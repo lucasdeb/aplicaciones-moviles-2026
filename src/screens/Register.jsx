@@ -38,8 +38,6 @@ function RegisterScreen({ navigation, user, handleRegister }) {
     handleRegister({ name: name.trim(), email: email.trim(), password });
   }
 
-  const errorMessage = formError || user.error;
-
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -87,7 +85,7 @@ function RegisterScreen({ navigation, user, handleRegister }) {
       </View>
       <Text style={styles.hint}>{PASSWORD_HINT}</Text>
 
-      {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
+      {formError ? <Text style={styles.error}>{formError}</Text> : null}
 
       <TouchableOpacity style={styles.button} onPress={onSubmit} disabled={user.isFetching}>
         {user.isFetching ? (

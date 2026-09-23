@@ -8,18 +8,10 @@ import { formatNumber } from '../utils/formatNumber';
 const ROTATE_INTERVAL = 5000;
 const FADE_DURATION = 450;
 
-// Card grande arriba del Home. En vez de mostrar una sola destacada fija,
-// va rotando sola entre todas (`movies`) con un crossfade (fade out ->
-// cambia la película -> fade in). Elegimos crossfade y no un scroll
-// horizontal como el de PopularCarousel a propósito: al "loopear" del
-// último ítem al primero, un scroll horizontal pega un salto feo, mientras
-// que acá el cambio pasa mientras está invisible, así que nunca se nota
-// la vuelta — da esa sensación de que gira sin fin.
 export default function FeaturedHero({ movies, onPressMovie }) {
   const [index, setIndex] = useState(0);
   const opacity = useRef(new Animated.Value(1)).current;
 
-  // Fade out la que se ve ahora, cambia el índice, fade in la nueva.
   function crossfadeTo(nextIndex) {
     Animated.timing(opacity, {
       toValue: 0,
@@ -35,10 +27,6 @@ export default function FeaturedHero({ movies, onPressMovie }) {
     });
   }
 
-  // El temporizador depende de `index`: cada vez que cambia (ya sea solo,
-  // por el autoplay, o porque el usuario tocó un puntito) se vuelve a
-  // armar desde cero — así tocar un puntito reinicia la cuenta en vez de
-  // que el autoplay salte de nuevo un instante después.
   useEffect(() => {
     if (movies.length < 2) return undefined;
     const timer = setTimeout(() => {
@@ -60,8 +48,6 @@ export default function FeaturedHero({ movies, onPressMovie }) {
         <Image source={{ uri: movie.backdropUrl || movie.posterUrl }} style={styles.image} />
 
         <View style={styles.topRow}>
-          {/* Rojo = acento principal (fondos sólidos/CTAs). Dorado = solo
-              calificaciones. Roles fijos definidos en theme.js. */}
           <View style={styles.featuredBadge}>
             <Ionicons name="sparkles" size={12} color={colors.onAccentPrimary} />
             <Text style={styles.featuredBadgeText}>DESTACADA</Text>
@@ -91,9 +77,6 @@ export default function FeaturedHero({ movies, onPressMovie }) {
         </LinearGradient>
       </Animated.View>
 
-      {/* Puntitos centrados abajo: además de indicar cuál se está viendo,
-          tocar uno salta directo a esa destacada (no hace falta esperar
-          a que rote sola). */}
       {movies.length > 1 && (
         <View style={styles.dots}>
           {movies.map((m, i) => (

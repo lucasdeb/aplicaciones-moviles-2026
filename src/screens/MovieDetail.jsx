@@ -54,7 +54,6 @@ function MovieDetailScreen({
 
   const canModerate = user.user.role === 'moderator' || user.user.role === 'superadmin';
 
-  // cargando ? mostrar el spinner : hubo error ? mostrarlo : ya está lista, mostrar el detalle
   return (movies.isFetchingDetail || !movie) && !movies.error ? (
     <View style={styles.centered}>
       <ActivityIndicator color={colors.accentPrimary} />
@@ -70,8 +69,6 @@ function MovieDetailScreen({
         source={{ uri: movie.backdropUrl || movie.posterUrl }}
         style={styles.hero}
       >
-        {/* Botón de volver flotando sobre la imagen (fondo semitransparente
-            tipo "vidrio") en vez de la barra de navegación nativa. */}
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} hitSlop={8}>
           <Ionicons name="arrow-back" size={20} color={colors.text} />
         </TouchableOpacity>
@@ -82,9 +79,6 @@ function MovieDetailScreen({
         >
           <Text style={styles.title}>{movie.title}</Text>
 
-          {/* Chips tipo "vidrio" con los datos de la película, en vez del
-              renglón de texto plano que había antes. El de rating va en
-              dorado porque ese color se reserva solo para calificaciones. */}
           <View style={styles.chipRow}>
             <View style={styles.chip}>
               <Text style={styles.chipText}>{movie.year}</Text>
@@ -135,9 +129,6 @@ function MovieDetailScreen({
           </>
         )}
 
-        {/* Resumen al lado del título: rating de la película + cantidad de
-            comentarios ya cargados (no pide nada nuevo al backend, son
-            datos que ya están en el estado de Redux). */}
         <View style={[styles.sectionHeader, styles.sectionHeaderRow]}>
           <View style={styles.sectionHeaderLeft}>
             <View style={styles.sectionBar} />

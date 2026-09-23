@@ -33,8 +33,6 @@ function MainTabs() {
   );
 }
 
-// Mismo patrón que en Clase 10: el Stack raíz decide qué screens montar
-// según props.user.isLoggedIn (viene del store global vía connectScreen).
 function RootNavigator({ user }) {
   return (
     <NavigationContainer>
@@ -47,10 +45,6 @@ function RootNavigator({ user }) {
         ) : (
           <>
             <Stack.Screen name="Main" component={MainTabs} />
-            {/* Sin header nativo acá: el botón de "volver" va dibujado a
-                mano, flotando sobre la imagen de fondo (ver MovieDetail.jsx),
-                para que se vea como la referencia en vez de la barra gris de
-                siempre. */}
             <Stack.Screen
               name="MovieDetail"
               component={MovieDetailScreen}

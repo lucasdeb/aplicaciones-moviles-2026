@@ -33,8 +33,6 @@ function LoginScreen({ navigation, user, handleLogin }) {
     handleLogin({ email: email.trim(), password });
   }
 
-  const errorMessage = formError || user.error;
-
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -74,7 +72,7 @@ function LoginScreen({ navigation, user, handleLogin }) {
         </TouchableOpacity>
       </View>
 
-      {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
+      {formError ? <Text style={styles.error}>{formError}</Text> : null}
 
       <TouchableOpacity style={styles.button} onPress={onSubmit} disabled={user.isFetching}>
         {user.isFetching ? (

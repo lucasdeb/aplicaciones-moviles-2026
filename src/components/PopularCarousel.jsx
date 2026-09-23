@@ -88,8 +88,6 @@ export default function PopularCarousel({ movies, onPressMovie }) {
               >
                 <View>
                   <Image source={{ uri: item.posterUrl }} style={styles.poster} />
-                  {/* Badge de rating superpuesto sobre el póster (dorado,
-                      igual que en FeaturedHero) */}
                   <View style={styles.ratingBadge}>
                     <Ionicons name="star" size={10} color={colors.background} />
                     <Text style={styles.ratingBadgeText}>{item.rating}</Text>

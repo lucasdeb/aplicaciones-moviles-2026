@@ -1,14 +1,12 @@
 import {
   LOG_USER_PENDING,
   LOG_USER_SUCCESS,
-  LOG_USER_FAILURE,
   LOG_OUT,
 } from '../actionTypes/userActionTypes';
 
 const initialState = {
   user: {},
   isFetching: false,
-  error: false,
   isLoggedIn: false,
 };
 
@@ -19,22 +17,13 @@ export default function userReducer(state = initialState, action) {
         ...state,
         isLoggedIn: false,
         isFetching: true,
-        error: false,
       };
     case LOG_USER_SUCCESS:
       return {
         ...state,
         isFetching: false,
-        error: false,
         isLoggedIn: true,
         user: action.payload,
-      };
-    case LOG_USER_FAILURE:
-      return {
-        ...state,
-        isFetching: false,
-        error: action.payload,
-        isLoggedIn: false,
       };
     case LOG_OUT:
       return {

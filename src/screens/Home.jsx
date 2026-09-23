@@ -94,12 +94,6 @@ function HomeScreen({
     navigation.navigate('MovieDetail', { movieId });
   }
 
-  // Valor animado que va guardando cuánto scrolleó el ScrollView de abajo
-  // (se actualiza con onScroll). RevealOnScroll lo usa para saber cuándo
-  // hacer aparecer cada sección — ver ese componente para el detalle.
-  // useNativeDriver: false a propósito acá: el valor lo consumen otros
-  // componentes (RevealOnScroll), no el mismo ScrollView, y esa combinación
-  // no siempre actualiza bien con el driver nativo.
   const scrollY = useRef(new Animated.Value(0)).current;
   const handleScroll = Animated.event(
     [{ nativeEvent: { contentOffset: { y: scrollY } } }],
@@ -107,17 +101,10 @@ function HomeScreen({
   );
 
   const isInitialLoading = movies.isFetching && movies.list.length === 0;
-  // El hero y el carrusel de "En tendencia" muestran las mismas destacadas
-  // (el hero las va rotando de a una, el carrusel las deja fijas para
-  // poder tocar la que quieras directo); si no hay ninguna marcada como
-  // destacada, caen al listado general para que no queden vacíos.
   const heroMovies = movies.featured.length > 0 ? movies.featured : movies.list.slice(0, 1);
 
   return (
     <View style={styles.container}>
-      {/* Header: logo + wordmark a la izquierda, buscador y menú a la
-          derecha. Los íconos van en rojo suave (accentPrimarySoft) porque
-          el rojo sólido queda para fondos, no para texto/íconos chicos. */}
       <View style={styles.brandRow}>
         <View style={styles.brandWordmark}>
           <View style={styles.logoBadge}>
@@ -136,8 +123,6 @@ function HomeScreen({
         </View>
       </View>
 
-      {/* Saludo con el nombre del usuario logueado (viene de Redux, no de
-          la API — ver mapStateToProps más abajo). */}
       {user?.name ? (
         <View style={styles.greetingPillWrap}>
           <TouchableOpacity style={styles.greetingPill}>
@@ -175,9 +160,6 @@ function HomeScreen({
           <SectionHeader title="En tendencia ahora" />
           <PopularCarousel movies={heroMovies} onPressMovie={goToMovie} />
 
-          {/* De acá para abajo, cada sección aparece (fade + desliza un
-              poco hacia arriba) recién cuando el scroll la acerca a la
-              pantalla, en vez de estar visible desde que carga el Home. */}
           {feed.popularReviews.length > 0 && (
             <RevealOnScroll scrollY={scrollY}>
               <SectionHeader title="Reseñas populares" />

@@ -1,7 +1,3 @@
-// Paleta "Cinematic Social" (sistema de diseño exportado de Stitch, ver
-// stitch_cineconnect_rewards/cinematic_social/DESIGN.md) — Material You,
-// tema oscuro. No inventar valores nuevos acá: si falta un token, sacarlo
-// de ese DESIGN.md en vez de aproximar a ojo.
 export const colors = {
   background: '#131313', // background / surface / surface-dim
   surface: '#1c1b1b', // surface-container-low

@@ -26,7 +26,9 @@
         {
           "photosPermission": "WhatsNext necesita acceso a tus fotos para elegir el póster de una película."
         }
-      ]
+      ],
+      "expo-status-bar",
+      "expo-font"
     ]
   }
 }

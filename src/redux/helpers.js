@@ -20,9 +20,6 @@ function mapDispatchToProps(dispatch) {
   return { ...bindActionCreators(allActionCreators, dispatch) };
 }
 
-// Cada screen define su propio mapStateToProps y se lo pasa a connectScreen,
-// así evitamos que un componente escriba directamente al estado global
-// (siempre pasa por un Action Creator -> Reducer).
 export function connectScreen(screenComponent, mapStateToProps) {
   return connect(mapStateToProps, mapDispatchToProps)(screenComponent);
 }

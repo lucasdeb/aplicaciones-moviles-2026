@@ -24,10 +24,6 @@ function ManageUsersScreen({ admin, user, fetchAllUsers, updateUserRole }) {
           <ActivityIndicator color={colors.accentPrimary} />
           <Text style={styles.loadingText}>Cargando usuarios...</Text>
         </View>
-      ) : admin.error ? (
-        <View style={styles.centered}>
-          <Text style={styles.errorText}>{admin.error}</Text>
-        </View>
       ) : (
         <FlatList
           data={admin.users}
@@ -94,11 +90,6 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 13,
     marginTop: 10,
-  },
-  errorText: {
-    color: colors.danger,
-    fontSize: 14,
-    textAlign: 'center',
   },
   row: {
     flexDirection: 'row',

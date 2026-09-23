@@ -41,8 +41,6 @@ export function fetchFeaturedMovies() {
   };
 }
 
-// Las siguientes tres acciones son solo para superadmin; como no hay backend
-// que vuelva a validar el rol, la pantalla es la única barrera.
 export function createMovie(requesterId, movieData) {
   return async (dispatch) => {
     try {

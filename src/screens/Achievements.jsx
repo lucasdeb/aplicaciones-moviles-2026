@@ -21,10 +21,6 @@ function AchievementsScreen({ achievements, user, fetchAchievements }) {
           <ActivityIndicator color={colors.accentPrimary} />
           <Text style={styles.loadingText}>Cargando logros...</Text>
         </View>
-      ) : achievements.error ? (
-        <View style={styles.centered}>
-          <Text style={styles.errorText}>{achievements.error}</Text>
-        </View>
       ) : (
         <>
           <Text style={styles.subtitle}>
@@ -100,11 +96,6 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 13,
     marginTop: 10,
-  },
-  errorText: {
-    color: colors.danger,
-    fontSize: 14,
-    textAlign: 'center',
   },
   row: {
     justifyContent: 'space-between',

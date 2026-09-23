@@ -1,13 +1,8 @@
-// App "hueca": no hay backend. Todo el estado vive acá, en memoria, y se
-// resetea cada vez que se reinicia la app. Las funciones imitan la forma de
-// las respuestas que antes daba la API (mismos nombres de campo) para que
-// screens y reducers no tengan que cambiar.
-
 function wait(ms = 300) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export const mockUsers = [
+const mockUsers = [
   { id: 1, name: 'Admin WhatsNext', email: 'admin.demo@whatsnext.app', role: 'superadmin' },
   { id: 2, name: 'Sofía Ramírez', email: 'sofia.demo@whatsnext.app', role: 'moderator' },
   { id: 3, name: 'Mateo Duarte', email: 'mateo.demo@whatsnext.app', role: 'user' },
@@ -22,7 +17,7 @@ function poster(title, bg, fg) {
   return `https://placehold.co/400x600/${bg}/${fg}?text=${text}&font=roboto`;
 }
 
-export const mockMovies = [
+const mockMovies = [
   {
     id: 1,
     title: 'El Último Horizonte',
@@ -187,8 +182,6 @@ export const mockMovies = [
     year: 2022,
     genre: 'Acción',
     rating: 4.7,
-    // Foto real (no el generador de placeholders con texto) para probar
-    // cómo se ve el diseño con imágenes de verdad en vez de rectángulos.
     posterUrl: 'https://images.unsplash.com/photo-1531259683007-016a7b628fc3?w=500&q=60',
     backdropUrl: 'https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?w=1200&q=60',
     views: 1284900,
@@ -209,7 +202,7 @@ const commentTemplates = [
   'Empieza lenta pero cuando arranca no para.',
 ];
 
-export const mockComments = [];
+const mockComments = [];
 let nextCommentId = 1;
 let templateIndex = 0;
 for (const movie of mockMovies) {
@@ -251,8 +244,6 @@ function withCommentsCount(movie) {
   return { ...movie, commentsCount };
 }
 
-// --- Auth: siempre "funciona", no hay contraseñas reales que validar. ---
-
 export async function mockLogin(email) {
   await wait();
   const existing = mockUsers.find((u) => u.email === email);
@@ -266,8 +257,6 @@ export async function mockRegister({ name, email }) {
   mockUsers.push(user);
   return user;
 }
-
-// --- Películas ---
 
 export async function mockGetMovies(search) {
   await wait();
@@ -345,8 +334,6 @@ export async function mockDeleteMovie(id) {
   if (index !== -1) mockMovies.splice(index, 1);
 }
 
-// --- Comentarios ---
-
 export async function mockGetComments(movieId) {
   await wait();
   return mockComments
@@ -393,8 +380,6 @@ export async function mockRepostComment(commentId) {
   return toPublicComment(comment);
 }
 
-// --- Feed ---
-
 export async function mockGetPopularReviews() {
   await wait();
   return [...mockComments]
@@ -416,8 +401,6 @@ export async function mockGetPopularReviewers() {
     });
 }
 
-// --- Admin ---
-
 export async function mockGetAllUsers() {
   await wait();
   return mockUsers;
@@ -430,8 +413,6 @@ export async function mockUpdateUserRole(userId, role) {
   user.role = role;
   return user;
 }
-
-// --- Logros (misma lógica que tenía el backend, calculada en el momento) ---
 
 const ACHIEVEMENTS = [
   {

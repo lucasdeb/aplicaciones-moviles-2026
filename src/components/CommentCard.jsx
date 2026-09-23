@@ -19,9 +19,6 @@ export default function CommentCard({ comment, onLike, onRepost, canDelete, onDe
 
   async function handleConfirmDelete() {
     const result = await onDelete();
-    // Si borró bien, la tarjeta desaparece de la lista sola (no hace falta
-    // resetear la posición). Si falló (ej. permiso denegado), volvemos el
-    // swipe a su lugar y avisamos por qué, en vez de quedar en silencio.
     if (result && result.success === false) {
       resetPosition();
       Alert.alert('No se pudo borrar', result.error || 'Probá de nuevo.');
@@ -35,8 +32,6 @@ export default function CommentCard({ comment, onLike, onRepost, canDelete, onDe
     ]);
   }
 
-  // Solo se arma el responder si el usuario puede borrar (dueño o moderador+);
-  // para cualquier otro caso el gesto no responde al arrastre.
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (evt, gestureState) =>
