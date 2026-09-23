@@ -1,4 +1,4 @@
-const UNITS = [
+const UNITS: Array<[string, number]> = [
   ['año', 31536000],
   ['mes', 2592000],
   ['semana', 604800],

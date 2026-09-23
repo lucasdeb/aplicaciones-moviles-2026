@@ -1,9 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, type ReactNode } from 'react';
 import { Animated, Dimensions, StyleSheet } from 'react-native';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
-export default function RevealOnScroll({ children, scrollY, style }) {
+type RevealOnScrollProps = {
+  children: ReactNode;
+  scrollY: Animated.Value;
+  style?: object;
+};
+
+export default function RevealOnScroll({ children, scrollY, style }: RevealOnScrollProps) {
   const [sectionY, setSectionY] = useState(null);
 
   function handleLayout(event) {

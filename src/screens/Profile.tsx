@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { connectScreen } from '../redux/helpers';
+import { useApp } from '../context/AppContext';
 import { colors } from '../theme';
 
 const ROLE_LABELS = {
@@ -16,7 +16,8 @@ const ROLE_COLORS = {
   superadmin: colors.accentPrimary,
 };
 
-function ProfileScreen({ navigation, user, logOut }) {
+function ProfileScreen({ navigation }) {
+  const { user, logOut } = useApp();
   const role = user.user?.role || 'user';
   const isSuperadmin = role === 'superadmin';
   const isModerator = role === 'moderator' || isSuperadmin;
@@ -169,8 +170,4 @@ const styles = StyleSheet.create({
   },
 });
 
-function mapStateToProps(state) {
-  return { user: state.users };
-}
-
-export default connectScreen(ProfileScreen, mapStateToProps);
+export default ProfileScreen;

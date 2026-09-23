@@ -258,7 +258,7 @@ export async function mockRegister({ name, email }) {
   return user;
 }
 
-export async function mockGetMovies(search) {
+export async function mockGetMovies(search?: string) {
   await wait();
   const sorted = [...mockMovies].sort((a, b) => b.rating - a.rating);
   const filtered = search
@@ -338,11 +338,11 @@ export async function mockGetComments(movieId) {
   await wait();
   return mockComments
     .filter((c) => c.movieId === movieId)
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .map(toPublicComment);
 }
 
-export async function mockPostComment(movieId, authorId, text, rating) {
+export async function mockPostComment(movieId, authorId, text, rating?: number) {
   await wait();
   const comment = {
     id: nextCommentId++,

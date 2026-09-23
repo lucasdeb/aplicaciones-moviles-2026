@@ -10,11 +10,12 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { connectScreen } from '../redux/helpers';
+import { useApp } from '../context/AppContext';
 import { colors } from '../theme';
 import { isValidEmail } from '../utils/validators';
 
-function LoginScreen({ navigation, user, handleLogin }) {
+function LoginScreen({ navigation }) {
+  const { user, handleLogin } = useApp();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -162,8 +163,4 @@ const styles = StyleSheet.create({
   },
 });
 
-function mapStateToProps(state) {
-  return { user: state.users };
-}
-
-export default connectScreen(LoginScreen, mapStateToProps);
+export default LoginScreen;

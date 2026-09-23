@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { connectScreen } from '../redux/helpers';
+import { useApp } from '../context/AppContext';
 import MovieCard from '../components/MovieCard';
 import ReviewCard from '../components/ReviewCard';
 import PopularCarousel from '../components/PopularCarousel';
@@ -21,7 +21,9 @@ import FeaturedHero from '../components/FeaturedHero';
 import RevealOnScroll from '../components/RevealOnScroll';
 import { colors } from '../theme';
 
-const MENU_ITEMS = [{ key: 'achievements', label: 'Logros', icon: 'trophy-outline', screen: 'Achievements' }];
+const MENU_ITEMS = [
+  { key: 'achievements', label: 'Logros', icon: 'trophy-outline' as const, screen: 'Achievements' },
+];
 
 function HeaderMenu({ navigation }) {
   const [visible, setVisible] = useState(false);
@@ -66,16 +68,16 @@ function SectionHeader({ title }) {
   );
 }
 
-function HomeScreen({
-  navigation,
-  movies,
-  feed,
-  user,
-  fetchMovies,
-  fetchFeaturedMovies,
-  fetchPopularReviews,
-  fetchPopularReviewers,
-}) {
+function HomeScreen({ navigation }) {
+  const {
+    movies,
+    feed,
+    user: { user: currentUser },
+    fetchMovies,
+    fetchFeaturedMovies,
+    fetchPopularReviews,
+    fetchPopularReviewers,
+  } = useApp();
   useEffect(() => {
     fetchMovies();
     fetchFeaturedMovies();
@@ -123,12 +125,12 @@ function HomeScreen({
         </View>
       </View>
 
-      {user?.name ? (
+      {currentUser?.name ? (
         <View style={styles.greetingPillWrap}>
           <TouchableOpacity style={styles.greetingPill}>
             <Ionicons name="person-circle-outline" size={16} color={colors.accentPrimarySoft} />
             <Text style={styles.greetingText} numberOfLines={1}>
-              Hola, {user.name.split(' ')[0]}
+              Hola, {currentUser.name.split(' ')[0]}
             </Text>
           </TouchableOpacity>
         </View>
@@ -466,8 +468,4 @@ const styles = StyleSheet.create({
   },
 });
 
-function mapStateToProps(state) {
-  return { movies: state.movies, feed: state.feed, user: state.users.user };
-}
-
-export default connectScreen(HomeScreen, mapStateToProps);
+export default HomeScreen;

@@ -14,10 +14,10 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { Ionicons } from '@expo/vector-icons';
-import { connectScreen } from '../redux/helpers';
+import { useApp } from '../context/AppContext';
 import { colors } from '../theme';
 
-function ImageSlot({ label, aspectRatio, value, onChange, resizeWidth, required }) {
+function ImageSlot({ label, aspectRatio, value, onChange, resizeWidth, required = false }) {
   const [linkInput, setLinkInput] = useState('');
   const [picking, setPicking] = useState(false);
 
@@ -105,7 +105,8 @@ function ImageSlot({ label, aspectRatio, value, onChange, resizeWidth, required 
   );
 }
 
-function AddMovieScreen({ navigation, route, movies, user, createMovie, updateMovie }) {
+function AddMovieScreen({ navigation, route }) {
+  const { movies, user, createMovie, updateMovie } = useApp();
   const movieId = route.params?.movieId;
   const editingMovie = movieId ? movies.list.find((m) => m.id === movieId) : null;
 
@@ -410,8 +411,4 @@ const styles = StyleSheet.create({
   },
 });
 
-function mapStateToProps(state) {
-  return { movies: state.movies, user: state.users };
-}
-
-export default connectScreen(AddMovieScreen, mapStateToProps);
+export default AddMovieScreen;

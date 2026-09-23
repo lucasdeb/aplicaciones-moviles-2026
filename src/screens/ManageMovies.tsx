@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
 import { View, Text, Image, FlatList, TouchableOpacity, Alert, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { connectScreen } from '../redux/helpers';
+import { useApp } from '../context/AppContext';
 import { colors } from '../theme';
 
-function ManageMoviesScreen({ navigation, movies, user, fetchMovies, deleteMovie }) {
+function ManageMoviesScreen({ navigation }) {
+  const { movies, user, fetchMovies, deleteMovie } = useApp();
   useEffect(() => {
     fetchMovies();
   }, []);
@@ -156,8 +157,4 @@ const styles = StyleSheet.create({
   },
 });
 
-function mapStateToProps(state) {
-  return { movies: state.movies, user: state.users };
-}
-
-export default connectScreen(ManageMoviesScreen, mapStateToProps);
+export default ManageMoviesScreen;

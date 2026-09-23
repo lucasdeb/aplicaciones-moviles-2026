@@ -13,25 +13,24 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { connectScreen } from '../redux/helpers';
+import { useApp } from '../context/AppContext';
 import CommentCard from '../components/CommentCard';
 import { colors } from '../theme';
 
-function MovieDetailScreen({
-  navigation,
-  route,
-  movies,
-  comments,
-  user,
-  fetchMovieDetail,
-  clearMovieDetail,
-  fetchComments,
-  clearComments,
-  postComment,
-  likeComment,
-  repostComment,
-  deleteComment,
-}) {
+function MovieDetailScreen({ navigation, route }) {
+  const {
+    movies,
+    comments,
+    user,
+    fetchMovieDetail,
+    clearMovieDetail,
+    fetchComments,
+    clearComments,
+    postComment,
+    likeComment,
+    repostComment,
+    deleteComment,
+  } = useApp();
   const { movieId } = route.params;
   const [commentText, setCommentText] = useState('');
 
@@ -377,8 +376,4 @@ const styles = StyleSheet.create({
   },
 });
 
-function mapStateToProps(state) {
-  return { movies: state.movies, comments: state.comments, user: state.users };
-}
-
-export default connectScreen(MovieDetailScreen, mapStateToProps);
+export default MovieDetailScreen;

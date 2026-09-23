@@ -2,7 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { connectScreen } from './redux/helpers';
+import { useApp } from './context/AppContext';
 import LoginScreen from './screens/Login';
 import RegisterScreen from './screens/Register';
 import HomeScreen from './screens/Home';
@@ -19,7 +19,7 @@ const Tab = createBottomTabNavigator();
 
 function MainTabs() {
   return (
-    <Tab.Navigator
+    <Tab.Navigator id="main-tabs"
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.accentPrimary,
@@ -33,10 +33,11 @@ function MainTabs() {
   );
 }
 
-function RootNavigator({ user }) {
+function RootNavigator() {
+  const { user } = useApp();
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator id="root-stack" screenOptions={{ headerShown: false }}>
         {!user.isLoggedIn ? (
           <>
             <Stack.Screen name="Login" component={LoginScreen} />
@@ -97,8 +98,4 @@ function RootNavigator({ user }) {
   );
 }
 
-function mapStateToProps(state) {
-  return { user: state.users };
-}
-
-export default connectScreen(RootNavigator, mapStateToProps);
+export default RootNavigator;

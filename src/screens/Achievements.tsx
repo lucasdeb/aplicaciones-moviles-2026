@@ -2,10 +2,11 @@ import React, { useEffect } from 'react';
 import { View, Text, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { connectScreen } from '../redux/helpers';
+import { useApp } from '../context/AppContext';
 import { colors } from '../theme';
 
-function AchievementsScreen({ achievements, user, fetchAchievements }) {
+function AchievementsScreen() {
+  const { achievements, user, fetchAchievements } = useApp();
   useEffect(() => {
     fetchAchievements(user.user.id);
   }, []);
@@ -154,8 +155,4 @@ const styles = StyleSheet.create({
   },
 });
 
-function mapStateToProps(state) {
-  return { achievements: state.achievements, user: state.users };
-}
-
-export default connectScreen(AchievementsScreen, mapStateToProps);
+export default AchievementsScreen;

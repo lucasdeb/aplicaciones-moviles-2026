@@ -102,10 +102,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceAlt,
   },
   fadeLayer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   image: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     width: '100%',
     height: '100%',
   },

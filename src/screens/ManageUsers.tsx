@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { connectScreen } from '../redux/helpers';
+import { useApp } from '../context/AppContext';
 import { colors } from '../theme';
 
 const ROLE_OPTIONS = [
@@ -10,7 +10,8 @@ const ROLE_OPTIONS = [
   { label: 'Superadmin', value: 'superadmin' },
 ];
 
-function ManageUsersScreen({ admin, user, fetchAllUsers, updateUserRole }) {
+function ManageUsersScreen() {
+  const { admin, user, fetchAllUsers, updateUserRole } = useApp();
   useEffect(() => {
     fetchAllUsers(user.user.id);
   }, []);
@@ -140,8 +141,4 @@ const styles = StyleSheet.create({
   },
 });
 
-function mapStateToProps(state) {
-  return { admin: state.admin, user: state.users };
-}
-
-export default connectScreen(ManageUsersScreen, mapStateToProps);
+export default ManageUsersScreen;
