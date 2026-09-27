@@ -234,6 +234,7 @@ function toPublicComment(comment) {
     likes: comment.likes,
     reposts: comment.reposts,
     createdAt: comment.createdAt,
+    photo: comment.photo ?? null,
     author: author ? { id: author.id, name: author.name } : null,
     movie: movie ? { id: movie.id, title: movie.title, year: movie.year, posterUrl: movie.posterUrl } : undefined,
   };
@@ -353,6 +354,7 @@ export async function mockPostComment(movieId, authorId, text, rating?: number) 
     createdAt: new Date().toISOString(),
     authorId: Number(authorId),
     movieId,
+    photo: photo ?? null,
   };
   mockComments.push(comment);
   return toPublicComment(comment);
@@ -414,49 +416,81 @@ export async function mockUpdateUserRole(userId, role) {
   return user;
 }
 
-const ACHIEVEMENTS = [
+type AchievementStat = 'totalReviews' | 'maxLikesOnReview' | 'distinctGenres' | 'totalRatings' | 'totalPhotos';
+
+interface AchievementDef {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  stat: AchievementStat;
+  goal: number;
+  points: number;
+}
+
+const ACHIEVEMENTS: AchievementDef[] = [
   {
     id: 'first_review',
     title: 'Primera reseña',
     description: 'Publicá tu primer comentario o reseña',
     icon: 'create-outline',
-    check: (stats) => stats.totalReviews >= 1,
+    stat: 'totalReviews',
+    goal: 1,
+    points: 10,
   },
   {
     id: 'active_critic',
     title: 'Crítico en marcha',
     description: 'Publicá 5 reseñas',
     icon: 'chatbubbles-outline',
-    check: (stats) => stats.totalReviews >= 5,
+    stat: 'totalReviews',
+     goal: 5,
+    points: 20,
   },
   {
     id: 'expert_critic',
     title: 'Crítico experto',
     description: 'Publicá 15 reseñas',
     icon: 'ribbon-outline',
-    check: (stats) => stats.totalReviews >= 15,
+    stat: 'totalReviews',
+    goal: 15,
+    points: 30,
   },
   {
     id: 'viral_review',
     title: 'Reseña viral',
     description: 'Conseguí 100 likes o más en una sola reseña',
     icon: 'flame-outline',
-    check: (stats) => stats.maxLikesOnReview >= 100,
+    stat: 'maxLikesOnReview',
+    goal: 100,
+    points: 50,
   },
   {
     id: 'genre_explorer',
     title: 'Explorador de géneros',
     description: 'Reseñá películas de 3 géneros distintos',
     icon: 'compass-outline',
-    check: (stats) => stats.distinctGenres >= 3,
+    stat: 'distinctGenres',
+    goal: 3,
+    points: 10,
   },
   {
     id: 'star_rater',
     title: 'Todo estrellas',
     description: 'Calificá con estrellas 5 películas',
     icon: 'star-outline',
-    check: (stats) => stats.totalRatings >= 5,
+    stat: 'totalRatings',
+    goal: 5,
+    points: 15,
   },
+  { id: 'cinema_photo', title: 'Fui al cine', description: 'Subí una reseña con foto', icon: 'camera-outline', stat: 'totalPhotos', goal: 1, points: 20 },
+];
+
+export const REWARDS = [
+  { id: 'popcorn', title: 'Pochoclos medianos', description: 'En cines adheridos', icon: 'fast-food-outline', cost: 30 },
+  { id: 'two_for_one', title: '2x1 en entradas', description: 'Válido de lunes a jueves', icon: 'ticket-outline', cost: 60 },
+  { id: 'presale', title: 'Preventa anticipada', description: 'Acceso 24 h antes a preventas', icon: 'time-outline', cost: 100 },
+  { id: 'free_ticket', title: 'Entrada gratis', description: 'Una función 2D a elección', icon: 'film-outline', cost: 150 },
 ];
 
 export async function mockGetAchievements(userId) {
@@ -465,17 +499,20 @@ export async function mockGetAchievements(userId) {
     .filter((c) => c.authorId === userId)
     .map((c) => ({ ...c, movie: mockMovies.find((m) => m.id === c.movieId) }));
   const genres = new Set(comments.map((c) => c.movie && c.movie.genre));
-  const stats = {
+  const stats: Record<AchievementStat, number> = {
     totalReviews: comments.length,
     maxLikesOnReview: comments.reduce((max, c) => Math.max(max, c.likes), 0),
     distinctGenres: genres.size,
     totalRatings: comments.filter((c) => c.rating !== null).length,
+    totalPhotos: comments.filter((c) => c.photo).length,
   };
-  return ACHIEVEMENTS.map((a) => ({
-    id: a.id,
-    title: a.title,
-    description: a.description,
-    icon: a.icon,
-    unlocked: a.check(stats),
-  }));
+  const list = ACHIEVEMENTS.map((a) => {
+    const current = Math.min(stats[a.stat], a.goal);
+    return {
+      id: a.id, title: a.title, description: a.description, icon: a.icon,
+      points: a.points, goal: a.goal, current, unlocked: current >= a.goal,
+    };
+  });
+  const totalPoints = list.filter((a) => a.unlocked).reduce((sum, a) => sum + a.points, 0);
+  return { list, totalPoints };
 }

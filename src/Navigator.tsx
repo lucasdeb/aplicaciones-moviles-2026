@@ -12,6 +12,7 @@ import ManageMoviesScreen from './screens/ManageMovies';
 import AddMovieScreen from './screens/AddMovie';
 import ManageUsersScreen from './screens/ManageUsers';
 import AchievementsScreen from './screens/Achievements';
+import RewardsScreen from './screens/Rewards';
 import { colors } from './theme';
 
 const Stack = createNativeStackNavigator();
@@ -33,66 +34,36 @@ function MainTabs() {
   );
 }
 
+const headerOptions = {
+  headerShown: true,
+  title: '',
+  headerStyle: { backgroundColor: colors.background },
+  headerTintColor: colors.text,
+};
+
 function RootNavigator() {
   const { user } = useApp();
   return (
     <NavigationContainer>
       <Stack.Navigator id="root-stack" screenOptions={{ headerShown: false }}>
-        {!user.isLoggedIn ? (
-          <>
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="Register" component={RegisterScreen} />
-          </>
-        ) : (
-          <>
-            <Stack.Screen name="Main" component={MainTabs} />
-            <Stack.Screen
-              name="MovieDetail"
-              component={MovieDetailScreen}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="ManageMovies"
-              component={ManageMoviesScreen}
-              options={{
-                headerShown: true,
-                title: '',
-                headerStyle: { backgroundColor: colors.background },
-                headerTintColor: colors.text,
-              }}
-            />
-            <Stack.Screen
-              name="AddMovie"
-              component={AddMovieScreen}
-              options={{
-                headerShown: true,
-                title: '',
-                headerStyle: { backgroundColor: colors.background },
-                headerTintColor: colors.text,
-              }}
-            />
-            <Stack.Screen
-              name="ManageUsers"
-              component={ManageUsersScreen}
-              options={{
-                headerShown: true,
-                title: '',
-                headerStyle: { backgroundColor: colors.background },
-                headerTintColor: colors.text,
-              }}
-            />
-            <Stack.Screen
-              name="Achievements"
-              component={AchievementsScreen}
-              options={{
-                headerShown: true,
-                title: '',
-                headerStyle: { backgroundColor: colors.background },
-                headerTintColor: colors.text,
-              }}
-            />
-          </>
-        )}
+      {/* Visibles para todos */}
+      <Stack.Screen name="Main" component={MainTabs} />
+      <Stack.Screen name="MovieDetail" component={MovieDetailScreen} />
+
+      {user.isLoggedIn ? (
+        <>
+        <Stack.Screen name="ManageMovies" component={ManageMoviesScreen} options={headerOptions} />
+        <Stack.Screen name="AddMovie" component={AddMovieScreen} options={headerOptions} />
+        <Stack.Screen name="ManageUsers" component={ManageUsersScreen} options={headerOptions} />
+        <Stack.Screen name="Achievements" component={AchievementsScreen} options={headerOptions} />
+        <Stack.Screen name="Rewards" component={RewardsScreen} options={headerOptions} />
+        </>
+      ) : (
+        <Stack.Group screenOptions={{ presentation: 'modal' }}>
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Register" component={RegisterScreen} />
+        </Stack.Group>
+      )}
       </Stack.Navigator>
     </NavigationContainer>
   );

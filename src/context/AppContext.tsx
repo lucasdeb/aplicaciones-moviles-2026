@@ -61,8 +61,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     popularReviewers: [],
     isFetchingReviewers: false,
   });
+
   const [admin, setAdmin] = useState({ users: [], isFetchingUsers: false });
-  const [achievements, setAchievements] = useState({ list: [], isFetching: false });
+  const [achievements, setAchievements] = useState({ list: [], totalPoints: 0, isFetching: false });
+  const [rewards, setRewards] = useState({ spentPoints: 0, redeemed: [] });
+
 
   async function handleLogin(credentials) {
     setUser((current) => ({ ...current, isFetching: true }));
@@ -78,6 +81,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   function logOut() {
     setUser({ user: null, isFetching: false, isLoggedIn: false });
+    setAchievements({ list: [], totalPoints: 0, isFetching: false });
+    setRewards({ spentPoints: 0, redeemed: [] });
   }
 
   async function fetchMovies() {
@@ -157,9 +162,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setComments({ list: [], isFetching: false, isPosting: false, error: false });
   }
 
-  async function postComment(movieId, authorId, text) {
+  async function postComment(movieId, authorId, text, rating?: number) {
     try {
-      const comment = await mockPostComment(movieId, authorId, text);
+      const comment = await mockPostComment(movieId, authorId, text, rating);
       setComments((current) => ({ ...current, list: [comment, ...current.list] }));
     } catch (error) {
       setComments((current) => ({ ...current, error: error.message }));
@@ -228,10 +233,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }
 
   async function fetchAchievements(userId) {
-    setAchievements((current) => ({ ...current, isFetching: true }));
-    const list = await mockGetAchievements(userId);
-    setAchievements({ list, isFetching: false });
-  }
+  setAchievements((c) => ({ ...c, isFetching: true }));
+  const { list, totalPoints } = await mockGetAchievements(userId);
+  setAchievements({ list, totalPoints, isFetching: false });
+}
+
+function redeemReward(reward) {
+  const available = achievements.totalPoints - rewards.spentPoints;
+  if (reward.cost > available) return { success: false, error: 'No te alcanzan los puntos' };
+  const code = Math.random().toString(36).slice(2, 8).toUpperCase();
+  setRewards((c) => ({
+    spentPoints: c.spentPoints + reward.cost,
+    redeemed: [{ ...reward, code, date: new Date().toISOString() }, ...c.redeemed],
+  }));
+  return { success: true, code };
+}
 
   const value = {
     user,
@@ -240,6 +256,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     feed,
     admin,
     achievements,
+    rewards,
+    redeemReward,
     handleLogin,
     handleRegister,
     logOut,

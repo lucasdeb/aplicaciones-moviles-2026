@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme';
 import { timeAgo } from '../utils/timeAgo';
+import { Image } from 'react-native';
 
 const SWIPE_THRESHOLD = -80;
 const MAX_SWIPE = -110;
@@ -92,7 +93,7 @@ export default function CommentCard({ comment, onLike, onRepost, canDelete, onDe
           </View>
 
           <Text style={styles.text}>{comment.text}</Text>
-
+          {comment.photo && <Image source={{ uri: comment.photo }} style={styles.photo} />}
           <View style={styles.actions}>
             <TouchableOpacity
               style={[styles.actionButton, liked && styles.actionButtonActive]}
@@ -199,6 +200,12 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontWeight: '600',
     fontSize: 13,
+  },
+  photo: { 
+    width: '100%', aspectRatio: 4 / 3, 
+    borderRadius: 10, 
+    marginTop: 8,
+    backgroundColor: colors.surfaceAlt 
   },
   dot: {
     width: 3,

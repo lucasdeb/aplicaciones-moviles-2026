@@ -1,17 +1,18 @@
 import React, { useEffect } from 'react';
-import { View, Text, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useApp } from '../context/AppContext';
 import { colors } from '../theme';
 
-function AchievementsScreen() {
-  const { achievements, user, fetchAchievements } = useApp();
+function AchievementsScreen({ navigation }) {
+  const { achievements, user, fetchAchievements, rewards } = useApp();
   useEffect(() => {
     fetchAchievements(user.user.id);
   }, []);
 
   const unlockedCount = achievements.list.filter((a) => a.unlocked).length;
+  const available = achievements.totalPoints - rewards.spentPoints;
 
   return (
     <View style={styles.container}>
@@ -27,6 +28,11 @@ function AchievementsScreen() {
           <Text style={styles.subtitle}>
             {unlockedCount} de {achievements.list.length} desbloqueados
           </Text>
+          <TouchableOpacity style={styles.pointsBox} onPress={() => navigation.navigate('Rewards')} activeOpacity={0.8}>
+            <Ionicons name="diamond-outline" size={18} color={colors.accentPrimary} />
+            <Text style={styles.pointsText}>{available} puntos disponibles</Text>
+            <Text style={styles.pointsLink}>Canjear ›</Text>
+          </TouchableOpacity>
 
           <FlatList
             data={achievements.list}
@@ -55,6 +61,10 @@ function AchievementsScreen() {
                   </View>
                   <Text style={styles.cardTitle}>{item.title}</Text>
                   <Text style={styles.cardDescription}>{item.description}</Text>
+                  <View style={styles.progressTrack}>
+                  <View style={[styles.progressFill, { width: `${(item.current / item.goal) * 100}%` as `${number}%` }]} />
+                  </View>
+                  <Text style={styles.progressText}>{item.current}/{item.goal} · +{item.points} pts</Text>
                 </View>
               )
             }
@@ -84,6 +94,11 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 16,
   },
+
+  progressTrack: { height: 6, borderRadius: 3, backgroundColor: colors.surfaceAlt, marginTop: 10, overflow: 'hidden' },
+  progressFill: { height: '100%', backgroundColor: colors.accentPrimary },
+  progressText: { color: colors.textMuted, fontSize: 11, marginTop: 4 },
+
   list: {
     paddingHorizontal: 16,
     paddingBottom: 24,
@@ -97,6 +112,27 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 13,
     marginTop: 10,
+  },
+  pointsBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 16,
+  },
+  pointsText: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: 'bold',
+    marginRight: 8,
+  },
+  pointsLink: {
+    color: colors.accentPrimary,
+    fontSize: 13,
+    fontWeight: 'bold',
   },
   row: {
     justifyContent: 'space-between',
