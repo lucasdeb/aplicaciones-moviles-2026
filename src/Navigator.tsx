@@ -14,6 +14,7 @@ import ManageUsersScreen from './screens/ManageUsers';
 import AchievementsScreen from './screens/Achievements';
 import RewardsScreen from './screens/Rewards';
 import { colors } from './theme';
+import CinemasScreen from './screens/Cinemas';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -30,6 +31,7 @@ function MainTabs() {
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Populares' }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarLabel: 'Perfil' }} />
+      <Tab.Screen name="Cinemas" component={CinemasScreen} options={{ tabBarLabel: 'Cines' }} />
     </Tab.Navigator>
   );
 }
