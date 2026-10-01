@@ -25,9 +25,7 @@ function MovieDetailScreen({ navigation, route }) {
     comments,
     user,
     fetchMovieDetail,
-    clearMovieDetail,
     fetchComments,
-    clearComments,
     postComment,
     likeComment,
     repostComment,
@@ -37,16 +35,17 @@ function MovieDetailScreen({ navigation, route }) {
   const [commentText, setCommentText] = useState('');
   const [photo, setPhoto] = useState<string | null>(null);
 
+  // Se recarga cada vez que la pantalla vuelve a estar visible (por ejemplo, al volver de una recomendada)
   useEffect(() => {
-    fetchMovieDetail(movieId);
-    fetchComments(movieId);
-    return () => {
-      clearMovieDetail();
-      clearComments();
-    };
-  }, [movieId]);
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchMovieDetail(movieId);
+      fetchComments(movieId);
+    });
+    return unsubscribe;
+  }, [navigation, movieId]);
 
-  const movie = movies.selectedMovie;
+  // Mientras llega la película pedida, no se muestra la que quedó cargada antes
+  const movie = movies.selectedMovie?.id === movieId ? movies.selectedMovie : null;
 
   const me = user.user;
   const canModerate = me?.role === 'moderator' || me?.role === 'superadmin';

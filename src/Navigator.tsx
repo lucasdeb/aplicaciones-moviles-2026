@@ -36,6 +36,7 @@ function MainTabs() {
       <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Populares', tabBarIcon: ({color, size, focused})=>(<Ionicons name={focused ? 'flame': 'flame-outline'} size={size} color={color} />) }} />
       {user.isLoggedIn && (<Tab.Screen name="Cinemas" component={CinemasScreen} options={{ tabBarLabel: 'Cines' , tabBarIcon: ({color, size, focused})=>(<Ionicons name={focused ? 'map': 'map-outline'} size={size} color={color} />) }} />)}
       <Tab.Screen name="Releases" component={ReleasesScreen} options={{ tabBarLabel: 'Estrenos' , tabBarIcon: ({color, size, focused})=>(<Ionicons name={focused ? 'calendar': 'calendar-outline'} size={size} color={color} />) }} />
+      <Tab.Screen name="Logros" component={AchievementsScreen} options={{ tabBarLabel: 'Logros', tabBarIcon: ({color, size, focused})=>(<Ionicons name={focused ? 'trophy': 'trophy-outline'} size={size} color={color} />) }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarLabel: 'Perfil', tabBarIcon: ({color, size, focused})=>(<Ionicons name={focused ? 'person-circle': 'person-circle-outline'} size={size} color={color} />) }} />
     </Tab.Navigator>
   );
@@ -63,7 +64,6 @@ function RootNavigator() {
         <Stack.Screen name="ManageMovies" component={ManageMoviesScreen} options={headerOptions} />
         <Stack.Screen name="AddMovie" component={AddMovieScreen} options={headerOptions} />
         <Stack.Screen name="ManageUsers" component={ManageUsersScreen} options={headerOptions} />
-        <Stack.Screen name="Achievements" component={AchievementsScreen} options={headerOptions} />
         <Stack.Screen name="Rewards" component={RewardsScreen} options={headerOptions} />
         </>
       ) : (

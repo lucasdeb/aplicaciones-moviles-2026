@@ -23,7 +23,7 @@ import BrandLogo from '../components/BrandLogo';
 import { colors } from '../theme';
 
 const MENU_ITEMS = [
-  { key: 'achievements', label: 'Logros', icon: 'trophy-outline' as const, screen: 'Achievements' },
+  { key: 'achievements', label: 'Logros', icon: 'trophy-outline' as const, screen: 'Logros' },
 ];
 
 function HeaderMenu({ navigation }) {
