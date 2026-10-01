@@ -21,32 +21,22 @@ import CinemasScreen from './screens/Cinemas';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Ícono lleno cuando la solapa está activa, contorno cuando no
-const TAB_ICONS = {
-  Home: ['flame', 'flame-outline'],
-  Profile: ['person-circle', 'person-circle-outline'],
-  Cinemas: ['location', 'location-outline'],
-  Releases: ['calendar', 'calendar-outline'],
-} as const;
-
 function MainTabs() {
+  const { user } = useApp();
   return (
     <Tab.Navigator id="main-tabs"
-      screenOptions={({ route }) => ({
+      screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.accentPrimary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
-        tabBarIcon: ({ focused, color, size }) => {
-          const [active, inactive] = TAB_ICONS[route.name as keyof typeof TAB_ICONS];
-          return <Ionicons name={focused ? active : inactive} size={size} color={color} />;
-        },
-      })}
+      }}
     >
-      <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Populares' }} />
-      <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarLabel: 'Perfil' }} />
-      <Tab.Screen name="Cinemas" component={CinemasScreen} options={{ tabBarLabel: 'Cines' }} />
-      <Tab.Screen name="Releases" component={ReleasesScreen} options={{ tabBarLabel: 'Estrenos' }} />
+      <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Populares', tabBarIcon: ({color, size, focused})=>(<Ionicons name={focused ? 'flame': 'flame-outline'} size={size} color={color} />) }} />
+      {user.isLoggedIn && (<Tab.Screen name="Cinemas" component={CinemasScreen} options={{ tabBarLabel: 'Cines' , tabBarIcon: ({color, size, focused})=>(<Ionicons name={focused ? 'map': 'map-outline'} size={size} color={color} />) }} />)}
+      
+      <Tab.Screen name="Releases" component={ReleasesScreen} options={{ tabBarLabel: 'Estrenos' , tabBarIcon: ({color, size, focused})=>(<Ionicons name={focused ? 'calendar': 'calendar-outline'} size={size} color={color} />) }} />
+      <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarLabel: 'Perfil', tabBarIcon: ({color, size, focused})=>(<Ionicons name={focused ? 'person-circle': 'person-circle-outline'} size={size} color={color} />) }} />
     </Tab.Navigator>
   );
 }

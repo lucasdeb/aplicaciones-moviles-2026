@@ -22,7 +22,7 @@ function LoginScreen({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState('');
 
-  function onSubmit() {
+  async function onSubmit() {
     if (!isValidEmail(email)) {
       setFormError('Ingresá un email válido');
       return;
@@ -32,7 +32,11 @@ function LoginScreen({ navigation }) {
       return;
     }
     setFormError('');
-    handleLogin({ email: email.trim(), password });
+    const result = await handleLogin({ email: email.trim(), password });
+    if (!result.success) {
+      setFormError(result.error);
+      setPassword('');
+    }
   }
 
   return (
