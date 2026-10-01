@@ -14,6 +14,7 @@ import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme';
 import { fetchNearbyCinemas, type Cinema } from '../utils/geo';
+import BrandLogo from '../components/BrandLogo';
 
 type Status = 'loading' | 'ready' | 'denied' | 'error';
 
@@ -139,7 +140,10 @@ function CinemasScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.headerTitle}>Cines cercanos</Text>
+      <View style={styles.titleRow}>
+        <BrandLogo size={36} />
+        <Text style={styles.headerTitle}>Cines cercanos</Text>
+      </View>
       <Text style={styles.subtitle}>
         {place ? `Cerca de ${place} · ordenados por distancia` : 'Ordenados por distancia'}
       </Text>
@@ -182,7 +186,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 32,
   },
-  headerTitle: { color: colors.text, fontSize: 20, fontWeight: 'bold', paddingHorizontal: 16 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', paddingLeft: 16 },
+  headerTitle: { color: colors.text, fontSize: 20, fontWeight: 'bold', paddingHorizontal: 12 },
   subtitle: { color: colors.textMuted, fontSize: 13, paddingHorizontal: 16, marginTop: 4, marginBottom: 16 },
   list: { paddingHorizontal: 16, paddingBottom: 24 },
   mutedText: { color: colors.textMuted, fontSize: 13, marginTop: 12, textAlign: 'center' },

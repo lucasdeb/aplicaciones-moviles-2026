@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { colors } from '../theme';
+import BrandLogo from '../components/BrandLogo';
 
 const ROLE_LABELS = {
   user: 'Usuario',
@@ -25,6 +26,9 @@ function ProfileScreen({ navigation }) {
   if (!user.isLoggedIn) {
     return (
       <View style={styles.container}>
+        <View style={styles.brand}>
+          <BrandLogo size={72} />
+        </View>
         <View style={styles.avatar}>
           <Ionicons name="person-outline" size={36} color={colors.textMuted} />
         </View>
@@ -45,6 +49,9 @@ function ProfileScreen({ navigation }) {
   }
   return (
     <View style={styles.container}>
+      <View style={styles.brand}>
+        <BrandLogo size={72} />
+      </View>
       <View style={styles.avatar}>
         <Text style={styles.avatarInitial}>
           {(user.user?.name || '?').charAt(0).toUpperCase()}
@@ -110,8 +117,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
     alignItems: 'center',
-    paddingTop: 80,
+    paddingTop: 56,
     paddingHorizontal: 24,
+  },
+  brand: {
+    marginBottom: 20,
   },
   avatar: {
     width: 80,

@@ -117,7 +117,7 @@ export default function PopularCarousel({ movies, onPressMovie }) {
       </Animated.ScrollView>
 
       <View style={styles.dots}>
-        {movies.map((_, index) => {
+        {movies.map((item, index) => {
           const inputRange = [
             (index - 1) * ITEM_SIZE,
             index * ITEM_SIZE,
@@ -135,7 +135,7 @@ export default function PopularCarousel({ movies, onPressMovie }) {
           });
           return (
             <Animated.View
-              key={index}
+              key={item.id}
               style={[styles.dot, { width: dotWidth, opacity: dotOpacity }]}
             />
           );

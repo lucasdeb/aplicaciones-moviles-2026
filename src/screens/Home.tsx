@@ -19,6 +19,7 @@ import ReviewCard from '../components/ReviewCard';
 import PopularCarousel from '../components/PopularCarousel';
 import FeaturedHero from '../components/FeaturedHero';
 import RevealOnScroll from '../components/RevealOnScroll';
+import BrandLogo from '../components/BrandLogo';
 import { colors } from '../theme';
 
 const MENU_ITEMS = [
@@ -110,9 +111,7 @@ function HomeScreen({ navigation }) {
     <View style={styles.container}>
       <View style={styles.brandRow}>
         <View style={styles.brandWordmark}>
-          <View style={styles.logoBadge}>
-            <Ionicons name="film" size={14} color={colors.onAccentPrimary} />
-          </View>
+          <BrandLogo size={44} />
           <Text style={styles.brand}>
             What's<Text style={styles.brandAccent}>Next</Text>
           </Text>
@@ -287,14 +286,6 @@ const styles = StyleSheet.create({
   brandAccent: {
     color: colors.accentPrimarySoft,
     fontStyle: 'italic',
-  },
-  logoBadge: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
-    backgroundColor: colors.accentPrimary,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   brandIcons: {
     flexDirection: 'row',

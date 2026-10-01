@@ -17,6 +17,7 @@ import RewardsScreen from './screens/Rewards';
 import ReleasesScreen from './screens/Releases';
 import { colors } from './theme';
 import CinemasScreen from './screens/Cinemas';
+import BrandLogo from './components/BrandLogo';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -34,7 +35,6 @@ function MainTabs() {
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Populares', tabBarIcon: ({color, size, focused})=>(<Ionicons name={focused ? 'flame': 'flame-outline'} size={size} color={color} />) }} />
       {user.isLoggedIn && (<Tab.Screen name="Cinemas" component={CinemasScreen} options={{ tabBarLabel: 'Cines' , tabBarIcon: ({color, size, focused})=>(<Ionicons name={focused ? 'map': 'map-outline'} size={size} color={color} />) }} />)}
-      
       <Tab.Screen name="Releases" component={ReleasesScreen} options={{ tabBarLabel: 'Estrenos' , tabBarIcon: ({color, size, focused})=>(<Ionicons name={focused ? 'calendar': 'calendar-outline'} size={size} color={color} />) }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarLabel: 'Perfil', tabBarIcon: ({color, size, focused})=>(<Ionicons name={focused ? 'person-circle': 'person-circle-outline'} size={size} color={color} />) }} />
     </Tab.Navigator>
@@ -44,6 +44,7 @@ function MainTabs() {
 const headerOptions = {
   headerShown: true,
   title: '',
+  headerTitle: () => <BrandLogo size={32} />,
   headerStyle: { backgroundColor: colors.background },
   headerTintColor: colors.text,
 };

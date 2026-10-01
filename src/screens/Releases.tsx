@@ -21,6 +21,7 @@ import {
   scheduleReleaseReminder,
   cancelReminder,
 } from '../utils/reminders';
+import BrandLogo from '../components/BrandLogo';
 
 type Tab = 'upcoming' | 'now';
 
@@ -54,7 +55,9 @@ function ReleasesScreen({ navigation }) {
   useEffect(() => {
     load();
     if (Platform.OS !== 'web') {
-      getScheduledReminders().then(setReminders).catch(() => {});
+      getScheduledReminders()
+        .then(setReminders)
+        .catch((error) => console.warn('No se pudieron leer los avisos programados', error));
     }
   }, []);
 
@@ -96,7 +99,10 @@ function ReleasesScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.headerTitle}>Estrenos</Text>
+      <View style={styles.titleRow}>
+        <BrandLogo size={36} />
+        <Text style={styles.headerTitle}>Estrenos</Text>
+      </View>
 
       <View style={styles.segment}>
         {(['upcoming', 'now'] as Tab[]).map((key) => (
@@ -197,7 +203,8 @@ function ReleasesScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background, paddingTop: 60 },
-  headerTitle: { color: colors.text, fontSize: 20, fontWeight: 'bold', paddingHorizontal: 16 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', paddingLeft: 16 },
+  headerTitle: { color: colors.text, fontSize: 20, fontWeight: 'bold', paddingHorizontal: 12 },
   segment: {
     flexDirection: 'row',
     backgroundColor: colors.surface,

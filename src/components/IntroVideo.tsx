@@ -4,7 +4,11 @@ import { useVideoPlayer, VideoView } from 'expo-video';
 
 const MAX_DURATION_MS = 12000;
 
-export default function IntroVideo({ onFinish }: { onFinish: () => void }) {
+type IntroVideoProps = {
+  onFinish: () => void;
+};
+
+export default function IntroVideo({ onFinish }: IntroVideoProps) {
   const player = useVideoPlayer(require('../../assets/Carga.mp4'), (p) => {
     p.muted = true;
     p.play();
@@ -21,7 +25,7 @@ export default function IntroVideo({ onFinish }: { onFinish: () => void }) {
       status.remove();
       clearTimeout(fallback);
     };
-  }, [player]);
+  }, [player, onFinish]);
 
   return (
     <View style={styles.container}>
