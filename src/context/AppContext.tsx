@@ -70,7 +70,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     async function handleLogin(credentials) {
     setUser((current) => ({ ...current, isFetching: true }));
     try {
-      const nextUser = await mockLogin(credentials.email);
+      const nextUser = await mockLogin(credentials);
       setUser({ user: nextUser, isFetching: false, isLoggedIn: true });
       return { success: true };
     } catch (error) {
