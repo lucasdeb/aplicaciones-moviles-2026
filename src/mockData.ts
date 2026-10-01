@@ -3,7 +3,7 @@ function wait(ms = 300) {
 }
 
 const mockUsers = [
-  { id: 1, name: 'Admin WhatsNext', email: 'admin.demo@whatsnext.app', role: 'superadmin', password: 'Demo1234' },
+  { id: 1, name: 'Admin WhatNext', email: 'admin.demo@whatsnext.app', role: 'superadmin', password: 'Demo1234' },
   { id: 2, name: 'Sofía Ramírez',   email: 'sofia.demo@whatsnext.app', role: 'moderator',  password: 'Demo1234' },
   { id: 3, name: 'Mateo Duarte',    email: 'mateo.demo@whatsnext.app', role: 'user',       password: 'Demo1234' },
   { id: 4, name: 'Lucía Fernández', email: 'lucia.demo@whatsnext.app', role: 'user',       password: 'Demo1234' },

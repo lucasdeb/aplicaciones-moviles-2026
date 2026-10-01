@@ -22,7 +22,7 @@ export function distanceKm(lat1: number, lng1: number, lat2: number, lng2: numbe
 
 const OVERPASS_HEADERS: Record<string, string> = {
   'Content-Type': 'application/x-www-form-urlencoded',
-  ...(Platform.OS !== 'web' && { 'User-Agent': 'WhatsNext/1.0' }),
+  ...(Platform.OS !== 'web' && { 'User-Agent': 'WhatNext/1.0' }),
 };
 
 async function queryOverpass(query: string, retries = 1): Promise<any> {

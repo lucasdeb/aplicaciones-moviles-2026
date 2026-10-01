@@ -11,7 +11,7 @@ export default function BrandLogo({ size = 40 }: BrandLogoProps) {
       source={require('../../assets/logo.png')}
       style={[styles.logo, { width: size, height: size }]}
       resizeMode="contain"
-      accessibilityLabel="WhatsNext"
+      accessibilityLabel="WhatNext"
     />
   );
 }

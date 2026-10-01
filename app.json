@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "WhatsNext",
+    "name": "WhatNext",
     "slug": "mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -23,14 +23,14 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "WhatsNext necesita acceso a tus fotos para elegir el póster de una película.",
-          "cameraPermission": "WhatsNext necesita la cámara para sacarle una foto al póster."
+          "photosPermission": "WhatNext necesita acceso a tus fotos para elegir el póster de una película.",
+          "cameraPermission": "WhatNext necesita la cámara para sacarle una foto al póster."
         }
       ],
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "WhatsNext usa tu ubicación para mostrarte cines cercanos."
+          "locationWhenInUsePermission": "WhatNext usa tu ubicación para mostrarte cines cercanos."
         }
       ],
       "expo-notifications",

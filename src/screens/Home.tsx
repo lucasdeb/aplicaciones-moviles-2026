@@ -113,7 +113,7 @@ function HomeScreen({ navigation }) {
         <View style={styles.brandWordmark}>
           <BrandLogo size={44} />
           <Text style={styles.brand}>
-            What's<Text style={styles.brandAccent}>Next</Text>
+            What<Text style={styles.brandAccent}>Next</Text>
           </Text>
         </View>
 

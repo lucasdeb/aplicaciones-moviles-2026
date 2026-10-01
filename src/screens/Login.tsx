@@ -44,7 +44,7 @@ function LoginScreen({ navigation }) {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <Image source={require('../../assets/logo.png')} style={styles.logo} accessibilityLabel="WhatsNext" />
+      <Image source={require('../../assets/logo.png')} style={styles.logo} accessibilityLabel="WhatNext" />
       <Text style={styles.subtitle}>Ya no sabés qué mirar. What's next?</Text>
 
       <TextInput
