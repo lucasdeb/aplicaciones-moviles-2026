@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
+  Image,
   TextInput,
   TouchableOpacity,
   StyleSheet,
@@ -39,7 +40,7 @@ function LoginScreen({ navigation }) {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <Text style={styles.logo}>WhatsNext</Text>
+      <Image source={require('../../assets/logo.png')} style={styles.logo} accessibilityLabel="WhatsNext" />
       <Text style={styles.subtitle}>Ya no sabés qué mirar. What's next?</Text>
 
       <TextInput
@@ -98,10 +99,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   logo: {
-    color: colors.accentPrimary,
-    fontSize: 32,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    width: 160,
+    height: 160,
+    alignSelf: 'center',
   },
   subtitle: {
     color: colors.textMuted,

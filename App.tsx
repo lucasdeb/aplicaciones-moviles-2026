@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppProvider } from './src/context/AppContext';
 import RootNavigator from './src/Navigator';
-import * as Notifications from 'expo-notifications';
+import IntroVideo from './src/components/IntroVideo';
+import { setNotificationHandler } from 'expo-notifications/build/NotificationsHandler';
 
-Notifications.setNotificationHandler({
+setNotificationHandler({
   handleNotification: async () => ({
     shouldShowBanner: true,
     shouldShowList: true,
@@ -15,11 +16,13 @@ Notifications.setNotificationHandler({
 });
 
 export default function App() {
+  const [showIntro, setShowIntro] = useState(true);
+
   return (
     <SafeAreaProvider>
       <AppProvider>
         <StatusBar style="light" />
-        <RootNavigator />
+        {showIntro ? <IntroVideo onFinish={() => setShowIntro(false)} /> : <RootNavigator />}
       </AppProvider>
     </SafeAreaProvider>
   );

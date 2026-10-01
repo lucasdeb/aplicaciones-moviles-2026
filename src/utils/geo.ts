@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 export type Cinema = {
   id: string;
   name: string;
@@ -18,16 +20,28 @@ export function distanceKm(lat1: number, lng1: number, lat2: number, lng2: numbe
   return 2 * R * Math.asin(Math.sqrt(a));
 }
 
+const OVERPASS_HEADERS: Record<string, string> = {
+  'Content-Type': 'application/x-www-form-urlencoded',
+  ...(Platform.OS !== 'web' && { 'User-Agent': 'WhatsNext/1.0' }),
+};
+
+async function queryOverpass(query: string, retries = 1): Promise<any> {
+  const res = await fetch('https://overpass-api.de/api/interpreter', {
+    method: 'POST',
+    headers: OVERPASS_HEADERS,
+    body: `data=${encodeURIComponent(query)}`,
+  });
+  if (res.ok) return res.json();
+  if (retries > 0 && (res.status === 429 || res.status === 504)) {
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    return queryOverpass(query, retries - 1);
+  }
+  throw new Error(`Overpass respondió ${res.status}`);
+}
 
 export async function fetchNearbyCinemas(lat: number, lng: number, radiusM = 15000): Promise<Cinema[]> {
   const query = `[out:json][timeout:25];nwr["amenity"="cinema"](around:${radiusM},${lat},${lng});out center tags;`;
-  const res = await fetch('https://overpass-api.de/api/interpreter', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `data=${encodeURIComponent(query)}`,
-  });
-  if (!res.ok) throw new Error(`Overpass respondió ${res.status}`);
-  const json = await res.json();
+  const json = await queryOverpass(query);
  
   return json.elements
     .map((el: any) => ({ el, cLat: el.lat ?? el.center?.lat, cLng: el.lon ?? el.center?.lon }))

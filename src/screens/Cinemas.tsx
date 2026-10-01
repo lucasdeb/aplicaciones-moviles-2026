@@ -8,6 +8,7 @@ import {
   Linking,
   RefreshControl,
   StyleSheet,
+  Platform,
 } from 'react-native';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
@@ -76,7 +77,7 @@ function CinemasScreen() {
       setStatus('error');
     }
 
-   
+    if (Platform.OS === 'web') return;
     try {
       const [addr] = await Location.reverseGeocodeAsync({ latitude, longitude });
       setPlace(addr ? [addr.district ?? addr.subregion, addr.city].filter(Boolean).join(', ') : null);

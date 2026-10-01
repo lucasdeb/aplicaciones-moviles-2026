@@ -2,6 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
 import { useApp } from './context/AppContext';
 import LoginScreen from './screens/Login';
 import RegisterScreen from './screens/Register';
@@ -20,15 +21,27 @@ import CinemasScreen from './screens/Cinemas';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
+// Ícono lleno cuando la solapa está activa, contorno cuando no
+const TAB_ICONS = {
+  Home: ['flame', 'flame-outline'],
+  Profile: ['person-circle', 'person-circle-outline'],
+  Cinemas: ['location', 'location-outline'],
+  Releases: ['calendar', 'calendar-outline'],
+} as const;
+
 function MainTabs() {
   return (
     <Tab.Navigator id="main-tabs"
-      screenOptions={{
+      screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: colors.accentPrimary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
-      }}
+        tabBarIcon: ({ focused, color, size }) => {
+          const [active, inactive] = TAB_ICONS[route.name as keyof typeof TAB_ICONS];
+          return <Ionicons name={focused ? active : inactive} size={size} color={color} />;
+        },
+      })}
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Populares' }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarLabel: 'Perfil' }} />

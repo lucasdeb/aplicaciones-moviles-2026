@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "mobile",
+    "name": "WhatsNext",
     "slug": "mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,9 +11,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#131313",
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       }
     },
@@ -30,11 +29,23 @@
       ],
       [
         "expo-location",
-        { "locationWhenInUsePermission": "WhatsNext usa tu ubicación para mostrarte cines cercanos." }
+        {
+          "locationWhenInUsePermission": "WhatsNext usa tu ubicación para mostrarte cines cercanos."
+        }
       ],
       "expo-notifications",
       "expo-status-bar",
-      "expo-font"
+      "expo-font",
+      "expo-video",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#000000"
+        }
+      ]
     ]
   }
 }
