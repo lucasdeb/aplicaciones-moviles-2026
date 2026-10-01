@@ -22,7 +22,7 @@ function RegisterScreen({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState('');
 
-  function onSubmit() {
+  async function onSubmit() {
     if (!name.trim()) {
       setFormError('Ingresá tu nombre');
       return;
@@ -36,7 +36,8 @@ function RegisterScreen({ navigation }) {
       return;
     }
     setFormError('');
-    handleRegister({ name: name.trim(), email: email.trim(), password });
+    const result =  handleRegister({ name: name.trim(), email: email.trim(), password });
+    if (!result.success) setFormError(result.error);
   }
 
   return (

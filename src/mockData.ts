@@ -3,11 +3,11 @@ function wait(ms = 300) {
 }
 
 const mockUsers = [
-  { id: 1, name: 'Admin WhatsNext', email: 'admin.demo@whatsnext.app', role: 'superadmin' },
-  { id: 2, name: 'Sofía Ramírez', email: 'sofia.demo@whatsnext.app', role: 'moderator' },
-  { id: 3, name: 'Mateo Duarte', email: 'mateo.demo@whatsnext.app', role: 'user' },
-  { id: 4, name: 'Lucía Fernández', email: 'lucia.demo@whatsnext.app', role: 'user' },
-  { id: 5, name: 'Nicolás Peralta', email: 'nicolas.demo@whatsnext.app', role: 'user' },
+  { id: 1, name: 'Admin WhatsNext', email: 'admin.demo@whatsnext.app', role: 'superadmin', password: 'Demo1234' },
+  { id: 2, name: 'Sofía Ramírez',   email: 'sofia.demo@whatsnext.app', role: 'moderator',  password: 'Demo1234' },
+  { id: 3, name: 'Mateo Duarte',    email: 'mateo.demo@whatsnext.app', role: 'user',       password: 'Demo1234' },
+  { id: 4, name: 'Lucía Fernández', email: 'lucia.demo@whatsnext.app', role: 'user',       password: 'Demo1234' },
+  { id: 5, name: 'Nicolás Peralta', email: 'nicolas.demo@whatsnext.app', role: 'user',     password: 'Demo1234' },
 ];
 
 let nextUserId = mockUsers.length + 1;
@@ -245,17 +245,25 @@ function withCommentsCount(movie) {
   return { ...movie, commentsCount };
 }
 
-export async function mockLogin(email) {
+export async function mockLogin({ email, password }) {
   await wait();
-  const existing = mockUsers.find((u) => u.email === email);
-  if (existing) return existing;
-  return { id: 0, name: email.split('@')[0] || 'Invitado', email, role: 'user' };
+  const user = mockUsers.find((u) => u.email.toLowerCase() === email.toLowerCase());
+  if (!user || user.password !== password) {
+    throw new Error('Email o contraseña incorrectos');
+  }
+  return toPublicUser(user);
 }
 
-export async function mockRegister({ name, email }) {
+export async function mockRegister({ name, email, password }) {
   await wait();
-  const user = { id: nextUserId++, name, email, role: 'user' };
+  const exists = mockUsers.some((u) => u.email.toLowerCase() === email.toLowerCase());
+  if (exists) throw new Error('Ya existe una cuenta con ese email');
+  const user = { id: nextUserId++, name, email, role: 'user', password };
   mockUsers.push(user);
+  return toPublicUser(user);
+}
+
+function toPublicUser({ password, ...user }: { id: number; name: string; email: string; role: string; password: string }) {
   return user;
 }
 
@@ -405,7 +413,7 @@ export async function mockGetPopularReviewers() {
 
 export async function mockGetAllUsers() {
   await wait();
-  return mockUsers;
+  return mockUsers.map(toPublicUser);
 }
 
 export async function mockUpdateUserRole(userId, role) {
@@ -413,7 +421,7 @@ export async function mockUpdateUserRole(userId, role) {
   const user = mockUsers.find((u) => u.id === userId);
   if (!user) throw new Error('Usuario no encontrado');
   user.role = role;
-  return user;
+  return toPublicUser(user);
 }
 
 type AchievementStat = 'totalReviews' | 'maxLikesOnReview' | 'distinctGenres' | 'totalRatings' | 'totalPhotos';
