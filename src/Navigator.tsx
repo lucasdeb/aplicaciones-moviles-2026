@@ -13,6 +13,7 @@ import AddMovieScreen from './screens/AddMovie';
 import ManageUsersScreen from './screens/ManageUsers';
 import AchievementsScreen from './screens/Achievements';
 import RewardsScreen from './screens/Rewards';
+import ReleasesScreen from './screens/Releases';
 import { colors } from './theme';
 import CinemasScreen from './screens/Cinemas';
 
@@ -32,6 +33,7 @@ function MainTabs() {
       <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Populares' }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarLabel: 'Perfil' }} />
       <Tab.Screen name="Cinemas" component={CinemasScreen} options={{ tabBarLabel: 'Cines' }} />
+      <Tab.Screen name="Releases" component={ReleasesScreen} options={{ tabBarLabel: 'Estrenos' }} />
     </Tab.Navigator>
   );
 }

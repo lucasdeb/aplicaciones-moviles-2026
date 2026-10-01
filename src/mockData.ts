@@ -343,7 +343,7 @@ export async function mockGetComments(movieId) {
     .map(toPublicComment);
 }
 
-export async function mockPostComment(movieId, authorId, text, rating?: number) {
+export async function mockPostComment(movieId, authorId, text, rating?: number, photo?: string){
   await wait();
   const comment = {
     id: nextCommentId++,

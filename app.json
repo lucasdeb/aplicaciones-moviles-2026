@@ -32,6 +32,7 @@
         "expo-location",
         { "locationWhenInUsePermission": "WhatsNext usa tu ubicación para mostrarte cines cercanos." }
       ],
+      "expo-notifications",
       "expo-status-bar",
       "expo-font"
     ]
