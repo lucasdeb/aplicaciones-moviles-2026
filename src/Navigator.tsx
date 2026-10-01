@@ -12,7 +12,10 @@ import ManageMoviesScreen from './screens/ManageMovies';
 import AddMovieScreen from './screens/AddMovie';
 import ManageUsersScreen from './screens/ManageUsers';
 import AchievementsScreen from './screens/Achievements';
+import RewardsScreen from './screens/Rewards';
+import ReleasesScreen from './screens/Releases';
 import { colors } from './theme';
+import CinemasScreen from './screens/Cinemas';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -29,70 +32,42 @@ function MainTabs() {
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Populares' }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarLabel: 'Perfil' }} />
+      <Tab.Screen name="Cinemas" component={CinemasScreen} options={{ tabBarLabel: 'Cines' }} />
+      <Tab.Screen name="Releases" component={ReleasesScreen} options={{ tabBarLabel: 'Estrenos' }} />
     </Tab.Navigator>
   );
 }
+
+const headerOptions = {
+  headerShown: true,
+  title: '',
+  headerStyle: { backgroundColor: colors.background },
+  headerTintColor: colors.text,
+};
 
 function RootNavigator() {
   const { user } = useApp();
   return (
     <NavigationContainer>
       <Stack.Navigator id="root-stack" screenOptions={{ headerShown: false }}>
-        {!user.isLoggedIn ? (
-          <>
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="Register" component={RegisterScreen} />
-          </>
-        ) : (
-          <>
-            <Stack.Screen name="Main" component={MainTabs} />
-            <Stack.Screen
-              name="MovieDetail"
-              component={MovieDetailScreen}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="ManageMovies"
-              component={ManageMoviesScreen}
-              options={{
-                headerShown: true,
-                title: '',
-                headerStyle: { backgroundColor: colors.background },
-                headerTintColor: colors.text,
-              }}
-            />
-            <Stack.Screen
-              name="AddMovie"
-              component={AddMovieScreen}
-              options={{
-                headerShown: true,
-                title: '',
-                headerStyle: { backgroundColor: colors.background },
-                headerTintColor: colors.text,
-              }}
-            />
-            <Stack.Screen
-              name="ManageUsers"
-              component={ManageUsersScreen}
-              options={{
-                headerShown: true,
-                title: '',
-                headerStyle: { backgroundColor: colors.background },
-                headerTintColor: colors.text,
-              }}
-            />
-            <Stack.Screen
-              name="Achievements"
-              component={AchievementsScreen}
-              options={{
-                headerShown: true,
-                title: '',
-                headerStyle: { backgroundColor: colors.background },
-                headerTintColor: colors.text,
-              }}
-            />
-          </>
-        )}
+      {/* Visibles para todos */}
+      <Stack.Screen name="Main" component={MainTabs} />
+      <Stack.Screen name="MovieDetail" component={MovieDetailScreen} />
+
+      {user.isLoggedIn ? (
+        <>
+        <Stack.Screen name="ManageMovies" component={ManageMoviesScreen} options={headerOptions} />
+        <Stack.Screen name="AddMovie" component={AddMovieScreen} options={headerOptions} />
+        <Stack.Screen name="ManageUsers" component={ManageUsersScreen} options={headerOptions} />
+        <Stack.Screen name="Achievements" component={AchievementsScreen} options={headerOptions} />
+        <Stack.Screen name="Rewards" component={RewardsScreen} options={headerOptions} />
+        </>
+      ) : (
+        <Stack.Group screenOptions={{ presentation: 'modal' }}>
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Register" component={RegisterScreen} />
+        </Stack.Group>
+      )}
       </Stack.Navigator>
     </NavigationContainer>
   );

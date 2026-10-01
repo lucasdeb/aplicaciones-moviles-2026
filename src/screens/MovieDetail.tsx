@@ -9,6 +9,7 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
   StyleSheet,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import CommentCard from '../components/CommentCard';
 import { colors } from '../theme';
+import { pickPhoto } from '../utils/pickPhoto';
 
 function MovieDetailScreen({ navigation, route }) {
   const {
@@ -33,6 +35,7 @@ function MovieDetailScreen({ navigation, route }) {
   } = useApp();
   const { movieId } = route.params;
   const [commentText, setCommentText] = useState('');
+  const [photo, setPhoto] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMovieDetail(movieId);
@@ -45,13 +48,29 @@ function MovieDetailScreen({ navigation, route }) {
 
   const movie = movies.selectedMovie;
 
-  function handlePublish() {
-    if (!commentText.trim()) return;
-    postComment(movieId, user.user.id, commentText.trim());
-    setCommentText('');
+  const me = user.user;
+  const canModerate = me?.role === 'moderator' || me?.role === 'superadmin';
+  const requireLogin = (fn) => () => (me ? fn() : navigation.navigate('Login'));
+
+  async function attach(source: 'camera' | 'gallery') {
+    const uri = await pickPhoto(source);
+    if (uri) setPhoto(uri);
   }
 
-  const canModerate = user.user.role === 'moderator' || user.user.role === 'superadmin';
+  function handleAddPhoto() {
+    Alert.alert('Agregar foto', 'Sacale una foto al póster o elegí una de tu galería', [
+      { text: 'Cámara', onPress: () => attach('camera') },
+      { text: 'Galería', onPress: () => attach('gallery') },
+      { text: 'Cancelar', style: 'cancel' },
+    ]);
+  }
+
+  function handlePublish() {
+    if (!commentText.trim() || !me) return;
+    postComment(movieId, me.id, commentText.trim(), undefined, photo ?? undefined);
+    setCommentText('');
+    setPhoto(null);
+  }
 
   return (movies.isFetchingDetail || !movie) && !movies.error ? (
     <View style={styles.centered}>
@@ -140,24 +159,48 @@ function MovieDetailScreen({ navigation, route }) {
           </View>
         </View>
 
-        <View style={styles.commentInputRow}>
-          <TextInput
-            style={styles.commentInput}
-            placeholder="Escribí tu opinión..."
-            placeholderTextColor={colors.textMuted}
-            value={commentText}
-            onChangeText={setCommentText}
-            multiline
-          />
+        {me ? (
+          <>
+            {photo && (
+              <View style={styles.photoPreview}>
+                <Image source={{ uri: photo }} style={styles.photoPreviewImage} />
+                <TouchableOpacity style={styles.photoRemove} onPress={() => setPhoto(null)} hitSlop={8}>
+                  <Ionicons name="close" size={14} color={colors.text} />
+                </TouchableOpacity>
+              </View>
+            )}
+            <View style={styles.commentInputRow}>
+              <TouchableOpacity style={styles.cameraButton} onPress={handleAddPhoto} activeOpacity={0.8}>
+                <Ionicons name="camera-outline" size={20} color={colors.accentPrimary} />
+              </TouchableOpacity>
+              <TextInput
+                style={styles.commentInput}
+                placeholder="Escribí tu opinión..."
+                placeholderTextColor={colors.textMuted}
+                value={commentText}
+                onChangeText={setCommentText}
+                multiline
+              />
+              <TouchableOpacity
+                style={[styles.sendButton, !commentText.trim() && styles.sendButtonDisabled]}
+                onPress={handlePublish}
+                disabled={!commentText.trim()}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="send" size={16} color={colors.onAccentPrimary} />
+              </TouchableOpacity>
+            </View>
+          </>
+        ) : (
           <TouchableOpacity
-            style={[styles.sendButton, !commentText.trim() && styles.sendButtonDisabled]}
-            onPress={handlePublish}
-            disabled={!commentText.trim()}
+            style={styles.login}
+            onPress={() => navigation.navigate('Login')}
             activeOpacity={0.8}
           >
-            <Ionicons name="send" size={16} color={colors.onAccentPrimary} />
+            <Ionicons name="log-in-outline" size={16} color={colors.accentPrimary} />
+            <Text style={styles.loginText}>Iniciá sesión para comentar</Text>
           </TouchableOpacity>
-        </View>
+        )}
 
         {comments.isFetching ? (
           <ActivityIndicator color={colors.accentPrimary} style={{ marginTop: 16 }} />
@@ -166,10 +209,10 @@ function MovieDetailScreen({ navigation, route }) {
             <CommentCard
               key={comment.id}
               comment={comment}
-              onLike={() => likeComment(comment.id)}
-              onRepost={() => repostComment(comment.id)}
-              canDelete={canModerate || comment.author.id === user.user.id}
-              onDelete={() => deleteComment(comment.id, user.user.id)}
+              onLike={requireLogin(() => likeComment(comment.id))}
+              onRepost={requireLogin(() => repostComment(comment.id))}
+              canDelete={canModerate || comment.author.id === me?.id}
+              onDelete={() => deleteComment(comment.id, me?.id)}
             />
           ))
         )}
@@ -189,6 +232,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
+  },
+  login: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 22,
+    paddingVertical: 12,
+    marginBottom: 18,
   },
   loadingText: {
     color: colors.textMuted,
@@ -373,6 +427,42 @@ const styles = StyleSheet.create({
   },
   sendButtonDisabled: {
     backgroundColor: colors.surfaceAlt,
+  },
+  loginText: {
+    color: colors.accentPrimary,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  cameraButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  photoPreview: {
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+  photoPreviewImage: {
+    width: 90,
+    height: 68,
+    borderRadius: 8,
+  },
+  photoRemove: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: colors.surfaceAlt,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

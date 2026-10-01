@@ -26,11 +26,12 @@ const MENU_ITEMS = [
 ];
 
 function HeaderMenu({ navigation }) {
+  const { user } = useApp();              
   const [visible, setVisible] = useState(false);
 
   function goTo(screen) {
     setVisible(false);
-    navigation.navigate(screen);
+    navigation.navigate(user.isLoggedIn ? screen : 'Login');
   }
 
   return (

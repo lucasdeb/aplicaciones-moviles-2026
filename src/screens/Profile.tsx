@@ -22,6 +22,27 @@ function ProfileScreen({ navigation }) {
   const isSuperadmin = role === 'superadmin';
   const isModerator = role === 'moderator' || isSuperadmin;
 
+  if (!user.isLoggedIn) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.avatar}>
+          <Ionicons name="person-outline" size={36} color={colors.textMuted} />
+        </View>
+        <Text style={styles.name}>No iniciaste sesión</Text>
+        <Text style={styles.email}>
+          Ingresá para ver tu perfil, tus logros y dejar reseñas.
+        </Text>
+
+        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Login')}>
+          <Text style={styles.buttonText}>Iniciar sesión</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+          <Text style={styles.email}>¿No tenés cuenta? Registrate</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
   return (
     <View style={styles.container}>
       <View style={styles.avatar}>
@@ -64,6 +85,8 @@ function ProfileScreen({ navigation }) {
             </>
           )}
 
+          
+
           {!isSuperadmin && (
             <Text style={styles.adminHint}>
               Como moderador podés borrar cualquier comentario o reseña desde el detalle de
@@ -72,6 +95,8 @@ function ProfileScreen({ navigation }) {
           )}
         </View>
       )}
+
+     
 
       <TouchableOpacity style={styles.button} onPress={logOut}>
         <Text style={styles.buttonText}>Cerrar sesión</Text>
