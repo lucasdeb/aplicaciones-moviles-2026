@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
 import { isValidEmail } from '../utils/validators';
 
 function LoginScreen({ navigation }) {
@@ -110,6 +110,7 @@ const styles = StyleSheet.create({
   subtitle: {
     color: colors.textMuted,
     fontSize: 14,
+    fontFamily: fonts.body,
     textAlign: 'center',
     marginTop: 8,
     marginBottom: 32,
@@ -157,7 +158,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: colors.onAccentPrimary,
-    fontWeight: 'bold',
+    fontFamily: fonts.label,
     fontSize: 16,
   },
   link: {

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
+import { fonts } from '../theme';
 
 const MAX_DURATION_MS = 12000;
 
@@ -48,5 +49,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     color: 'rgba(255,255,255,0.6)',
     fontSize: 13,
+    fontFamily: fonts.body,
   },
 });

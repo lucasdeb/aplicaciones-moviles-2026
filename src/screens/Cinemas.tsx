@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
 import { fetchNearbyCinemas, type Cinema } from '../utils/geo';
 import BrandLogo from '../components/BrandLogo';
 
@@ -187,10 +187,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   titleRow: { flexDirection: 'row', alignItems: 'center', paddingLeft: 16 },
-  headerTitle: { color: colors.text, fontSize: 20, fontWeight: 'bold', paddingHorizontal: 12 },
-  subtitle: { color: colors.textMuted, fontSize: 13, paddingHorizontal: 16, marginTop: 4, marginBottom: 16 },
+  headerTitle: { color: colors.text, fontSize: 20, fontFamily: fonts.title, paddingHorizontal: 12 },
+  subtitle: { color: colors.textMuted, fontSize: 13, fontFamily: fonts.body, paddingHorizontal: 16, marginTop: 4, marginBottom: 16 },
   list: { paddingHorizontal: 16, paddingBottom: 24 },
-  mutedText: { color: colors.textMuted, fontSize: 13, marginTop: 12, textAlign: 'center' },
+  mutedText: { color: colors.textMuted, fontSize: 13, fontFamily: fonts.body, marginTop: 12, textAlign: 'center' },
   primaryButton: {
     backgroundColor: colors.accentPrimary,
     borderRadius: 22,
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: 16,
   },
-  primaryButtonText: { color: colors.onAccentPrimary, fontWeight: 'bold' },
+  primaryButtonText: { color: colors.onAccentPrimary, fontFamily: fonts.label },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -218,9 +218,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cardBody: { flex: 1, marginHorizontal: 12 },
-  cardTitle: { color: colors.text, fontWeight: 'bold', fontSize: 14 },
-  cardAddress: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
-  cardDistance: { color: colors.accentPrimary, fontSize: 12, fontWeight: '600', marginTop: 4 },
+  cardTitle: { color: colors.text, fontFamily: fonts.bodyBold, fontSize: 14 },
+  cardAddress: { color: colors.textMuted, fontSize: 12, fontFamily: fonts.body, marginTop: 2 },
+  cardDistance: { color: colors.accentPrimary, fontSize: 12, fontFamily: fonts.bodySemiBold, marginTop: 4 },
   directionsButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
   },
-  directionsText: { color: colors.onAccentPrimary, fontWeight: 'bold', fontSize: 12, marginLeft: 4 },
+  directionsText: { color: colors.onAccentPrimary, fontFamily: fonts.bodyBold, fontSize: 12, marginLeft: 4 },
 });
 
 export default CinemasScreen;

@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { View, Text, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useApp } from '../context/AppContext';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
 
 const ROLE_OPTIONS = [
   { label: 'Usuario', value: 'user' },
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: colors.text,
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: fonts.title,
     paddingHorizontal: 16,
     marginBottom: 16,
   },
@@ -90,6 +90,7 @@ const styles = StyleSheet.create({
   loadingText: {
     color: colors.textMuted,
     fontSize: 13,
+    fontFamily: fonts.body,
     marginTop: 10,
   },
   row: {
@@ -112,7 +113,7 @@ const styles = StyleSheet.create({
   },
   avatarInitial: {
     color: colors.onAccentPrimary,
-    fontWeight: 'bold',
+    fontFamily: fonts.bodyBold,
   },
   rowBody: {
     flex: 1,
@@ -120,17 +121,18 @@ const styles = StyleSheet.create({
   },
   rowName: {
     color: colors.text,
-    fontWeight: '600',
+    fontFamily: fonts.bodySemiBold,
     fontSize: 14,
   },
   selfTag: {
     color: colors.textMuted,
-    fontWeight: 'normal',
+    fontFamily: fonts.body,
     fontSize: 12,
   },
   rowEmail: {
     color: colors.textMuted,
     fontSize: 12,
+    fontFamily: fonts.body,
     marginTop: 2,
   },
   pickerWrapper: {

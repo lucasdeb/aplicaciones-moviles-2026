@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, Animated, PanResponder, Alert, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
 import { timeAgo } from '../utils/timeAgo';
 import { Image } from 'react-native';
 
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   },
   deleteBackgroundText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontFamily: fonts.bodyBold,
     fontSize: 13,
     marginLeft: 6,
   },
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
   },
   avatarInitial: {
     color: colors.onAccentPrimary,
-    fontWeight: 'bold',
+    fontFamily: fonts.bodyBold,
     fontSize: 14,
   },
   bubble: {
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   },
   author: {
     color: colors.text,
-    fontWeight: '600',
+    fontFamily: fonts.bodySemiBold,
     fontSize: 13,
   },
   photo: { 
@@ -217,10 +217,12 @@ const styles = StyleSheet.create({
   time: {
     color: colors.textMuted,
     fontSize: 12,
+    fontFamily: fonts.body,
   },
   text: {
     color: colors.text,
     fontSize: 14,
+    fontFamily: fonts.body,
     lineHeight: 20,
     marginTop: 4,
   },
@@ -244,6 +246,7 @@ const styles = StyleSheet.create({
   actionCount: {
     color: colors.textMuted,
     fontSize: 12,
+    fontFamily: fonts.body,
     marginLeft: 5,
   },
   actionCountActive: {
@@ -255,6 +258,7 @@ const styles = StyleSheet.create({
   swipeHint: {
     color: colors.textMuted,
     fontSize: 10,
+    fontFamily: fonts.body,
     marginLeft: 'auto',
     fontStyle: 'italic',
   },

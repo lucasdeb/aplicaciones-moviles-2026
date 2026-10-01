@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { View, Text, Image, FlatList, TouchableOpacity, Alert, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
 
 function ManageMoviesScreen({ navigation }) {
   const { movies, user, fetchMovies, deleteMovie } = useApp();
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: colors.text,
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: fonts.title,
   },
   addButton: {
     width: 34,
@@ -115,11 +115,13 @@ const styles = StyleSheet.create({
   loadingText: {
     color: colors.textMuted,
     fontSize: 13,
+    fontFamily: fonts.body,
     marginTop: 10,
   },
   errorText: {
     color: colors.danger,
     fontSize: 14,
+    fontFamily: fonts.body,
     textAlign: 'center',
   },
   row: {
@@ -144,12 +146,13 @@ const styles = StyleSheet.create({
   },
   rowTitle: {
     color: colors.text,
-    fontWeight: '600',
+    fontFamily: fonts.bodySemiBold,
     fontSize: 14,
   },
   rowMeta: {
     color: colors.textMuted,
     fontSize: 12,
+    fontFamily: fonts.body,
     marginTop: 2,
   },
   rowIcon: {

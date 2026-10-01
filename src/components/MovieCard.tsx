@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Image, Text, StyleSheet } from 'react-native';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
 
 export default function MovieCard({ movie, onPress }) {
   return (
@@ -27,6 +27,7 @@ const styles = StyleSheet.create({
   title: {
     color: colors.text,
     fontSize: 12,
+    fontFamily: fonts.body,
     marginTop: 6,
   },
 });

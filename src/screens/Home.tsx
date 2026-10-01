@@ -20,7 +20,7 @@ import PopularCarousel from '../components/PopularCarousel';
 import FeaturedHero from '../components/FeaturedHero';
 import RevealOnScroll from '../components/RevealOnScroll';
 import BrandLogo from '../components/BrandLogo';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
 
 const MENU_ITEMS = [
   { key: 'achievements', label: 'Logros', icon: 'trophy-outline' as const, screen: 'Logros' },
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
   brand: {
     color: colors.text,
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: fonts.title,
     marginLeft: 8,
   },
   brandAccent: {
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   greetingText: {
     color: colors.text,
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fonts.bodySemiBold,
     marginLeft: 6,
   },
   heroWrap: {
@@ -366,6 +366,7 @@ const styles = StyleSheet.create({
   menuItemText: {
     color: colors.text,
     fontSize: 14,
+    fontFamily: fonts.body,
     marginLeft: 10,
   },
   loader: {
@@ -393,7 +394,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.text,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: fonts.bodyBold,
   },
   carouselList: {
     paddingHorizontal: 16,
@@ -419,6 +420,7 @@ const styles = StyleSheet.create({
   pickTitle: {
     color: colors.text,
     fontSize: 11,
+    fontFamily: fonts.body,
     marginTop: 6,
     textAlign: 'center',
   },
@@ -437,18 +439,19 @@ const styles = StyleSheet.create({
   reviewerInitial: {
     color: colors.onAccentPrimary,
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: fonts.title,
   },
   reviewerName: {
     color: colors.text,
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fonts.bodySemiBold,
     marginTop: 6,
     textAlign: 'center',
   },
   reviewerCount: {
     color: colors.textMuted,
     fontSize: 11,
+    fontFamily: fonts.body,
     marginTop: 2,
   },
   gridRow: {

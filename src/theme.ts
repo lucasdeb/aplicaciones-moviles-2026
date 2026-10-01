@@ -14,3 +14,13 @@ export const colors = {
   border: 'rgba(255,255,255,0.08)', // glass border (white/5–white/10 en el export)
   danger: '#ffb4ab', // error
 };
+
+// Tipografía de la marca: Be Vietnam Pro en toda la app.
+// Con fuentes propias cada peso es una familia distinta, por eso no se usa fontWeight.
+export const fonts = {
+  title: 'BeVietnamPro_700Bold',
+  label: 'BeVietnamPro_600SemiBold',
+  body: 'BeVietnamPro_400Regular',
+  bodySemiBold: 'BeVietnamPro_600SemiBold',
+  bodyBold: 'BeVietnamPro_700Bold',
+};

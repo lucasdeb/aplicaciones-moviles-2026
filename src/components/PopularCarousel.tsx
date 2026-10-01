@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, Image, Animated, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
 import { formatNumber } from '../utils/formatNumber';
 
 const CARD_WIDTH = 148;
@@ -173,18 +173,19 @@ const styles = StyleSheet.create({
   ratingBadgeText: {
     color: colors.background,
     fontSize: 10,
-    fontWeight: 'bold',
+    fontFamily: fonts.label,
     marginLeft: 3,
   },
   title: {
     color: colors.text,
     fontSize: 13,
-    fontWeight: 'bold',
+    fontFamily: fonts.bodyBold,
     marginTop: 8,
   },
   subtitle: {
     color: colors.textMuted,
     fontSize: 11,
+    fontFamily: fonts.body,
     marginTop: 2,
   },
   statsRow: {
@@ -195,6 +196,7 @@ const styles = StyleSheet.create({
   statText: {
     color: colors.textMuted,
     fontSize: 11,
+    fontFamily: fonts.body,
     marginLeft: 3,
   },
   statSpacing: {

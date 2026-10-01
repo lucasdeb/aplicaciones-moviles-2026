@@ -15,7 +15,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
 
 function ImageSlot({ label, aspectRatio, value, onChange, resizeWidth, required = false }) {
   const [linkInput, setLinkInput] = useState('');
@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: colors.text,
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: fonts.title,
     marginBottom: 20,
   },
   slotContainer: {
@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 11,
     marginLeft: 6,
-    fontWeight: 'bold',
+    fontFamily: fonts.bodyBold,
   },
   imagePlaceholder: {
     justifyContent: 'center',
@@ -322,6 +322,7 @@ const styles = StyleSheet.create({
   imagePlaceholderText: {
     color: colors.textMuted,
     fontSize: 12,
+    fontFamily: fonts.body,
     marginTop: 8,
     textAlign: 'center',
   },
@@ -340,6 +341,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     marginRight: 8,
     fontSize: 13,
+    fontFamily: fonts.body,
   },
   linkButton: {
     backgroundColor: colors.surfaceAlt,
@@ -349,13 +351,13 @@ const styles = StyleSheet.create({
   },
   linkButtonText: {
     color: colors.accentSecondary,
-    fontWeight: 'bold',
+    fontFamily: fonts.label,
     fontSize: 13,
   },
   label: {
     color: colors.textMuted,
     fontSize: 12,
-    fontWeight: 'bold',
+    fontFamily: fonts.label,
     marginBottom: 6,
     marginTop: 4,
   },
@@ -390,6 +392,7 @@ const styles = StyleSheet.create({
   switchLabel: {
     color: colors.text,
     fontSize: 14,
+    fontFamily: fonts.body,
     flex: 1,
     marginRight: 12,
   },
@@ -406,7 +409,7 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: colors.onAccentPrimary,
-    fontWeight: 'bold',
+    fontFamily: fonts.label,
     fontSize: 16,
   },
 });

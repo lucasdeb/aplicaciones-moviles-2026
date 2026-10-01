@@ -16,7 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import CommentCard from '../components/CommentCard';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
 import { pickPhoto } from '../utils/pickPhoto';
 
 function MovieDetailScreen({ navigation, route }) {
@@ -246,11 +246,13 @@ const styles = StyleSheet.create({
   loadingText: {
     color: colors.textMuted,
     fontSize: 13,
+    fontFamily: fonts.body,
     marginTop: 10,
   },
   errorText: {
     color: colors.danger,
     fontSize: 14,
+    fontFamily: fonts.body,
     textAlign: 'center',
   },
   hero: {
@@ -278,7 +280,7 @@ const styles = StyleSheet.create({
   title: {
     color: colors.text,
     fontSize: 26,
-    fontWeight: 'bold',
+    fontFamily: fonts.title,
   },
   chipRow: {
     flexDirection: 'row',
@@ -298,7 +300,7 @@ const styles = StyleSheet.create({
   chipText: {
     color: colors.text,
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fonts.label,
   },
   ratingChip: {
     flexDirection: 'row',
@@ -312,7 +314,7 @@ const styles = StyleSheet.create({
   ratingChipText: {
     color: colors.background,
     fontSize: 12,
-    fontWeight: 'bold',
+    fontFamily: fonts.label,
     marginLeft: 4,
   },
   content: {
@@ -322,6 +324,7 @@ const styles = StyleSheet.create({
   overview: {
     color: colors.text,
     fontSize: 15,
+    fontFamily: fonts.body,
     lineHeight: 22,
   },
   sectionHeader: {
@@ -344,12 +347,13 @@ const styles = StyleSheet.create({
   ratingSummaryText: {
     color: colors.text,
     fontSize: 15,
-    fontWeight: 'bold',
+    fontFamily: fonts.bodyBold,
     marginLeft: 4,
   },
   ratingSummaryCount: {
     color: colors.textMuted,
     fontSize: 12,
+    fontFamily: fonts.body,
     marginLeft: 4,
   },
   sectionBar: {
@@ -362,7 +366,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.text,
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: fonts.title,
   },
   recommendationBox: {
     width: 130,
@@ -387,6 +391,7 @@ const styles = StyleSheet.create({
   recommendationTitle: {
     color: colors.text,
     fontSize: 12,
+    fontFamily: fonts.body,
     marginTop: 6,
   },
   recommendationRatingRow: {
@@ -397,6 +402,7 @@ const styles = StyleSheet.create({
   recommendationRating: {
     color: colors.textMuted,
     fontSize: 11,
+    fontFamily: fonts.body,
     marginLeft: 4,
   },
   commentInputRow: {
@@ -429,7 +435,7 @@ const styles = StyleSheet.create({
   },
   loginText: {
     color: colors.accentPrimary,
-    fontWeight: '600',
+    fontFamily: fonts.bodySemiBold,
     marginLeft: 6,
   },
   cameraButton: {

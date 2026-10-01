@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
 import BrandLogo from '../components/BrandLogo';
 
 const ROLE_LABELS = {
@@ -134,17 +134,18 @@ const styles = StyleSheet.create({
   avatarInitial: {
     color: colors.onAccentPrimary,
     fontSize: 32,
-    fontWeight: 'bold',
+    fontFamily: fonts.title,
   },
   name: {
     color: colors.text,
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: fonts.title,
     marginTop: 16,
   },
   email: {
     color: colors.textMuted,
     fontSize: 14,
+    fontFamily: fonts.body,
     marginTop: 4,
   },
   roleBadge: {
@@ -156,7 +157,7 @@ const styles = StyleSheet.create({
   },
   roleBadgeText: {
     fontSize: 12,
-    fontWeight: 'bold',
+    fontFamily: fonts.label,
   },
   adminSection: {
     width: '100%',
@@ -165,7 +166,7 @@ const styles = StyleSheet.create({
   adminSectionTitle: {
     color: colors.textMuted,
     fontSize: 12,
-    fontWeight: 'bold',
+    fontFamily: fonts.bodyBold,
     textTransform: 'uppercase',
     marginBottom: 10,
   },
@@ -183,12 +184,14 @@ const styles = StyleSheet.create({
   adminButtonText: {
     color: colors.text,
     fontSize: 14,
+    fontFamily: fonts.body,
     flex: 1,
     marginLeft: 10,
   },
   adminHint: {
     color: colors.textMuted,
     fontSize: 13,
+    fontFamily: fonts.body,
     lineHeight: 18,
   },
   button: {
@@ -201,7 +204,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: colors.danger,
-    fontWeight: 'bold',
+    fontFamily: fonts.label,
   },
 });
 

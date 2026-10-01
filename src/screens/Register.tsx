@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
 import { isValidEmail, isValidPassword, PASSWORD_HINT } from '../utils/validators';
 
 function RegisterScreen({ navigation }) {
@@ -114,12 +114,13 @@ const styles = StyleSheet.create({
   logo: {
     color: colors.accentPrimary,
     fontSize: 28,
-    fontWeight: 'bold',
+    fontFamily: fonts.title,
     textAlign: 'center',
   },
   subtitle: {
     color: colors.textMuted,
     fontSize: 14,
+    fontFamily: fonts.body,
     textAlign: 'center',
     marginTop: 8,
     marginBottom: 32,
@@ -155,6 +156,7 @@ const styles = StyleSheet.create({
   hint: {
     color: colors.textMuted,
     fontSize: 12,
+    fontFamily: fonts.body,
     marginTop: 6,
     marginBottom: 12,
   },
@@ -172,7 +174,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: colors.onAccentPrimary,
-    fontWeight: 'bold',
+    fontFamily: fonts.label,
     fontSize: 16,
   },
   link: {

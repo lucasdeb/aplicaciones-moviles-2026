@@ -15,7 +15,7 @@ import ManageUsersScreen from './screens/ManageUsers';
 import AchievementsScreen from './screens/Achievements';
 import RewardsScreen from './screens/Rewards';
 import ReleasesScreen from './screens/Releases';
-import { colors } from './theme';
+import { colors, fonts } from './theme';
 import CinemasScreen from './screens/Cinemas';
 import BrandLogo from './components/BrandLogo';
 
@@ -31,6 +31,7 @@ function MainTabs() {
         tabBarActiveTintColor: colors.accentPrimary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
+        tabBarLabelStyle: { fontFamily: fonts.label },
       }}
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Populares', tabBarIcon: ({color, size, focused})=>(<Ionicons name={focused ? 'flame': 'flame-outline'} size={size} color={color} />) }} />

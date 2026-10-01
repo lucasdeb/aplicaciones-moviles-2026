@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
 import { timeAgo } from '../utils/timeAgo';
 import { formatNumber } from '../utils/formatNumber';
 import StarRating from './StarRating';
@@ -63,12 +63,12 @@ const styles = StyleSheet.create({
   },
   movieTitle: {
     color: colors.text,
-    fontWeight: 'bold',
+    fontFamily: fonts.bodyBold,
     fontSize: 14,
   },
   movieYear: {
     color: colors.textMuted,
-    fontWeight: 'normal',
+    fontFamily: fonts.body,
   },
   authorRow: {
     flexDirection: 'row',
@@ -87,16 +87,18 @@ const styles = StyleSheet.create({
   avatarInitial: {
     color: colors.onAccentPrimary,
     fontSize: 10,
-    fontWeight: 'bold',
+    fontFamily: fonts.bodyBold,
   },
   authorName: {
     color: colors.textMuted,
     fontSize: 12,
+    fontFamily: fonts.body,
     marginRight: 8,
   },
   text: {
     color: colors.text,
     fontSize: 13,
+    fontFamily: fonts.body,
     lineHeight: 18,
     marginTop: 6,
   },
@@ -108,15 +110,18 @@ const styles = StyleSheet.create({
   likes: {
     color: colors.textMuted,
     fontSize: 11,
+    fontFamily: fonts.body,
     marginLeft: 4,
   },
   dot: {
     color: colors.textMuted,
     fontSize: 11,
+    fontFamily: fonts.body,
     marginHorizontal: 6,
   },
   time: {
     color: colors.textMuted,
     fontSize: 11,
+    fontFamily: fonts.body,
   },
 });

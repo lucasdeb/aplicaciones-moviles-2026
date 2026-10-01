@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
 import { getNowPlaying, getUpcoming, type TmdbMovie } from '../services/tmdb';
 import {
   ensureNotificationPermission,
@@ -204,7 +204,7 @@ function ReleasesScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background, paddingTop: 60 },
   titleRow: { flexDirection: 'row', alignItems: 'center', paddingLeft: 16 },
-  headerTitle: { color: colors.text, fontSize: 20, fontWeight: 'bold', paddingHorizontal: 12 },
+  headerTitle: { color: colors.text, fontSize: 20, fontFamily: fonts.title, paddingHorizontal: 12 },
   segment: {
     flexDirection: 'row',
     backgroundColor: colors.surface,
@@ -216,10 +216,10 @@ const styles = StyleSheet.create({
   },
   segmentItem: { flex: 1, paddingVertical: 8, borderRadius: 18, alignItems: 'center' },
   segmentItemActive: { backgroundColor: colors.accentPrimary },
-  segmentText: { color: colors.textMuted, fontWeight: '600', fontSize: 13 },
+  segmentText: { color: colors.textMuted, fontFamily: fonts.label, fontSize: 13 },
   segmentTextActive: { color: colors.onAccentPrimary },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 },
-  mutedText: { color: colors.textMuted, fontSize: 13, marginTop: 12, textAlign: 'center' },
+  mutedText: { color: colors.textMuted, fontSize: 13, fontFamily: fonts.body, marginTop: 12, textAlign: 'center' },
   retryButton: {
     backgroundColor: colors.accentPrimary,
     borderRadius: 22,
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: 16,
   },
-  retryText: { color: colors.onAccentPrimary, fontWeight: 'bold' },
+  retryText: { color: colors.onAccentPrimary, fontFamily: fonts.bodyBold },
   list: { paddingHorizontal: 16, paddingBottom: 24 },
   card: {
     flexDirection: 'row',
@@ -241,10 +241,10 @@ const styles = StyleSheet.create({
   poster: { width: 80, aspectRatio: 2 / 3, borderRadius: 8, backgroundColor: colors.surfaceAlt },
   posterEmpty: { justifyContent: 'center', alignItems: 'center' },
   cardBody: { flex: 1, marginLeft: 12 },
-  cardTitle: { color: colors.text, fontWeight: 'bold', fontSize: 15 },
+  cardTitle: { color: colors.text, fontFamily: fonts.bodyBold, fontSize: 15 },
   metaRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
-  metaText: { color: colors.textMuted, fontSize: 12, marginLeft: 4 },
-  overview: { color: colors.textMuted, fontSize: 12, marginTop: 6, lineHeight: 17 },
+  metaText: { color: colors.textMuted, fontSize: 12, fontFamily: fonts.body, marginLeft: 4 },
+  overview: { color: colors.textMuted, fontSize: 12, fontFamily: fonts.body, marginTop: 6, lineHeight: 17 },
   remindButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   remindButtonActive: { backgroundColor: colors.accentPrimary },
-  remindText: { color: colors.accentPrimary, fontWeight: '600', fontSize: 12, marginLeft: 4 },
+  remindText: { color: colors.accentPrimary, fontFamily: fonts.bodySemiBold, fontSize: 12, marginLeft: 4 },
   remindTextActive: { color: colors.onAccentPrimary },
 });
 

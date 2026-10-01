@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, Animated, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
 import { formatNumber } from '../utils/formatNumber';
 
 const ROTATE_INTERVAL = 5000;
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   featuredBadgeText: {
     color: colors.onAccentPrimary,
     fontSize: 10,
-    fontWeight: 'bold',
+    fontFamily: fonts.label,
     marginLeft: 4,
     letterSpacing: 0.5,
   },
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
   ratingBadgeText: {
     color: colors.background,
     fontSize: 12,
-    fontWeight: 'bold',
+    fontFamily: fonts.label,
     marginLeft: 4,
   },
   gradient: {
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
   title: {
     color: colors.text,
     fontSize: 22,
-    fontWeight: 'bold',
+    fontFamily: fonts.title,
   },
   metaRow: {
     flexDirection: 'row',
@@ -166,6 +166,7 @@ const styles = StyleSheet.create({
   metaText: {
     color: colors.textMuted,
     fontSize: 13,
+    fontFamily: fonts.body,
   },
   statsRow: {
     flexDirection: 'row',
@@ -174,6 +175,7 @@ const styles = StyleSheet.create({
   statText: {
     color: colors.textMuted,
     fontSize: 12,
+    fontFamily: fonts.body,
     marginLeft: 4,
   },
   dots: {

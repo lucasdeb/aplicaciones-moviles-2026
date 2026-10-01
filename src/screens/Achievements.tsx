@@ -12,7 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { REWARDS } from '../mockData';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
 import BrandLogo from '../components/BrandLogo';
 
 type Achievement = {
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: colors.text,
     fontSize: 22,
-    fontWeight: 'bold',
+    fontFamily: fonts.title,
     marginLeft: 10,
   },
   pointsPill: {
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
   },
   pointsText: {
     color: colors.rating,
-    fontWeight: 'bold',
+    fontFamily: fonts.bodyBold,
     marginLeft: 6,
   },
   loader: {
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
   },
   challengePercent: {
     color: colors.text,
-    fontWeight: 'bold',
+    fontFamily: fonts.bodyBold,
   },
   challengeBody: {
     flex: 1,
@@ -280,23 +280,25 @@ const styles = StyleSheet.create({
   challengeLabel: {
     color: colors.textMuted,
     fontSize: 11,
+    fontFamily: fonts.body,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
   challengeTitle: {
     color: colors.text,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: fonts.bodyBold,
     marginTop: 2,
   },
   challengeText: {
     color: colors.textMuted,
     fontSize: 12,
+    fontFamily: fonts.body,
     marginTop: 2,
   },
   challengePoints: {
     color: colors.rating,
-    fontWeight: 'bold',
+    fontFamily: fonts.bodyBold,
   },
   progressTrack: {
     height: 6,
@@ -320,11 +322,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.text,
     fontSize: 17,
-    fontWeight: 'bold',
+    fontFamily: fonts.bodyBold,
   },
   sectionMeta: {
     color: colors.textMuted,
     fontSize: 12,
+    fontFamily: fonts.body,
   },
   badgeGrid: {
     flexDirection: 'row',
@@ -362,12 +365,13 @@ const styles = StyleSheet.create({
   badgeTitle: {
     color: colors.text,
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fonts.label,
     textAlign: 'center',
   },
   badgeMeta: {
     color: colors.textMuted,
     fontSize: 11,
+    fontFamily: fonts.body,
     marginTop: 2,
   },
   mutedText: {
@@ -397,11 +401,11 @@ const styles = StyleSheet.create({
   rewardTitle: {
     color: colors.text,
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fonts.bodySemiBold,
   },
   rewardCost: {
     color: colors.rating,
-    fontWeight: 'bold',
+    fontFamily: fonts.bodyBold,
     marginTop: 2,
   },
   redeemButton: {
@@ -416,12 +420,12 @@ const styles = StyleSheet.create({
   },
   redeemText: {
     color: colors.background,
-    fontWeight: 'bold',
+    fontFamily: fonts.label,
   },
   redeemTextDisabled: {
     color: colors.textMuted,
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fonts.label,
   },
   redeemed: {
     paddingHorizontal: 16,
@@ -441,13 +445,14 @@ const styles = StyleSheet.create({
   guestTitle: {
     color: colors.text,
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: fonts.title,
     marginTop: 16,
     textAlign: 'center',
   },
   guestText: {
     color: colors.textMuted,
     fontSize: 14,
+    fontFamily: fonts.body,
     marginTop: 6,
     textAlign: 'center',
   },
@@ -460,7 +465,7 @@ const styles = StyleSheet.create({
   },
   guestButtonText: {
     color: colors.onAccentPrimary,
-    fontWeight: 'bold',
+    fontFamily: fonts.label,
   },
 });
 
