@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, type ReactNode } from 'react';
+import React, { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 import {
   mockLogin,
   mockRegister,
@@ -19,6 +19,7 @@ import {
   mockGetAllUsers,
   mockUpdateUserRole,
   mockGetAchievements,
+  mockGetUserComments,
 } from '../mockData';
 
 type User = {
@@ -63,7 +64,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   });
 
   const [admin, setAdmin] = useState({ users: [], isFetchingUsers: false });
-  const [achievements, setAchievements] = useState({ list: [], totalPoints: 0, isFetching: false });
+  const [achievements, setAchievements] = useState({ list: [], totalPoints: 0, profile: null, isFetching: false });
   const [rewards, setRewards] = useState({ spentPoints: 0, redeemed: [] });
 
 
@@ -94,7 +95,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   function logOut() {
     setUser({ user: null, isFetching: false, isLoggedIn: false });
-    setAchievements({ list: [], totalPoints: 0, isFetching: false });
+    setAchievements({ list: [], totalPoints: 0, profile: null, isFetching: false });
     setRewards({ spentPoints: 0, redeemed: [] });
   }
 
@@ -270,8 +271,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   async function fetchAchievements(userId) {
     setAchievements((c) => ({ ...c, isFetching: true }));
     try {
-      const { list, totalPoints } = await mockGetAchievements(userId);
-      setAchievements((c) => ({ ...c, list, totalPoints }));
+      const { list, totalPoints, profile } = await mockGetAchievements(userId);
+      setAchievements((c) => ({ ...c, list, totalPoints, profile }));
     } finally {
       setAchievements((c) => ({ ...c, isFetching: false }));
     }
@@ -303,7 +304,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   return { success: true, code };
   }
 
-  const value = {
+  // Las reseñas de un usuario solo las usa una pantalla: se devuelven y cada pantalla
+  // las guarda en su propio useState, sin sumar estado global.
+  function getUserReviews(userId) {
+    return mockGetUserComments(userId);
+  }
+
+  // Memoizado: el objeto se rearma solo cuando cambia el estado, así los consumidores
+  // no se vuelven a renderizar en cada render del Provider. Las funciones usan
+  // setX(c => ...) o leen estado que ya está en las dependencias.
+  const value = useMemo(() => ({
     user,
     movies,
     comments,
@@ -333,7 +343,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     fetchAllUsers,
     updateUserRole,
     fetchAchievements,
-  };
+    getUserReviews,
+  }), [user, movies, comments, feed, admin, achievements, rewards]);
   
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

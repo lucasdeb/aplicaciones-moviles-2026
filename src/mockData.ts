@@ -351,6 +351,14 @@ export async function mockGetComments(movieId) {
     .map(toPublicComment);
 }
 
+export async function mockGetUserComments(userId) {
+  await wait();
+  return mockComments
+    .filter((c) => c.authorId === userId)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .map(toPublicComment);
+}
+
 export async function mockPostComment(movieId, authorId, text, rating?: number, photo?: string){
   await wait();
   const comment = {
@@ -522,5 +530,9 @@ export async function mockGetAchievements(userId) {
     };
   });
   const totalPoints = list.filter((a) => a.unlocked).reduce((sum, a) => sum + a.points, 0);
-  return { list, totalPoints };
+  const profile = {
+    reviews: stats.totalReviews,
+    likes: comments.reduce((sum, c) => sum + c.likes, 0),
+  };
+  return { list, totalPoints, profile };
 }
