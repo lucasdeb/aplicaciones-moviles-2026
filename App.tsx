@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { AppProvider } from './src/context/AppContext';
+import { AuthProvider } from './src/context/AuthContext';
+import { MoviesProvider } from './src/context/MovieContext';
+import { GamificationProvider } from './src/context/GamificationContext';
 import RootNavigator from './src/Navigator';
 import IntroVideo from './src/components/IntroVideo';
 import { setNotificationHandler } from 'expo-notifications/build/NotificationsHandler';
@@ -10,14 +12,6 @@ import { BeVietnamPro_400Regular } from '@expo-google-fonts/be-vietnam-pro/400Re
 import { BeVietnamPro_600SemiBold } from '@expo-google-fonts/be-vietnam-pro/600SemiBold';
 import { BeVietnamPro_700Bold } from '@expo-google-fonts/be-vietnam-pro/700Bold';
 
-setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
 
 export default function App() {
   const [showIntro, setShowIntro] = useState(true);
@@ -31,10 +25,14 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <AppProvider>
-        <StatusBar style="light" />
-        {showIntro || !fontsReady ? <IntroVideo onFinish={() => setShowIntro(false)} /> : <RootNavigator />}
-      </AppProvider>
+      <AuthProvider>
+        <GamificationProvider>
+          <MoviesProvider>
+            <StatusBar style="light" />
+              {showIntro || !fontsReady ? <IntroVideo onFinish={() => setShowIntro(false)} /> : <RootNavigator />}
+          </MoviesProvider>
+        </GamificationProvider>
+      </AuthProvider>
     </SafeAreaProvider>
   );
 }

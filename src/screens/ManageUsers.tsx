@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
+import { mockGetAllUsers, mockUpdateUserRole } from '../mockData';
 import { colors, fonts } from '../theme';
 
 const ROLE_OPTIONS = [
@@ -11,23 +12,39 @@ const ROLE_OPTIONS = [
 ];
 
 function ManageUsersScreen() {
-  const { admin, user, fetchAllUsers, updateUserRole } = useApp();
+  const { user } = useAuth();
+  // La lista de usuarios solo la usa esta pantalla: estado local
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    fetchAllUsers(user.user.id);
+    mockGetAllUsers()
+      .then(setUsers)
+      .finally(() => setLoading(false));
   }, []);
+
+  async function updateUserRole(userId, role) {
+    try {
+      const updated = await mockUpdateUserRole(userId, role);
+      setUsers((current) => current.map((u) => (u.id === updated.id ? updated : u)));
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
 
   return (
     <View style={styles.container}>
       <Text style={styles.headerTitle}>Administrar usuarios</Text>
 
-      {admin.isFetchingUsers ? (
+      {loading ? (
         <View style={styles.centered}>
           <ActivityIndicator color={colors.accentPrimary} />
           <Text style={styles.loadingText}>Cargando usuarios...</Text>
         </View>
       ) : (
         <FlatList
-          data={admin.users}
+          data={users}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={styles.list}
           renderItem={({ item }) => {
@@ -49,7 +66,7 @@ function ManageUsersScreen() {
                     selectedValue={item.role}
                     style={styles.picker}
                     dropdownIconColor={colors.text}
-                    onValueChange={(value) => updateUserRole(user.user.id, item.id, value)}
+                    onValueChange={(value) => updateUserRole(item.id, value)}
                   >
                     {ROLE_OPTIONS.map((option) => (
                       <Picker.Item key={option.value} label={option.label} value={option.value} />

@@ -12,7 +12,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { colors, fonts } from '../theme';
 import { getNowPlaying, getUpcoming, type TmdbMovie } from '../services/tmdb';
 import {
@@ -33,7 +33,7 @@ function formatDate(iso: string) {
 }
 
 function ReleasesScreen({ navigation }) {
-  const { user } = useApp();
+  const { user } = useAuth();
   const [tab, setTab] = useState<Tab>('upcoming');
   const [movies, setMovies] = useState<{ upcoming: TmdbMovie[]; now: TmdbMovie[] }>({ upcoming: [], now: [] });
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');

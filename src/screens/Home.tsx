@@ -13,7 +13,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
+import { useMovies } from '../context/MovieContext';
+import { mockGetPopularReviews, mockGetPopularReviewers } from '../mockData';
 import MovieCard from '../components/MovieCard';
 import ReviewCard from '../components/ReviewCard';
 import PopularCarousel from '../components/PopularCarousel';
@@ -27,7 +29,7 @@ const MENU_ITEMS = [
 ];
 
 function HeaderMenu({ navigation }) {
-  const { user } = useApp();              
+  const { user } = useAuth();
   const [visible, setVisible] = useState(false);
 
   function goTo(screen) {
@@ -71,28 +73,28 @@ function SectionHeader({ title }) {
 }
 
 function HomeScreen({ navigation }) {
-  const {
-    movies,
-    feed,
-    user: { user: currentUser },
-    fetchMovies,
-    fetchFeaturedMovies,
-    fetchPopularReviews,
-    fetchPopularReviewers,
-  } = useApp();
-  useEffect(() => {
+  const { user: { user: currentUser } } = useAuth();
+  const { movies, fetchMovies } = useMovies();
+  // El feed solo lo usa Home: estado local, no global
+  const [feed, setFeed] = useState({ popularReviews: [], popularReviewers: [] });
+
+  async function refreshAll() {
     fetchMovies();
-    fetchFeaturedMovies();
-    fetchPopularReviews();
-    fetchPopularReviewers();
+    try {
+      const [popularReviews, popularReviewers] = await Promise.all([
+        mockGetPopularReviews(),
+        mockGetPopularReviewers(),
+      ]);
+      setFeed({ popularReviews, popularReviewers });
+    } catch (error) {
+      console.warn('No se pudo cargar el feed', error);
+    }
+  }
+
+  useEffect(() => {
+    refreshAll();
   }, []);
 
-  function refreshAll() {
-    fetchMovies();
-    fetchFeaturedMovies();
-    fetchPopularReviews();
-    fetchPopularReviewers();
-  }
 
   function goToMovie(movieId) {
     navigation.navigate('MovieDetail', { movieId });

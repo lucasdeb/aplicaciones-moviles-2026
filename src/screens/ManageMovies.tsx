@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
 import { View, Text, Image, FlatList, TouchableOpacity, Alert, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useApp } from '../context/AppContext';
+import { useMovies } from '../context/MovieContext';
 import { colors, fonts } from '../theme';
 
 function ManageMoviesScreen({ navigation }) {
-  const { movies, user, fetchMovies, deleteMovie } = useApp();
+  const { movies, fetchMovies, deleteMovie } = useMovies();
   useEffect(() => {
     fetchMovies();
   }, []);
@@ -16,7 +16,7 @@ function ManageMoviesScreen({ navigation }) {
       {
         text: 'Borrar',
         style: 'destructive',
-        onPress: () => deleteMovie(user.user.id, movie.id),
+        onPress: () => deleteMovie(movie.id),
       },
     ]);
   }

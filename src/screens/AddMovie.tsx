@@ -11,40 +11,23 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import * as ImageManipulator from 'expo-image-manipulator';
 import { Ionicons } from '@expo/vector-icons';
-import { useApp } from '../context/AppContext';
+import { useMovies } from '../context/MovieContext';
+import { pickPhoto } from '../utils/pickPhoto';
 import { colors, fonts } from '../theme';
 
-function ImageSlot({ label, aspectRatio, value, onChange, resizeWidth, required = false }) {
+// aspect es [ancho, alto]: lo usa el recorte del picker y el tamaño del recuadro
+function ImageSlot({ label, aspect, value, onChange, required = false }) {
   const [linkInput, setLinkInput] = useState('');
   const [picking, setPicking] = useState(false);
+  const aspectRatio = aspect[0] / aspect[1];
 
+  // Se reutiliza pickPhoto en vez de repetir la misma lógica
   async function handlePickFromGallery() {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert('Falta permiso', 'Necesitamos acceso a tus fotos para elegir la imagen.');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: aspectRatio,
-      quality: 0.8,
-    });
-
-    if (result.canceled) return;
-
     setPicking(true);
     try {
-      const manipulated = await ImageManipulator.manipulateAsync(
-        result.assets[0].uri,
-        [{ resize: { width: resizeWidth } }],
-        { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG, base64: true }
-      );
-      onChange(`data:image/jpeg;base64,${manipulated.base64}`);
+      const uri = await pickPhoto('gallery', aspect);
+      if (uri) onChange(uri);
     } catch (e) {
       Alert.alert('No se pudo procesar la imagen', 'Probá con otra foto.');
     } finally {
@@ -106,7 +89,7 @@ function ImageSlot({ label, aspectRatio, value, onChange, resizeWidth, required 
 }
 
 function AddMovieScreen({ navigation, route }) {
-  const { movies, user, createMovie, updateMovie } = useApp();
+  const { movies, createMovie, updateMovie } = useMovies();
   const movieId = route.params?.movieId;
   const editingMovie = movieId ? movies.list.find((m) => m.id === movieId) : null;
 
@@ -152,8 +135,8 @@ function AddMovieScreen({ navigation, route }) {
     };
 
     const result = editingMovie
-      ? await updateMovie(user.user.id, movieId, payload)
-      : await createMovie(user.user.id, payload);
+        ? await updateMovie(movieId, payload)      
+        : await createMovie(payload);
 
     setSaving(false);
     if (result.success) {
@@ -171,8 +154,7 @@ function AddMovieScreen({ navigation, route }) {
 
       <ImageSlot
         label="Póster"
-        aspectRatio={2 / 3}
-        resizeWidth={500}
+        aspect={[2, 3]}
         value={posterUrl}
         onChange={setPosterUrl}
         required
@@ -180,8 +162,7 @@ function AddMovieScreen({ navigation, route }) {
 
       <ImageSlot
         label="Fondo (hero del detalle)"
-        aspectRatio={16 / 9}
-        resizeWidth={800}
+        aspect={[16, 9]}
         value={backdropUrl}
         onChange={setBackdropUrl}
       />

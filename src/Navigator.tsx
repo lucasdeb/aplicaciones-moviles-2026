@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { useApp } from './context/AppContext';
+import { useAuth } from './context/AuthContext';
 import LoginScreen from './screens/Login';
 import RegisterScreen from './screens/Register';
 import HomeScreen from './screens/Home';
@@ -13,7 +13,6 @@ import ManageMoviesScreen from './screens/ManageMovies';
 import AddMovieScreen from './screens/AddMovie';
 import ManageUsersScreen from './screens/ManageUsers';
 import AchievementsScreen from './screens/Achievements';
-import RewardsScreen from './screens/Rewards';
 import ReleasesScreen from './screens/Releases';
 import { colors, fonts } from './theme';
 import CinemasScreen from './screens/Cinemas';
@@ -24,7 +23,7 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function MainTabs() {
-  const { user } = useApp();
+  const { user } = useAuth();
   return (
     <Tab.Navigator id="main-tabs"
       screenOptions={{
@@ -53,7 +52,7 @@ const headerOptions = {
 };
 
 function RootNavigator() {
-  const { user } = useApp();
+  const { user } = useAuth();
   return (
     <NavigationContainer>
       <Stack.Navigator id="root-stack" screenOptions={{ headerShown: false }}>
@@ -66,7 +65,6 @@ function RootNavigator() {
         <Stack.Screen name="ManageMovies" component={ManageMoviesScreen} options={headerOptions} />
         <Stack.Screen name="AddMovie" component={AddMovieScreen} options={headerOptions} />
         <Stack.Screen name="ManageUsers" component={ManageUsersScreen} options={headerOptions} />
-        <Stack.Screen name="Rewards" component={RewardsScreen} options={headerOptions} />
         <Stack.Screen name="UserReviews" component={UserReviewsScreen} options={headerOptions} />
         </>
       ) : (

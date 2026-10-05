@@ -11,12 +11,12 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { colors, fonts } from '../theme';
 import { isValidEmail } from '../utils/validators';
 
 function LoginScreen({ navigation }) {
-  const { user, handleLogin } = useApp();
+  const { user, handleLogin } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);

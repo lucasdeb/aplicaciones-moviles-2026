@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -14,38 +14,81 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
+import { useOnFocus } from '../hooks/useOnFocus';
+import {
+  mockGetMovie,
+  mockGetRecommendations,
+  mockGetComments,
+  mockPostComment,
+  mockLikeComment,
+  mockRepostComment,
+  mockDeleteComment,
+} from '../mockData';
 import CommentCard from '../components/CommentCard';
 import { colors, fonts } from '../theme';
 import { pickPhoto } from '../utils/pickPhoto';
 
 function MovieDetailScreen({ navigation, route }) {
-  const {
-    movies,
-    comments,
-    user,
-    fetchMovieDetail,
-    fetchComments,
-    postComment,
-    likeComment,
-    repostComment,
-    deleteComment,
-  } = useApp();
+  const { user } = useAuth();
   const { movieId } = route.params;
+
+  // Solo los usa esta pantalla: estado local. Al salir se descartan solos,
+  // por eso ya no hacen falta clearMovieDetail ni clearComments.
+  const [movie, setMovie] = useState(null);
+  const [recommendations, setRecommendations] = useState([]);
+  const [comments, setComments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingComments, setLoadingComments] = useState(true);
+  const [error, setError] = useState('');
   const [commentText, setCommentText] = useState('');
   const [photo, setPhoto] = useState<string | null>(null);
 
-  // Se recarga cada vez que la pantalla vuelve a estar visible (por ejemplo, al volver de una recomendada)
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      fetchMovieDetail(movieId);
-      fetchComments(movieId);
-    });
-    return unsubscribe;
-  }, [navigation, movieId]);
+  // Se recarga cada vez que la pantalla queda visible (por ejemplo, al volver de una recomendada)
+  useOnFocus(loadMovie, [movieId]);
 
-  // Mientras llega la película pedida, no se muestra la que quedó cargada antes
-  const movie = movies.selectedMovie?.id === movieId ? movies.selectedMovie : null;
+  async function loadMovie() {
+    setError('');
+    setLoadingComments(true);
+    try {
+      const [detail, recs, list] = await Promise.all([
+        mockGetMovie(movieId),
+        mockGetRecommendations(movieId),
+        mockGetComments(movieId),
+      ]);
+      setMovie(detail);
+      setRecommendations(recs);
+      setComments(list);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+      setLoadingComments(false);
+    }
+  }
+
+  // Reemplaza en la lista el comentario que devolvió el mock (like / repost)
+  function replaceComment(updated) {
+    setComments((current) => current.map((c) => (c.id === updated.id ? updated : c)));
+  }
+
+  async function likeComment(commentId) {
+    replaceComment(await mockLikeComment(commentId));
+  }
+
+  async function repostComment(commentId) {
+    replaceComment(await mockRepostComment(commentId));
+  }
+
+  async function deleteComment(commentId) {
+    try {
+      await mockDeleteComment(commentId);
+      setComments((current) => current.filter((c) => c.id !== commentId));
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  }
 
   const me = user.user;
   const canModerate = me?.role === 'moderator' || me?.role === 'superadmin';
@@ -66,19 +109,20 @@ function MovieDetailScreen({ navigation, route }) {
 
   function handlePublish() {
     if (!commentText.trim() || !me) return;
-    postComment(movieId, me.id, commentText.trim(), undefined, photo ?? undefined);
+    mockPostComment(movieId, me.id, commentText.trim(), undefined, photo ?? undefined)
+      .then((comment) => setComments((current) => [comment, ...current]));
     setCommentText('');
     setPhoto(null);
   }
 
-  return (movies.isFetchingDetail || !movie) && !movies.error ? (
+  return (loading || !movie) && !error ? (
     <View style={styles.centered}>
       <ActivityIndicator color={colors.accentPrimary} />
       <Text style={styles.loadingText}>Cargando película...</Text>
     </View>
-  ) : movies.error ? (
+  ) : error ? (
     <View style={styles.centered}>
-      <Text style={styles.errorText}>{movies.error}</Text>
+      <Text style={styles.errorText}>{error}</Text>
     </View>
   ) : (
     <ScrollView style={styles.container}>
@@ -114,14 +158,14 @@ function MovieDetailScreen({ navigation, route }) {
       <View style={styles.content}>
         <Text style={styles.overview}>{movie.overview}</Text>
 
-        {movies.recommendations.length > 0 && (
+        {recommendations.length > 0 && (
           <>
             <View style={styles.sectionHeader}>
               <View style={styles.sectionBar} />
               <Text style={styles.sectionTitle}>Recomendadas para vos</Text>
             </View>
             <FlatList
-              data={movies.recommendations}
+              data={recommendations}
               keyExtractor={(item) => String(item.id)}
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -154,7 +198,7 @@ function MovieDetailScreen({ navigation, route }) {
           <View style={styles.ratingSummary}>
             <Ionicons name="star" size={14} color={colors.rating} />
             <Text style={styles.ratingSummaryText}>{movie.rating}</Text>
-            <Text style={styles.ratingSummaryCount}>({comments.list.length})</Text>
+            <Text style={styles.ratingSummaryCount}>({comments.length})</Text>
           </View>
         </View>
 
@@ -201,17 +245,17 @@ function MovieDetailScreen({ navigation, route }) {
           </TouchableOpacity>
         )}
 
-        {comments.isFetching ? (
+        {loadingComments ? (
           <ActivityIndicator color={colors.accentPrimary} style={{ marginTop: 16 }} />
         ) : (
-          comments.list.map((comment) => (
+          comments.map((comment) => (
             <CommentCard
               key={comment.id}
               comment={comment}
               onLike={requireLogin(() => likeComment(comment.id))}
               onRepost={requireLogin(() => repostComment(comment.id))}
               canDelete={canModerate || comment.author.id === me?.id}
-              onDelete={() => deleteComment(comment.id, me?.id)}
+              onDelete={() => deleteComment(comment.id)}
             />
           ))
         )}

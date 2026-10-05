@@ -267,22 +267,11 @@ function toPublicUser({ password, ...user }: { id: number; name: string; email: 
   return user;
 }
 
-export async function mockGetMovies(search?: string) {
-  await wait();
-  const sorted = [...mockMovies].sort((a, b) => b.rating - a.rating);
-  const filtered = search
-    ? sorted.filter((m) => m.title.toLowerCase().includes(search.toLowerCase()))
-    : sorted;
-  return filtered.map(withCommentsCount);
-}
+export async function mockGetMovies() {
+    await wait();
+    return [...mockMovies].sort((a, b) => b.rating - a.rating).map(withCommentsCount);
+  }
 
-export async function mockGetFeaturedMovies() {
-  await wait();
-  return mockMovies
-    .filter((m) => m.featured)
-    .sort((a, b) => b.rating - a.rating)
-    .map(withCommentsCount);
-}
 
 export async function mockGetMovie(id) {
   await wait();

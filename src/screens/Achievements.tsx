@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,9 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
+import { useGamification } from '../context/GamificationContext';
+import { useOnFocus } from '../hooks/useOnFocus';
 import { REWARDS } from '../mockData';
 import { colors, fonts } from '../theme';
 import BrandLogo from '../components/BrandLogo';
@@ -57,16 +59,11 @@ function Badge({ achievement }: BadgeProps) {
 }
 
 function AchievementsScreen({ navigation }) {
-  const { user, achievements, rewards, fetchAchievements, redeemReward } = useApp();
-  const userId = user.user?.id;
+  const { user } = useAuth();
+  const { achievements, rewards, fetchAchievements, redeemReward } = useGamification();
 
   // Se recalcula al entrar a la solapa, así refleja las reseñas nuevas
-  useEffect(() => {
-    if (userId === undefined) return undefined;
-    fetchAchievements(userId);
-    const unsubscribe = navigation.addListener('focus', () => fetchAchievements(userId));
-    return unsubscribe;
-  }, [navigation, userId]);
+  useOnFocus(fetchAchievements, [user.user?.id]);
 
   if (!user.isLoggedIn) {
     return (

@@ -9,7 +9,8 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
+import { mockGetUserComments } from '../mockData';
 import { colors, fonts } from '../theme';
 import { formatNumber } from '../utils/formatNumber';
 import { timeAgo } from '../utils/timeAgo';
@@ -32,15 +33,16 @@ const MODES: { key: Mode; label: string }[] = [
 ];
 
 function UserReviewsScreen({ navigation, route }) {
-  const { user, getUserReviews } = useApp();
+  const { user } = useAuth();
   const mode: Mode = route.params?.mode ?? 'reviews';
   const [list, setList] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Las reseñas solo las usa esta pantalla: se piden al mock y se guardan en estado local
   useEffect(() => {
     if (!user.user) return;
-    getUserReviews(user.user.id)
+    mockGetUserComments(user.user.id)
       .then(setList)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -113,7 +115,6 @@ function UserReviewsScreen({ navigation, route }) {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

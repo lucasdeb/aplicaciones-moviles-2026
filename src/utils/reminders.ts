@@ -10,6 +10,7 @@ import { scheduleNotificationAsync } from 'expo-notifications/build/scheduleNoti
 import { cancelScheduledNotificationAsync } from 'expo-notifications/build/cancelScheduledNotificationAsync';
 import { SchedulableTriggerInputTypes } from 'expo-notifications/build/Notifications.types';
 import type { TmdbMovie } from '../services/tmdb';
+import { setNotificationHandler } from 'expo-notifications/build/NotificationsHandler';
 
 // Para probar en clase: poné 10 y el aviso llega a los 10 segundos en vez del día del estreno
 const TEST_SECONDS = 0;
@@ -55,6 +56,16 @@ export function scheduleReleaseReminder(movie: TmdbMovie) {
       date,
       channelId: 'estrenos',
     },
+  });
+}
+export function configureNotifications() {
+  setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
   });
 }
 

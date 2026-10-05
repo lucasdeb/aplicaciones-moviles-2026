@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Modal, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
+import { useGamification } from '../context/GamificationContext';
+import { useOnFocus } from '../hooks/useOnFocus';
 import { colors, fonts } from '../theme';
 import { formatNumber } from '../utils/formatNumber';
 import BrandLogo from '../components/BrandLogo';
@@ -157,17 +159,12 @@ function MenuRow({ icon, title, onPress }: MenuRowProps) {
 }
 
 function ProfileScreen({ navigation }) {
-  const { user, achievements, rewards, fetchAchievements, logOut } = useApp();
-  const userId = user.user?.id;
+  const { user, logOut } = useAuth();
+  const { achievements, rewards, fetchAchievements } = useGamification();
   const [levelsVisible, setLevelsVisible] = useState(false);
 
   // Las estadísticas se recalculan al entrar a la solapa
-  useEffect(() => {
-    if (userId === undefined) return undefined;
-    fetchAchievements(userId);
-    const unsubscribe = navigation.addListener('focus', () => fetchAchievements(userId));
-    return unsubscribe;
-  }, [navigation, userId]);
+  useOnFocus(fetchAchievements, [user.user?.id]);
 
   if (!user.isLoggedIn) {
     return (
@@ -311,7 +308,6 @@ function ProfileScreen({ navigation }) {
     </ScrollView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
