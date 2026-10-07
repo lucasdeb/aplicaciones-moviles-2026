@@ -9,11 +9,11 @@ import StarRating from './StarRating';
 export default function ReviewCard({ review, onPress }) {
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.8}>
-      <Image source={{ uri: review.movie.posterUrl }} style={styles.poster} />
+      <Image source={{ uri: review.movie?.posterUrl }} style={styles.poster} />
 
       <View style={styles.body}>
         <Text style={styles.movieTitle} numberOfLines={1}>
-          {review.movie.title} <Text style={styles.movieYear}>{review.movie.year}</Text>
+          {review.movie?.title} <Text style={styles.movieYear}>{review.movie?.year}</Text>
         </Text>
 
         <View style={styles.authorRow}>

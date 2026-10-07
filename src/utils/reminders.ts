@@ -13,7 +13,7 @@ import type { TmdbMovie } from '../services/tmdb';
 import { setNotificationHandler } from 'expo-notifications/build/NotificationsHandler';
 
 // Para probar en clase: poné 10 y el aviso llega a los 10 segundos en vez del día del estreno
-const TEST_SECONDS = 0;
+const TEST_SECONDS = 10;
 
 export async function ensureNotificationPermission() {
   if (Platform.OS === 'android') {

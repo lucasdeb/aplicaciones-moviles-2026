@@ -329,7 +329,11 @@ export async function mockUpdateMovie(id, data) {
 export async function mockDeleteMovie(id) {
   await wait();
   const index = mockMovies.findIndex((m) => m.id === id);
-  if (index !== -1) mockMovies.splice(index, 1);
+  if (index !== -1) throw new Error('Película no encontrada');
+  mockMovies.splice(index, 1);
+  for (let i = mockComments.length - 1; i >= 0; i--) {
+    if (mockComments[i].movieId === id) mockComments.splice(i, 1);
+  }
 }
 
 export async function mockGetComments(movieId) {
@@ -503,7 +507,7 @@ export async function mockGetAchievements(userId) {
   const comments = mockComments
     .filter((c) => c.authorId === userId)
     .map((c) => ({ ...c, movie: mockMovies.find((m) => m.id === c.movieId) }));
-  const genres = new Set(comments.map((c) => c.movie && c.movie.genre));
+  const genres = new Set(comments.map((c) => c.movie?.genre).filter(Boolean));
   const stats: Record<AchievementStat, number> = {
     totalReviews: comments.length,
     maxLikesOnReview: comments.reduce((max, c) => Math.max(max, c.likes), 0),

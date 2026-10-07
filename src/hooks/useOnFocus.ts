@@ -6,5 +6,5 @@ import { useFocusEffect } from '@react-navigation/native';
 export function useOnFocus(callback: () => void, deps: unknown[] = []) {
   const saved = useRef(callback);
   saved.current = callback;
-  useFocusEffect(useCallback(() => saved.current(), deps));
+  useFocusEffect(useCallback(() => { saved.current(); }, deps));
 }

@@ -6,12 +6,14 @@ import { MoviesProvider } from './src/context/MovieContext';
 import { GamificationProvider } from './src/context/GamificationContext';
 import RootNavigator from './src/Navigator';
 import IntroVideo from './src/components/IntroVideo';
-import { setNotificationHandler } from 'expo-notifications/build/NotificationsHandler';
+import { configureNotifications } from './src/utils/reminders';
 import { useFonts } from 'expo-font';
 import { BeVietnamPro_400Regular } from '@expo-google-fonts/be-vietnam-pro/400Regular';
 import { BeVietnamPro_600SemiBold } from '@expo-google-fonts/be-vietnam-pro/600SemiBold';
 import { BeVietnamPro_700Bold } from '@expo-google-fonts/be-vietnam-pro/700Bold';
 
+
+configureNotifications();
 
 export default function App() {
   const [showIntro, setShowIntro] = useState(true);

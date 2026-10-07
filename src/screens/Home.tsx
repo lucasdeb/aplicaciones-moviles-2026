@@ -172,7 +172,7 @@ function HomeScreen({ navigation }) {
                   <ReviewCard
                     key={review.id}
                     review={review}
-                    onPress={() => goToMovie(review.movie.id)}
+                    onPress={() => review.movie && goToMovie(review.movie.id)}
                   />
                 ))}
               </View>
