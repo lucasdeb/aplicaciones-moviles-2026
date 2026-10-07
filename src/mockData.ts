@@ -329,7 +329,7 @@ export async function mockUpdateMovie(id, data) {
 export async function mockDeleteMovie(id) {
   await wait();
   const index = mockMovies.findIndex((m) => m.id === id);
-  if (index !== -1) throw new Error('Película no encontrada');
+  if (index === -1) throw new Error('Película no encontrada');
   mockMovies.splice(index, 1);
   for (let i = mockComments.length - 1; i >= 0; i--) {
     if (mockComments[i].movieId === id) mockComments.splice(i, 1);
