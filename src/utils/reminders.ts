@@ -23,9 +23,10 @@ export async function ensureNotificationPermission() {
     });
   }
   const current = await getPermissionsAsync();
-  if (current.granted) return true;
+  if (current.granted) return  { granted: true, canAskAgain: true };
+  if (!current.canAskAgain) return { granted: false, canAskAgain: false };
   const request = await requestPermissionsAsync();
-  return request.granted;
+  return { granted: request.granted, canAskAgain: request.canAskAgain };
 }
 
 // Los avisos programados los guarda el sistema, así que sobreviven a cerrar la app

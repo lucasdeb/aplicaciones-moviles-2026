@@ -10,6 +10,7 @@ import {
   Alert,
   Platform,
   StyleSheet,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
@@ -22,6 +23,7 @@ import {
   cancelReminder,
 } from '../utils/reminders';
 import BrandLogo from '../components/BrandLogo';
+import SettingsButton from '../components/SettingsButton';
 
 type Tab = 'upcoming' | 'now';
 
@@ -67,7 +69,7 @@ function ReleasesScreen({ navigation }) {
     setRefreshing(false);
   }
 
-  async function toggleReminder(movie: TmdbMovie) {
+    async function toggleReminder(movie: TmdbMovie) {
     if (!user.isLoggedIn) {
       navigation.navigate('Login');
       return;
@@ -77,31 +79,47 @@ function ReleasesScreen({ navigation }) {
       return;
     }
 
-    const existing = reminders[movie.id];
-    if (existing) {
-      await cancelReminder(existing);
-      setReminders(({ [movie.id]: _removed, ...rest }) => rest);
-      return;
-    }
+    try {
+      const existing = reminders[movie.id];
+      if (existing) {
+        await cancelReminder(existing);
+        setReminders(({ [movie.id]: _removed, ...rest }) => rest);
+        return;
+      }
 
-    const granted = await ensureNotificationPermission();
-    if (!granted) {
-      Alert.alert('Sin permiso', 'Activá las notificaciones en los ajustes para recibir avisos.');
-      return;
-    }
+      const { granted, canAskAgain } = await ensureNotificationPermission();
+      if (!granted) {
+        Alert.alert(
+          'Notificaciones desactivadas',
+          'Activalas en los ajustes del teléfono para recibir avisos.',
+          canAskAgain
+            ? [{ text: 'OK' }]
+            : [
+                { text: 'Cancelar', style: 'cancel' },
+                { text: 'Abrir ajustes', onPress: () => Linking.openSettings() },
+              ]
+        );
+        return;
+      }
 
-    const id = await scheduleReleaseReminder(movie);
-    setReminders((current) => ({ ...current, [movie.id]: id }));
-    Alert.alert('¡Listo!', `Te avisamos el ${formatDate(movie.releaseDate)} cuando se estrene.`);
+      const id = await scheduleReleaseReminder(movie);
+      setReminders((current) => ({ ...current, [movie.id]: id }));
+      Alert.alert('¡Listo!', `Te avisamos el ${formatDate(movie.releaseDate)} cuando se estrene.`);
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo programar el aviso: ' + error.message);
+    }
   }
+
 
   const data = tab === 'upcoming' ? movies.upcoming : movies.now;
 
   return (
     <View style={styles.container}>
       <View style={styles.titleRow}>
+        
         <BrandLogo size={36} />
         <Text style={styles.headerTitle}>Estrenos</Text>
+        <SettingsButton />
       </View>
 
       <View style={styles.segment}>

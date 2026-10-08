@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, fonts } from '../theme';
 import { fetchNearbyCinemas, type Cinema } from '../utils/geo';
 import BrandLogo from '../components/BrandLogo';
+import SettingsButton from '../components/SettingsButton';
 
 type Status = 'loading' | 'ready' | 'denied' | 'error';
 
@@ -143,6 +144,7 @@ function CinemasScreen() {
       <View style={styles.titleRow}>
         <BrandLogo size={36} />
         <Text style={styles.headerTitle}>Cines cercanos</Text>
+        <SettingsButton />
       </View>
       <Text style={styles.subtitle}>
         {place ? `Cerca de ${place} · ordenados por distancia` : 'Ordenados por distancia'}

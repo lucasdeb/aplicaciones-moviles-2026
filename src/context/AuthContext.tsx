@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
-import { mockLogin, mockRegister } from '../mockData';
+import { mockLogin, mockRegister, mockUpdateUser } from '../mockData';
 
 export type User = { id: number; name: string; email: string; role: string };
 type AuthState = { user: User | null; isFetching: boolean; isLoggedIn: boolean };
@@ -10,6 +10,8 @@ type AuthContextValue = {
   handleLogin: (credentials: { email: string; password: string }) => Promise<Result>;
   handleRegister: (info: { name: string; email: string; password: string }) => Promise<Result>;
   logOut: () => void;
+  updateUser: (data: { name: string; email: string }) => Promise<Result>;
+
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -38,6 +40,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       handleLogin: (credentials) => authenticate(() => mockLogin(credentials)),
       handleRegister: (info) => authenticate(() => mockRegister(info)),
       logOut: () => setUser(loggedOut),
+      updateUser: async (data) => {
+        try {
+          const updated = await mockUpdateUser(user.user!.id, data);
+          setUser((current) => ({ ...current, user: updated }));
+          return { success: true };
+        } catch (error) {
+          return { success: false, error: error.message };
+        }
+      }
     }),
     [user]
   );

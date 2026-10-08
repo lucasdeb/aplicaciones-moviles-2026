@@ -16,6 +16,7 @@ import { useOnFocus } from '../hooks/useOnFocus';
 import { REWARDS } from '../mockData';
 import { colors, fonts } from '../theme';
 import BrandLogo from '../components/BrandLogo';
+import SettingsButton from '../components/SettingsButton';
 
 type Achievement = {
   id: string;
@@ -108,6 +109,7 @@ function AchievementsScreen({ navigation }) {
         <View style={styles.titleRow}>
           <BrandLogo size={36} />
           <Text style={styles.headerTitle}>Logros</Text>
+          <SettingsButton />
         </View>
         <View style={styles.pointsPill}>
           <Ionicons name="diamond-outline" size={14} color={colors.rating} />
@@ -214,9 +216,6 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 16,
   },
   titleRow: {
@@ -230,13 +229,15 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   pointsPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.rating,
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    alignSelf: 'flex-start',
+  marginTop: 12,
+  flexDirection: 'row',
+  alignItems: 'center',
+  borderWidth: 1,
+  borderColor: colors.rating,
+  borderRadius: 20,
+  paddingHorizontal: 12,
+  paddingVertical: 6,
   },
   pointsText: {
     color: colors.rating,

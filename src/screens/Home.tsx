@@ -23,8 +23,9 @@ import FeaturedHero from '../components/FeaturedHero';
 import RevealOnScroll from '../components/RevealOnScroll';
 import BrandLogo from '../components/BrandLogo';
 import { colors, fonts } from '../theme';
+import SettingsButton from '../components/SettingsButton';
 
-const MENU_ITEMS = [
+/**const MENU_ITEMS = [
   { key: 'achievements', label: 'Logros', icon: 'trophy-outline' as const, screen: 'Logros' },
 ];
 
@@ -62,7 +63,7 @@ function HeaderMenu({ navigation }) {
     </>
   );
 }
-
+**/
 function SectionHeader({ title }) {
   return (
     <View style={styles.sectionHeader}>
@@ -123,7 +124,7 @@ function HomeScreen({ navigation }) {
           <TouchableOpacity style={styles.iconButton} hitSlop={8}>
             <Ionicons name="search-outline" size={18} color={colors.accentPrimarySoft} />
           </TouchableOpacity>
-          <HeaderMenu navigation={navigation} />
+            <SettingsButton />
         </View>
       </View>
 

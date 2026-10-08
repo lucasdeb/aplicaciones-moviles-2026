@@ -8,6 +8,7 @@ import { useOnFocus } from '../hooks/useOnFocus';
 import { colors, fonts } from '../theme';
 import { formatNumber } from '../utils/formatNumber';
 import BrandLogo from '../components/BrandLogo';
+import SettingsButton from '../components/SettingsButton';
 
 const ROLE_LABELS = {
   user: 'Usuario',
@@ -200,6 +201,7 @@ function ProfileScreen({ navigation }) {
       <View style={styles.topRow}>
         <BrandLogo size={36} />
         <Text style={styles.topTitle}>Perfil</Text>
+        <SettingsButton />
       </View>
 
       <View style={styles.card}>
@@ -293,12 +295,12 @@ function ProfileScreen({ navigation }) {
           )}
         </>
       )}
-
+{/*
       <TouchableOpacity style={styles.logout} onPress={logOut}>
         <Ionicons name="log-out-outline" size={18} color={colors.danger} />
         <Text style={styles.logoutText}>Cerrar sesión</Text>
       </TouchableOpacity>
-
+*/}
       <LevelsModal
         visible={levelsVisible}
         currentLevel={level.number}

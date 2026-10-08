@@ -262,6 +262,16 @@ export async function mockRegister({ name, email, password }) {
   mockUsers.push(user);
   return toPublicUser(user);
 }
+export async function mockUpdateUser(userId, { name, email }) {
+  await wait();
+  const user = mockUsers.find((u) => u.id === userId);
+  if (!user) throw new Error('Usuario no encontrado');
+  const taken = mockUsers.some((u) => u.id !== userId && u.email.toLowerCase() === email.toLowerCase());
+  if (taken) throw new Error('Ese email ya está en uso');
+  Object.assign(user, { name, email });
+  return toPublicUser(user);
+}
+
 
 function toPublicUser({ password, ...user }: { id: number; name: string; email: string; role: string; password: string }) {
   return user;

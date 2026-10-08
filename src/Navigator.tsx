@@ -18,6 +18,7 @@ import { colors, fonts } from './theme';
 import CinemasScreen from './screens/Cinemas';
 import BrandLogo from './components/BrandLogo';
 import UserReviewsScreen from './screens/UserReviews';
+import SettingsScreen from './screens/Settings';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -66,6 +67,8 @@ function RootNavigator() {
         <Stack.Screen name="AddMovie" component={AddMovieScreen} options={headerOptions} />
         <Stack.Screen name="ManageUsers" component={ManageUsersScreen} options={headerOptions} />
         <Stack.Screen name="UserReviews" component={UserReviewsScreen} options={headerOptions} />
+        <Stack.Screen name="Settings" component={SettingsScreen} options={{ ...headerOptions, headerTitle: 'Configuración' }} />
+
         </>
       ) : (
         <Stack.Group screenOptions={{ presentation: 'modal' }}>
