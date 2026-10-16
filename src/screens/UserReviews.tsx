@@ -28,7 +28,7 @@ type Review = {
 };
 
 const MODES: { key: Mode; label: string }[] = [
-  { key: 'reviews', label: 'Reseñas' },
+  { key: 'reviews', label: 'Comentarios' },
   { key: 'likes', label: 'Likes' },
 ];
 
@@ -39,7 +39,7 @@ function UserReviewsScreen({ navigation, route }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Las reseñas solo las usa esta pantalla: se piden al mock y se guardan en estado local
+  // Los comentarios solo los usa esta pantalla: se piden al mock y se guardan en estado local
   useEffect(() => {
     if (!user.user) return;
     mockGetUserComments(user.user.id)
@@ -48,17 +48,17 @@ function UserReviewsScreen({ navigation, route }) {
       .finally(() => setLoading(false));
   }, [user.user?.id]);
 
-  // En modo likes se ordena por likes; en reseñas, de la más nueva a la más vieja
+  // En modo likes se ordena por likes; en comentarios, del más nuevo al más viejo
   const data = mode === 'likes' ? [...list].sort((a, b) => b.likes - a.likes) : list;
   const totalLikes = list.reduce((sum, r) => sum + r.likes, 0);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{mode === 'likes' ? 'Likes recibidos' : 'Mis reseñas'}</Text>
+      <Text style={styles.title}>{mode === 'likes' ? 'Likes recibidos' : 'Mis comentarios'}</Text>
       <Text style={styles.subtitle}>
         {mode === 'likes'
-          ? `${formatNumber(totalLikes)} likes en ${list.length} reseñas`
-          : `${list.length} reseñas publicadas`}
+          ? `${formatNumber(totalLikes)} likes en ${list.length} comentarios`
+          : `${list.length} comentarios publicados`}
       </Text>
 
       <View style={styles.segment}>
@@ -85,7 +85,7 @@ function UserReviewsScreen({ navigation, route }) {
           data={data}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={styles.list}
-          ListEmptyComponent={<Text style={styles.empty}>Todavía no publicaste reseñas.</Text>}
+          ListEmptyComponent={<Text style={styles.empty}>Todavía no publicaste comentarios.</Text>}
           renderItem={({ item, index }) => (
             <TouchableOpacity
               style={styles.card}

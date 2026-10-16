@@ -30,7 +30,7 @@ const LEVELS = [
     min: 0,
     name: 'Espectador',
     icon: 'ticket-outline',
-    benefits: ['Reseñar y calificar películas', 'Avisos el día del estreno'],
+    benefits: ['Comentar y calificar películas', 'Avisos el día del estreno'],
   },
   {
     min: 50,
@@ -42,7 +42,7 @@ const LEVELS = [
     min: 100,
     name: 'Crítico',
     icon: 'create-outline',
-    benefits: ['Tus reseñas pueden aparecer en Reseñas populares', 'Acceso a preventas anticipadas'],
+    benefits: ['Tus comentarios pueden aparecer en Comentarios populares', 'Acceso a preventas anticipadas'],
   },
   {
     min: 150,
@@ -222,7 +222,7 @@ function ProfileScreen({ navigation }) {
         <BrandLogo size={110} />
         <Text style={styles.guestTitle}>Tu perfil de cine</Text>
         <Text style={styles.guestText}>
-          Ingresá para ver tus reseñas, subir de nivel y canjear premios en cines adheridos.
+          Ingresá para ver tus comentarios, subir de nivel y canjear premios en cines adheridos.
         </Text>
         <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('Login')}>
           <Text style={styles.primaryButtonText}>Iniciar sesión</Text>
@@ -298,7 +298,7 @@ function ProfileScreen({ navigation }) {
           icon="chatbubbles"
           color={colors.accentPrimarySoft}
           value={String(profile?.reviews ?? 0)}
-          label="Reseñas"
+          label="Comentarios"
           onPress={() => navigation.navigate('UserReviews', { mode: 'reviews' })}
         />
         <StatCard
@@ -338,7 +338,7 @@ function ProfileScreen({ navigation }) {
             </>
           ) : (
             <Text style={styles.hint}>
-              Como moderador podés borrar cualquier comentario o reseña desde el detalle de cada película.
+              Como moderador podés borrar cualquier comentario desde el detalle de cada película.
             </Text>
           )}
         </>

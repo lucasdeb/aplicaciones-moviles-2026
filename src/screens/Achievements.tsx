@@ -63,14 +63,14 @@ function AchievementsScreen({ navigation }) {
   const { user } = useAuth();
   const { achievements, rewards, fetchAchievements, redeemReward } = useGamification();
 
-  // Se recalcula al entrar a la solapa, así refleja las reseñas nuevas
+  // Se recalcula al entrar a la solapa, así refleja los comentarios nuevos
   useOnFocus(fetchAchievements, [user.user?.id]);
 
   if (!user.isLoggedIn) {
     return (
       <View style={styles.guest}>
         <BrandLogo size={96} />
-        <Text style={styles.guestTitle}>Ganá puntos con tus reseñas</Text>
+        <Text style={styles.guestTitle}>Ganá puntos con tus comentarios</Text>
         <Text style={styles.guestText}>
           Iniciá sesión para ver tus logros y canjear premios en cines adheridos.
         </Text>

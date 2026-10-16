@@ -512,8 +512,8 @@ interface AchievementDef {
 const ACHIEVEMENTS: AchievementDef[] = [
   {
     id: 'first_review',
-    title: 'Primera reseña',
-    description: 'Publicá tu primer comentario o reseña',
+    title: 'Primer comentario',
+    description: 'Publicá tu primer comentario',
     icon: 'create-outline',
     stat: 'totalReviews',
     goal: 1,
@@ -522,7 +522,7 @@ const ACHIEVEMENTS: AchievementDef[] = [
   {
     id: 'active_critic',
     title: 'Crítico en marcha',
-    description: 'Publicá 5 reseñas',
+    description: 'Publicá 5 comentarios',
     icon: 'chatbubbles-outline',
     stat: 'totalReviews',
      goal: 5,
@@ -531,7 +531,7 @@ const ACHIEVEMENTS: AchievementDef[] = [
   {
     id: 'expert_critic',
     title: 'Crítico experto',
-    description: 'Publicá 15 reseñas',
+    description: 'Publicá 15 comentarios',
     icon: 'ribbon-outline',
     stat: 'totalReviews',
     goal: 15,
@@ -539,8 +539,8 @@ const ACHIEVEMENTS: AchievementDef[] = [
   },
   {
     id: 'viral_review',
-    title: 'Reseña viral',
-    description: 'Conseguí 100 likes o más en una sola reseña',
+    title: 'Comentario viral',
+    description: 'Conseguí 100 likes o más en un solo comentario',
     icon: 'flame-outline',
     stat: 'maxLikesOnReview',
     goal: 100,
@@ -564,7 +564,7 @@ const ACHIEVEMENTS: AchievementDef[] = [
     goal: 5,
     points: 15,
   },
-  { id: 'cinema_photo', title: 'Fui al cine', description: 'Subí una reseña con foto', icon: 'camera-outline', stat: 'totalPhotos', goal: 1, points: 20 },
+  { id: 'cinema_photo', title: 'Fui al cine', description: 'Subí un comentario con foto', icon: 'camera-outline', stat: 'totalPhotos', goal: 1, points: 20 },
 ];
 
 export const REWARDS = [

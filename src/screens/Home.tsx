@@ -167,7 +167,7 @@ function HomeScreen({ navigation }) {
 
           {feed.popularReviews.length > 0 && (
             <RevealOnScroll scrollY={scrollY}>
-              <SectionHeader title="Reseñas populares" />
+              <SectionHeader title="Comentarios populares" />
               <View style={styles.reviewsList}>
                 {feed.popularReviews.slice(0, 5).map((review) => (
                   <ReviewCard
@@ -214,7 +214,7 @@ function HomeScreen({ navigation }) {
 
           {feed.popularReviewers.length > 0 && (
             <RevealOnScroll scrollY={scrollY}>
-              <SectionHeader title="Reseñadores populares" />
+              <SectionHeader title="Comentaristas populares" />
               <FlatList
                 data={feed.popularReviewers}
                 keyExtractor={(item) => String(item.id)}
@@ -236,7 +236,7 @@ function HomeScreen({ navigation }) {
                     <Text style={styles.reviewerName} numberOfLines={1}>
                       {item.name}
                     </Text>
-                    <Text style={styles.reviewerCount}>{item.reviewCount} reseñas</Text>
+                    <Text style={styles.reviewerCount}>{item.reviewCount} comentarios</Text>
                   </View>
                 )}
               />
