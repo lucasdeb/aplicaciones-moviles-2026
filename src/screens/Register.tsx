@@ -36,7 +36,7 @@ function RegisterScreen({ navigation }) {
       return;
     }
     setFormError('');
-    const result = await  handleRegister({ name: name.trim(), email: email.trim(), password });
+    const result = await handleRegister({ name: name.trim(), email: email.trim(), password});
     if (!result.success) setFormError(result.error);
   }
 

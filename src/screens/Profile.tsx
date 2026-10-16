@@ -9,6 +9,8 @@ import { colors, fonts } from '../theme';
 import { formatNumber } from '../utils/formatNumber';
 import BrandLogo from '../components/BrandLogo';
 import SettingsButton from '../components/SettingsButton';
+import CommentCard from '../components/CommentCard';
+import { mockGetUserReposts, mockRepostComment } from '../mockData';
 
 const ROLE_LABELS = {
   user: 'Usuario',
@@ -68,6 +70,17 @@ type StatCardProps = {
   label: string;
   onPress: () => void;
 };
+
+type CommentCardProps = {
+  commentId: string;
+  authorName: string;
+  text: string;
+  createdAt: string;
+  likes: number;
+  reposts: number;
+  onPress: () => void;
+};
+
 
 function StatCard({ icon, color, value, label, onPress }: StatCardProps) {
   return (
@@ -163,6 +176,41 @@ function ProfileScreen({ navigation }) {
   const { user, logOut } = useAuth();
   const { achievements, rewards, fetchAchievements } = useGamification();
   const [levelsVisible, setLevelsVisible] = useState(false);
+  const [reposts, setReposts] = useState([]);
+
+  //Carga los reposts del usuario y los guarda en el estado
+  async function loadReposts() {
+    const userId = user.user?.id;
+
+    if (!userId) {
+      setReposts([]);
+      return;
+    }
+
+    const list = await mockGetUserReposts(userId);
+    setReposts(list);
+  }
+
+  async function removeRepost(commentId) {
+  if (!user.user?.id) return;
+
+  const result = await mockRepostComment(
+    commentId,
+    user.user.id
+  );
+
+  if (!result.reposted) {
+    setReposts((current) =>
+      current.filter(
+        (comment) => comment.id !== commentId
+      )
+    );
+  }
+
+  return result.reposted;
+}
+
+  useOnFocus(loadReposts, [user.user?.id]);
 
   // Las estadísticas se recalculan al entrar a la solapa
   useOnFocus(fetchAchievements, [user.user?.id]);
@@ -307,6 +355,37 @@ function ProfileScreen({ navigation }) {
         points={achievements.totalPoints}
         onClose={() => setLevelsVisible(false)}
       />
+      <Text style={styles.sectionTitle}>Reposteos</Text>
+
+      {reposts.length === 0 ? (
+        <Text style={styles.hint}>
+          Todavía no reposteaste ningún comentario.
+        </Text>
+      ) : (
+        reposts.map((comment) => (
+          <View key={comment.id} style={styles.repostItem}>
+            <View style={styles.repostHeader}>
+              <Ionicons
+                name="repeat"
+                size={14}
+                color={colors.accentSecondaryText}
+              />
+              <Text style={styles.repostLabel}>
+                Reposteado por vos
+              </Text>
+            </View>
+
+            <CommentCard
+              comment={comment}
+              canDelete={false}
+              onLike={() => {}}
+              onRepost={() => removeRepost(comment.id)}
+              onDelete={() => {}}
+              initialReposted={true}
+            />
+          </View>
+        ))
+      )}
     </ScrollView>
   );
 }
@@ -699,6 +778,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: fonts.body,
     marginTop: 16,
+  },
+  repostItem: {
+    marginBottom: 8,
+  },
+  repostHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  repostLabel: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontFamily: fonts.label,
+    marginLeft: 6,
   },
 });
 

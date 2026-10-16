@@ -3,11 +3,11 @@ function wait(ms = 300) {
 }
 
 const mockUsers = [
-  { id: 1, name: 'Admin WhatNext', email: 'admin.demo@whatsnext.app', role: 'superadmin', password: 'Demo1234' },
-  { id: 2, name: 'Sofía Ramírez',   email: 'sofia.demo@whatsnext.app', role: 'moderator',  password: 'Demo1234' },
-  { id: 3, name: 'Mateo Duarte',    email: 'mateo.demo@whatsnext.app', role: 'user',       password: 'Demo1234' },
-  { id: 4, name: 'Lucía Fernández', email: 'lucia.demo@whatsnext.app', role: 'user',       password: 'Demo1234' },
-  { id: 5, name: 'Nicolás Peralta', email: 'nicolas.demo@whatsnext.app', role: 'user',     password: 'Demo1234' },
+  { id: 1, name: 'Admin WhatNext', email: 'admin.demo@whatsnext.app', role: 'superadmin', password: 'Demo1234', reposts: [] },
+  { id: 2, name: 'Sofía Ramírez',   email: 'sofia.demo@whatsnext.app', role: 'moderator', password: 'Demo1234', reposts: [] },
+  { id: 3, name: 'Mateo Duarte',    email: 'mateo.demo@whatsnext.app', role: 'user', password: 'Demo1234', reposts: [] },
+  { id: 4, name: 'Lucía Fernández', email: 'lucia.demo@whatsnext.app', role: 'user', password: 'Demo1234', reposts: [] },
+  { id: 5, name: 'Nicolás Peralta', email: 'nicolas.demo@whatsnext.app', role: 'user', password: 'Demo1234', reposts: [] },
 ];
 
 let nextUserId = mockUsers.length + 1;
@@ -189,6 +189,15 @@ const mockMovies = [
   },
 ];
 
+let mockReposts = [
+  {
+    id: 1,
+    userId: 0,
+    commentId: 12,
+    createdAt: new Date().toISOString(),
+  },
+];
+
 let nextMovieId = mockMovies.length + 1;
 
 const commentTemplates = [
@@ -258,7 +267,7 @@ export async function mockRegister({ name, email, password }) {
   await wait();
   const exists = mockUsers.some((u) => u.email.toLowerCase() === email.toLowerCase());
   if (exists) throw new Error('Ya existe una cuenta con ese email');
-  const user = { id: nextUserId++, name, email, role: 'user', password };
+  const user = { id: nextUserId++, name, email, role: 'user', password, reposts: [] };
   mockUsers.push(user);
   return toPublicUser(user);
 }
@@ -273,7 +282,7 @@ export async function mockUpdateUser(userId, { name, email }) {
 }
 
 
-function toPublicUser({ password, ...user }: { id: number; name: string; email: string; role: string; password: string }) {
+function toPublicUser({ password, ...user }: { id: number; name: string; email: string; role: string; password: string, reposts: any[] }) {
   return user;
 }
 
@@ -393,12 +402,49 @@ export async function mockLikeComment(commentId) {
   return toPublicComment(comment);
 }
 
-export async function mockRepostComment(commentId) {
+export async function mockRepostComment(
+  commentId,
+  userId
+) {
   await wait();
-  const comment = mockComments.find((c) => c.id === commentId);
-  if (!comment) throw new Error('Comentario no encontrado');
-  comment.reposts += 1;
-  return toPublicComment(comment);
+
+  const comment = mockComments.find(
+    (comment) => comment.id === commentId
+  );
+
+  const user = mockUsers.find(
+    (user) => user.id === userId
+  );
+
+  if (!comment) {
+    throw new Error('Comentario no encontrado');
+  }
+
+  if (!user) {
+    throw new Error('Usuario no encontrado');
+  }
+
+  const repostIndex = user.reposts.indexOf(commentId);
+
+  if (repostIndex === -1) {
+    // It was not reposted, so add it
+    user.reposts.push(commentId);
+    comment.reposts += 1;
+
+    return {
+      comment: toPublicComment(comment),
+      reposted: true,
+    };
+  }
+
+  // It was already reposted, so remove it
+  user.reposts.splice(repostIndex, 1);
+  comment.reposts = Math.max(0, comment.reposts - 1);
+
+  return {
+    comment: toPublicComment(comment),
+    reposted: false,
+  };
 }
 
 export async function mockGetPopularReviews() {
@@ -433,6 +479,22 @@ export async function mockUpdateUserRole(userId, role) {
   if (!user) throw new Error('Usuario no encontrado');
   user.role = role;
   return toPublicUser(user);
+}
+
+export function mockGetUser(userId) {
+  return mockUsers.find((u) => u.id === userId);
+}
+
+//Carga los reposts del usuario y devuelve los comentarios asociados por el commentId
+export async function mockGetUserReposts(userId) {
+  await wait();
+  const user = mockGetUser(userId);
+  if (!user) throw new Error('Usuario no encontrado');
+
+  return user.reposts
+    .map((commentId) => mockComments.find((c) => c.id === commentId))
+    .filter(Boolean) // Filtramos los comentarios que no exiten y aparecen como undefined
+    .map((comment) => toPublicComment(comment));
 }
 
 type AchievementStat = 'totalReviews' | 'maxLikesOnReview' | 'distinctGenres' | 'totalRatings' | 'totalPhotos';

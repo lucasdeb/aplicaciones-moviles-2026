@@ -76,13 +76,21 @@ function MovieDetailScreen({ navigation, route }) {
     replaceComment(await mockLikeComment(commentId));
   }
 
-  async function repostComment(commentId) {
-    replaceComment(await mockRepostComment(commentId));
+  async function repostComment(commentId, userId) {
+    const result = await mockRepostComment(
+      commentId,
+      userId
+    );
+
+    replaceComment(result.comment);
+
+    return result.reposted;
   }
 
   async function deleteComment(commentId) {
     try {
       await mockDeleteComment(commentId);
+      //Retorna la lista de los comentarios filtrados que excluye el actual
       setComments((current) => current.filter((c) => c.id !== commentId));
       return { success: true };
     } catch (e) {
@@ -253,9 +261,10 @@ function MovieDetailScreen({ navigation, route }) {
               key={comment.id}
               comment={comment}
               onLike={requireLogin(() => likeComment(comment.id))}
-              onRepost={requireLogin(() => repostComment(comment.id))}
+              onRepost={requireLogin(() => repostComment(comment.id, me?.id))}
               canDelete={canModerate || comment.author.id === me?.id}
               onDelete={() => deleteComment(comment.id)}
+              initialReposted={me?.reposts?.includes(comment.id) ?? false}
             />
           ))
         )}

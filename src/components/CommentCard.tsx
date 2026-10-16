@@ -9,10 +9,11 @@ import { Image } from 'react-native';
 const SWIPE_THRESHOLD = -80;
 const MAX_SWIPE = -110;
 
-export default function CommentCard({ comment, onLike, onRepost, canDelete, onDelete }) {
+export default function CommentCard({ comment, onLike, onRepost, canDelete, onDelete, initialReposted = false }) {
   const [liked, setLiked] = useState(false);
-  const [reposted, setReposted] = useState(false);
+  const [reposted, setReposted] = useState(initialReposted);
   const translateX = useRef(new Animated.Value(0)).current;
+  const authorName = comment.author?.name ?? 'Usuario';
 
   function resetPosition() {
     Animated.spring(translateX, { toValue: 0, useNativeDriver: false }).start();
@@ -57,10 +58,9 @@ export default function CommentCard({ comment, onLike, onRepost, canDelete, onDe
     onLike();
   }
 
-  function handleRepost() {
-    if (reposted) return;
-    setReposted(true);
-    onRepost();
+  async function handleRepost() {
+    const isNowReposted = await onRepost();
+    setReposted(isNowReposted);
   }
 
   return (
@@ -82,12 +82,12 @@ export default function CommentCard({ comment, onLike, onRepost, canDelete, onDe
           end={{ x: 1, y: 1 }}
           style={styles.avatar}
         >
-          <Text style={styles.avatarInitial}>{comment.author.name.charAt(0).toUpperCase()}</Text>
+          <Text style={styles.avatarInitial}>{authorName.charAt(0).toUpperCase()}</Text>
         </LinearGradient>
 
         <View style={styles.bubble}>
           <View style={styles.headerRow}>
-            <Text style={styles.author}>{comment.author.name}</Text>
+            <Text style={styles.author}>{authorName}</Text>
             <View style={styles.dot} />
             <Text style={styles.time}>{timeAgo(comment.createdAt)}</Text>
           </View>
