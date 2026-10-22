@@ -114,12 +114,11 @@ function HomeScreen({ navigation }) {
 
       {currentUser?.name ? (
         <View style={styles.greetingPillWrap}>
-          <TouchableOpacity style={styles.greetingPill}>
-            <AppIcon name="person-circle-outline" size={16} />
+          <view style={styles.greetingPill}>
             <Text style={styles.greetingText} numberOfLines={1}>
               Hola, {currentUser.name.split(' ')[0]}
             </Text>
-          </TouchableOpacity>
+          </view>
         </View>
       ) : null}
 
