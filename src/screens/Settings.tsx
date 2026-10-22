@@ -12,6 +12,8 @@ import {
   Linking,
   Platform,
   StyleSheet,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getPermissionsAsync } from 'expo-notifications/build/NotificationPermissions';
@@ -19,6 +21,7 @@ import { useAuth } from '../context/AuthContext';
 import { ensureNotificationPermission } from '../utils/reminders';
 import { isValidEmail } from '../utils/validators';
 import { colors, fonts } from '../theme';
+import ConfirmModal from '../components/ConfirmModal';
 
 function SettingsScreen() {
   const { user, updateUser, logOut } = useAuth();
@@ -27,6 +30,7 @@ function SettingsScreen() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
   const [notificationsOn, setNotificationsOn] = useState(false);
+  const [logoutVisible, setLogoutVisible] = useState(false);
 
   // El permiso se puede cambiar desde los ajustes del teléfono,
   // así que lo volvemos a leer cada vez que la app vuelve al frente
@@ -85,75 +89,87 @@ function SettingsScreen() {
   }
 
   function onLogOut() {
-    Alert.alert('Cerrar sesión', '¿Seguro que querés salir?', [
-      { text: 'Cancelar', style: 'cancel' },
-      // Al salir, el Navigator quita esta pantalla solo (está dentro del bloque isLoggedIn)
-      { text: 'Salir', style: 'destructive', onPress: logOut },
-    ]);
+    setLogoutVisible(true);
   }
 
+  function confirmLogOut(){
+    setLogoutVisible(false);
+    logOut();
+  }
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.sectionTitle}>Cuenta</Text>
-      <View style={styles.card}>
-        <Text style={styles.label}>Nombre</Text>
-        <TextInput
-          style={styles.input}
-          value={name}
-          onChangeText={setName}
-          placeholder="Tu nombre"
-          placeholderTextColor={colors.textMuted}
-        />
-
-        <Text style={styles.label}>Email</Text>
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          placeholder="tu@email.com"
-          placeholderTextColor={colors.textMuted}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-
-        {formError ? <Text style={styles.error}>{formError}</Text> : null}
-
-        <TouchableOpacity
-          style={[styles.button, (!hasChanges || saving) && styles.buttonDisabled]}
-          onPress={onSave}
-          disabled={!hasChanges || saving}
-        >
-          {saving ? (
-            <ActivityIndicator color={colors.onAccentPrimary} />
-          ) : (
-            <Text style={styles.buttonText}>Guardar cambios</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-
-      <Text style={styles.sectionTitle}>Preferencias</Text>
-      <View style={styles.card}>
-        <View style={styles.row}>
-          <Ionicons name="notifications-outline" size={20} color={colors.accentPrimarySoft} />
-          <View style={styles.rowText}>
-            <Text style={styles.rowTitle}>Avisos de estrenos</Text>
-            <Text style={styles.rowSubtitle}>Te avisamos el día que se estrena una película</Text>
-          </View>
-          <Switch
-            value={notificationsOn}
-            onValueChange={onToggleNotifications}
-            trackColor={{ false: colors.surfaceHigh, true: colors.accentPrimary }}
-            thumbColor={colors.onAccentPrimary}
+    <>
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        {/* Keep all existing settings content here */}
+        <Text style={styles.sectionTitle}>Cuenta</Text>
+        <View style={styles.card}>
+          <Text style={styles.label}>Nombre</Text>
+          <TextInput
+            style={styles.input}
+            value={name}
+            onChangeText={setName}
+            placeholder="Tu nombre"
+            placeholderTextColor={colors.textMuted}
           />
-        </View>
-      </View>
 
-      <TouchableOpacity style={styles.logout} onPress={onLogOut}>
-        <Ionicons name="log-out-outline" size={20} color={colors.danger} />
-        <Text style={styles.logoutText}>Cerrar sesión</Text>
-      </TouchableOpacity>
-    </ScrollView>
+          <Text style={styles.label}>Email</Text>
+          <TextInput
+            style={styles.input}
+            value={email}
+            onChangeText={setEmail}
+            placeholder="tu@email.com"
+            placeholderTextColor={colors.textMuted}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+
+          {formError ? <Text style={styles.error}>{formError}</Text> : null}
+
+          <TouchableOpacity
+            style={[styles.button, (!hasChanges || saving) && styles.buttonDisabled]}
+            onPress={onSave}
+            disabled={!hasChanges || saving}
+          >
+            {saving ? (
+              <ActivityIndicator color={colors.onAccentPrimary} />
+            ) : (
+              <Text style={styles.buttonText}>Guardar cambios</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.sectionTitle}>Preferencias</Text>
+        <View style={styles.card}>
+          <View style={styles.row}>
+            <Ionicons name="notifications-outline" size={20} color={colors.accentPrimarySoft} />
+            <View style={styles.rowText}>
+              <Text style={styles.rowTitle}>Avisos de estrenos</Text>
+              <Text style={styles.rowSubtitle}>Te avisamos el día que se estrena una película</Text>
+            </View>
+            <Switch
+              value={notificationsOn}
+              onValueChange={onToggleNotifications}
+              trackColor={{ false: colors.surfaceHigh, true: colors.accentPrimary }}
+              thumbColor={colors.onAccentPrimary}
+            />
+          </View>
+        </View>
+        <TouchableOpacity style={styles.logout} onPress={onLogOut}>
+          <Ionicons name="log-out-outline" size={20} color={colors.danger} />
+          <Text style={styles.logoutText}>Cerrar sesión</Text>
+        </TouchableOpacity>
+      </ScrollView>
+
+      <ConfirmModal
+        visible={logoutVisible}
+        title="Cerrar sesión"
+        message="¿Seguro que querés salir de tu cuenta?"
+        confirmLabel="Salir"
+        destructive
+        onConfirm={confirmLogOut}
+        onCancel={() => setLogoutVisible(false)}
+      />
+    </>
   );
 }
 
@@ -251,6 +267,73 @@ const styles = StyleSheet.create({
     fontFamily: fonts.label,
     fontSize: 16,
     marginLeft: 8,
+  },
+  modalOverlay: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+  padding: 24,
+  backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 360,
+    padding: 24,
+    borderRadius: 16,
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  modalIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 14,
+    backgroundColor: colors.surfaceHigh,
+  },
+  modalTitle: {
+    color: colors.text,
+    fontSize: 20,
+    fontFamily: fonts.title,
+  },
+  modalText: {
+    color: colors.textMuted,
+    fontSize: 14,
+    fontFamily: fonts.body,
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  modalActions: {
+    width: '100%',
+    flexDirection: 'row',
+    marginTop: 24,
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  cancelButtonText: {
+    color: colors.text,
+    fontFamily: fonts.label,
+  },
+  confirmButton: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: colors.danger,
+  },
+  confirmButtonText: {
+    color: colors.onAccentPrimary,
+    fontFamily: fonts.label,
   },
 });
 

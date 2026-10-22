@@ -9,7 +9,7 @@ export type TmdbMovie = {
   overview: string;
   releaseDate: string; // 'YYYY-MM-DD'
   posterUrl: string | null;
-  rating: number;
+  rating: number | '-';
 };
 
 
@@ -24,13 +24,14 @@ async function get(path: string): Promise<TmdbMovie[]> {
   const res = await fetch(`${BASE_URL}${path}?api_key=${API_KEY}&language=es-AR&region=AR&page=1`);
   if (!res.ok) throw new Error(`TMDB respondió ${res.status}`);
   const json = await res.json();
+  console.log(json.results);
   return json.results.map((m: any) => ({
     id: m.id,
     title: m.title,
     overview: m.overview,
     releaseDate: m.release_date,
     posterUrl: m.poster_path ? `${IMG_URL}${m.poster_path}` : null,
-    rating: Math.round(m.vote_average * 10) / 10,
+    rating: m.vote_average === 0 ? '-' : Number((m.vote_average / 2).toFixed(1)),
   }));
 }
 

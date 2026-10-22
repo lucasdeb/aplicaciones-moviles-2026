@@ -1,3 +1,5 @@
+import { calculateRank } from './utils/ranks';
+
 function wait(ms = 300) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -690,6 +692,7 @@ export async function mockGetPublicProfile(userId) {
 
   return {
     user: { id: user.id, name: user.name, role: user.role },  
+    rank: calculateRank(comments.length),
     comments,
     reposts,
     stats: {
