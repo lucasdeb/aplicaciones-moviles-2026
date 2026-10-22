@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   Modal,
   ActivityIndicator,
+  TextInput,
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -78,6 +79,18 @@ function HomeScreen({ navigation }) {
   const { movies, fetchMovies } = useMovies();
   // El feed solo lo usa Home: estado local, no global
   const [feed, setFeed] = useState({ popularReviews: [], popularReviewers: [] });
+  const [showSearch, setShowSearch] = useState(false);
+  const [search, setSearch] = useState('');
+
+  // Búsqueda: deja solo las películas cuyo título contiene lo escrito
+  const results = movies.list.filter((movie) =>
+    movie.title.toLowerCase().includes(search.toLowerCase())
+  );
+
+  function toggleSearch() {
+    setShowSearch(!showSearch);
+    setSearch('');
+  }
 
   async function refreshAll() {
     fetchMovies();
@@ -121,8 +134,8 @@ function HomeScreen({ navigation }) {
         </View>
 
         <View style={styles.brandIcons}>
-          <TouchableOpacity style={styles.iconButton} hitSlop={8}>
-            <Ionicons name="search-outline" size={18} color={colors.accentPrimarySoft} />
+          <TouchableOpacity style={styles.iconButton} hitSlop={8} onPress={toggleSearch}>
+            <Ionicons name={showSearch ? 'close' : 'search-outline'} size={18} color={colors.accentPrimarySoft} />
           </TouchableOpacity>
             <SettingsButton />
         </View>
@@ -139,7 +152,23 @@ function HomeScreen({ navigation }) {
         </View>
       ) : null}
 
-      {isInitialLoading ? (
+      {showSearch && (
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar película por título"
+          placeholderTextColor={colors.textMuted}
+          value={search}
+          onChangeText={setSearch}
+          autoFocus
+        />
+      )}
+
+      {search !== '' ? (
+        <View>
+          <PopularCarousel movies={results} onPressMovie={goToMovie} />
+          {results.length === 0 && <Text style={styles.noResults}>No hay películas con ese título.</Text>}
+        </View>
+      ) : isInitialLoading ? (
         <ActivityIndicator color={colors.accentPrimary} style={styles.loader} />
       ) : movies.error ? (
         <Text style={styles.error}>{movies.error}</Text>
@@ -402,6 +431,27 @@ const styles = StyleSheet.create({
   },
   gridList: {
     paddingBottom: 24,
+  },
+  searchInput: {
+    marginHorizontal: 16,
+    marginTop: 10,
+    marginBottom: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    color: colors.text,
+    fontSize: 14,
+    fontFamily: fonts.body,
+  },
+  noResults: {
+    color: colors.textMuted,
+    fontSize: 14,
+    fontFamily: fonts.body,
+    textAlign: 'center',
+    marginTop: 24,
   },
 });
 

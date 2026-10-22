@@ -48,10 +48,6 @@ export default function FeaturedHero({ movies, onPressMovie }) {
         <Image source={{ uri: movie.backdropUrl || movie.posterUrl }} style={styles.image} />
 
         <View style={styles.topRow}>
-          <View style={styles.featuredBadge}>
-            <Ionicons name="sparkles" size={12} color={colors.onAccentPrimary} />
-            <Text style={styles.featuredBadgeText}>DESTACADA</Text>
-          </View>
           <View style={styles.ratingBadge}>
             <Ionicons name="star" size={12} color={colors.background} />
             <Text style={styles.ratingBadgeText}>{movie.rating}</Text>
@@ -107,23 +103,8 @@ const styles = StyleSheet.create({
   },
   topRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     padding: 12,
-  },
-  featuredBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.accentPrimary,
-    borderRadius: 20,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-  },
-  featuredBadgeText: {
-    color: colors.onAccentPrimary,
-    fontSize: 10,
-    fontFamily: fonts.label,
-    marginLeft: 4,
-    letterSpacing: 0.5,
   },
   ratingBadge: {
     flexDirection: 'row',
