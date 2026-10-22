@@ -90,7 +90,6 @@ function MovieDetailScreen({ navigation, route }) {
   async function deleteComment(commentId) {
     try {
       await mockDeleteComment(commentId);
-      //Retorna la lista de los comentarios filtrados que excluye el actual
       setComments((current) => current.filter((c) => c.id !== commentId));
       return { success: true };
     } catch (e) {
@@ -205,7 +204,7 @@ function MovieDetailScreen({ navigation, route }) {
         <View style={[styles.sectionHeader, styles.sectionHeaderRow]}>
           <View style={styles.sectionHeaderLeft}>
             <View style={styles.sectionBar} />
-            <Text style={styles.sectionTitle}>Comentarios</Text>
+            <Text style={styles.sectionTitle}>Reseñas</Text>
           </View>
           <View style={styles.ratingSummary}>
             <Ionicons name="star" size={14} color={colors.rating} />
@@ -230,7 +229,7 @@ function MovieDetailScreen({ navigation, route }) {
               </TouchableOpacity>
               <TextInput
                 style={styles.commentInput}
-                placeholder="Escribí tu opinión..."
+                placeholder="Escribí tu reseña..."
                 placeholderTextColor={colors.textMuted}
                 value={commentText}
                 onChangeText={setCommentText}
@@ -253,7 +252,7 @@ function MovieDetailScreen({ navigation, route }) {
             activeOpacity={0.8}
           >
             <Ionicons name="log-in-outline" size={16} color={colors.accentPrimary} />
-            <Text style={styles.loginText}>Iniciá sesión para comentar</Text>
+            <Text style={styles.loginText}>Iniciá sesión para reseñar</Text>
           </TouchableOpacity>
         )}
 

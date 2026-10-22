@@ -28,7 +28,7 @@ export default function CommentCard({ comment, onLike, onRepost, canDelete,onPre
   }
 
   function confirmDelete() {
-    Alert.alert('Borrar comentario', '¿Seguro que querés borrar este comentario?', [
+    Alert.alert('Borrar reseña', '¿Seguro que querés borrar esta reseña?', [
       { text: 'Cancelar', onPress: resetPosition },
       { text: 'Borrar', style: 'destructive', onPress: handleConfirmDelete },
     ]);

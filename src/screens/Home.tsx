@@ -167,7 +167,7 @@ function HomeScreen({ navigation }) {
 
           {feed.popularReviews.length > 0 && (
             <RevealOnScroll scrollY={scrollY}>
-              <SectionHeader title="Comentarios populares" />
+              <SectionHeader title="Reseñas populares" />
               <View style={styles.reviewsList}>
                 {feed.popularReviews.slice(0, 5).map((review) => (
                   <ReviewCard
@@ -180,68 +180,7 @@ function HomeScreen({ navigation }) {
             </RevealOnScroll>
           )}
 
-          {movies.featured.length > 0 && (
-            <RevealOnScroll scrollY={scrollY}>
-              <SectionHeader title="Elegidas por el equipo" />
-              <FlatList
-                data={movies.featured}
-                keyExtractor={(item) => String(item.id)}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.carouselList}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={styles.pickCard}
-                    activeOpacity={0.8}
-                    onPress={() => goToMovie(item.id)}
-                  >
-                    <LinearGradient
-                      colors={[colors.accentPrimary, colors.accentSecondary]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.pickBorder}
-                    >
-                      <Image source={{ uri: item.posterUrl }} style={styles.pickPoster} />
-                    </LinearGradient>
-                    <Text style={styles.pickTitle} numberOfLines={1}>
-                      {item.title}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              />
-            </RevealOnScroll>
-          )}
 
-          {feed.popularReviewers.length > 0 && (
-            <RevealOnScroll scrollY={scrollY}>
-              <SectionHeader title="Comentaristas populares" />
-              <FlatList
-                data={feed.popularReviewers}
-                keyExtractor={(item) => String(item.id)}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.carouselList}
-                renderItem={({ item }) => (
-                  <View style={styles.reviewerCard}>
-                    <LinearGradient
-                      colors={[colors.accentPrimary, colors.accentSecondary]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.reviewerAvatar}
-                    >
-                      <Text style={styles.reviewerInitial}>
-                        {item.name.charAt(0).toUpperCase()}
-                      </Text>
-                    </LinearGradient>
-                    <Text style={styles.reviewerName} numberOfLines={1}>
-                      {item.name}
-                    </Text>
-                    <Text style={styles.reviewerCount}>{item.reviewCount} comentarios</Text>
-                  </View>
-                )}
-              />
-            </RevealOnScroll>
-          )}
 
           <RevealOnScroll scrollY={scrollY}>
             <SectionHeader title="Explorar todas" />

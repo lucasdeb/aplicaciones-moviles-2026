@@ -397,7 +397,7 @@ export async function mockDeleteComment(commentId) {
 export async function mockLikeComment(commentId) {
   await wait();
   const comment = mockComments.find((c) => c.id === commentId);
-  if (!comment) throw new Error('Comentario no encontrado');
+  if (!comment) throw new Error('Reseña no encontrada');
   comment.likes += 1;
   return toPublicComment(comment);
 }
@@ -417,7 +417,7 @@ export async function mockRepostComment(
   );
 
   if (!comment) {
-    throw new Error('Comentario no encontrado');
+    throw new Error('Reseña no encontrada');
   }
 
   if (!user) {
@@ -512,8 +512,8 @@ interface AchievementDef {
 const ACHIEVEMENTS: AchievementDef[] = [
   {
     id: 'first_review',
-    title: 'Primer comentario',
-    description: 'Publicá tu primer comentario',
+    title: 'Primer Reseña',
+    description: 'Publicá tu primer reseña',
     icon: 'create-outline',
     stat: 'totalReviews',
     goal: 1,
@@ -522,7 +522,7 @@ const ACHIEVEMENTS: AchievementDef[] = [
   {
     id: 'active_critic',
     title: 'Crítico en marcha',
-    description: 'Publicá 5 comentarios',
+    description: 'Publicá 5 Reseñas',
     icon: 'chatbubbles-outline',
     stat: 'totalReviews',
      goal: 5,
@@ -531,7 +531,7 @@ const ACHIEVEMENTS: AchievementDef[] = [
   {
     id: 'expert_critic',
     title: 'Crítico experto',
-    description: 'Publicá 15 comentarios',
+    description: 'Publicá 15 Reseñas',
     icon: 'ribbon-outline',
     stat: 'totalReviews',
     goal: 15,
@@ -539,8 +539,8 @@ const ACHIEVEMENTS: AchievementDef[] = [
   },
   {
     id: 'viral_review',
-    title: 'Comentario viral',
-    description: 'Conseguí 100 likes o más en un solo comentario',
+    title: 'Reseña viral',
+    description: 'Conseguí 100 likes o más en una sola reseña',
     icon: 'flame-outline',
     stat: 'maxLikesOnReview',
     goal: 100,
@@ -564,7 +564,7 @@ const ACHIEVEMENTS: AchievementDef[] = [
     goal: 5,
     points: 15,
   },
-  { id: 'cinema_photo', title: 'Fui al cine', description: 'Subí un comentario con foto', icon: 'camera-outline', stat: 'totalPhotos', goal: 1, points: 20 },
+  { id: 'cinema_photo', title: 'Fui al cine', description: 'Subí una reseña con foto', icon: 'camera-outline', stat: 'totalPhotos', goal: 1, points: 20 },
 ];
 
 export const REWARDS = [
