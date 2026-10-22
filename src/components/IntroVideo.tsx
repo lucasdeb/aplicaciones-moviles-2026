@@ -16,6 +16,7 @@ export default function IntroVideo({ onFinish }: IntroVideoProps) {
   });
 
   useEffect(() => {
+    player.play(); // en web el play() del setup se pierde porque el <video> todavía no existe
     const ended = player.addListener('playToEnd', onFinish);
     const status = player.addListener('statusChange', ({ status }) => {
       if (status === 'error') onFinish();
@@ -30,7 +31,7 @@ export default function IntroVideo({ onFinish }: IntroVideoProps) {
 
   return (
     <View style={styles.container}>
-      <VideoView player={player} style={StyleSheet.absoluteFill} contentFit="contain" nativeControls={false} />
+      <VideoView player={player} style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }]} contentFit="contain" nativeControls={false} />
       <Pressable style={StyleSheet.absoluteFill} onPress={onFinish}>
         <Text style={styles.skip}>Tocá para saltear</Text>
       </Pressable>
