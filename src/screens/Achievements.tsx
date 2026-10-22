@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import { REWARDS } from '../mockData';
 import { colors, fonts } from '../theme';
 import BrandLogo from '../components/BrandLogo';
 import SettingsButton from '../components/SettingsButton';
+import ConfirmModal from '../components/ConfirmModal';
 
 type Achievement = {
   id: string;
@@ -62,6 +63,8 @@ function Badge({ achievement }: BadgeProps) {
 function AchievementsScreen({ navigation }) {
   const { user } = useAuth();
   const { achievements, rewards, fetchAchievements, redeemReward } = useGamification();
+  const [rewardToRedeem, setRewardToRedeem] = useState<Reward | null>(null);
+  const [redeemError, setRedeemError] = useState('');
 
   // Se recalcula al entrar a la solapa, así refleja los comentarios nuevos
   useOnFocus(fetchAchievements, [user.user?.id]);
@@ -89,120 +92,135 @@ function AchievementsScreen({ navigation }) {
     .sort((a, b) => b.current / b.goal - a.current / a.goal)[0];
   const nextPercent = nextGoal ? Math.round((nextGoal.current / nextGoal.goal) * 100) : 100;
 
-  const handleRedeem = (reward: Reward) => {
-    Alert.alert('Canjear premio', `¿Canjear "${reward.title}" por ${reward.cost} puntos?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Canjear',
-        onPress: () => {
-          const result = redeemReward(reward);
-          if (result.success) Alert.alert('¡Listo!', `Tu código es ${result.code}`);
-          else Alert.alert('Error', result.error);
-        },
-      },
-    ]);
-  };
+  function handleRedeem(reward: Reward) {
+    setRedeemError('');
+    setRewardToRedeem(reward);
+  }
+
+  function confirmRedeem() {
+    if (!rewardToRedeem) return;
+
+    const result = redeemReward(rewardToRedeem);
+
+    if (!result.success) {
+      setRedeemError(result.error ?? 'No se pudo realizar el canje.');
+      return;
+    }
+
+    setRewardToRedeem(null);
+    setRedeemError('');
+  }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <BrandLogo size={36} />
-          <Text style={styles.headerTitle}>Logros</Text>
-          <SettingsButton />
+    <>
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <View style={styles.header}>
+          <View style={styles.titleRow}>
+            <BrandLogo size={36} />
+            <Text style={styles.headerTitle}>Logros</Text>
+            <SettingsButton />
+          </View>
+          <View style={styles.pointsPill}>
+            <Ionicons name="diamond-outline" size={14} color={colors.rating} />
+            <Text style={styles.pointsText}>{available} pts</Text>
+          </View>
         </View>
-        <View style={styles.pointsPill}>
-          <Ionicons name="diamond-outline" size={14} color={colors.rating} />
-          <Text style={styles.pointsText}>{available} pts</Text>
-        </View>
-      </View>
 
-      {achievements.isFetching && list.length === 0 ? (
-        <ActivityIndicator color={colors.accentPrimary} style={styles.loader} />
-      ) : (
-        <>
-          {nextGoal ? (
-            <View style={styles.challenge}>
-              <View style={styles.challengeCircle}>
-                <Text style={styles.challengePercent}>{nextPercent}%</Text>
-              </View>
-              <View style={styles.challengeBody}>
-                <Text style={styles.challengeLabel}>Próximo logro</Text>
-                <Text style={styles.challengeTitle}>{nextGoal.title}</Text>
-                <Text style={styles.challengeText}>
-                  {nextGoal.description} · {nextGoal.current}/{nextGoal.goal}
-                </Text>
-                <View style={styles.progressTrack}>
-                  <View style={[styles.progressFill, { width: `${nextPercent}%` }]} />
+        {achievements.isFetching && list.length === 0 ? (
+          <ActivityIndicator color={colors.accentPrimary} style={styles.loader} />
+        ) : (
+          <>
+            {nextGoal ? (
+              <View style={styles.challenge}>
+                <View style={styles.challengeCircle}>
+                  <Text style={styles.challengePercent}>{nextPercent}%</Text>
                 </View>
-              </View>
-              <Text style={styles.challengePoints}>+{nextGoal.points}</Text>
-            </View>
-          ) : (
-            <View style={styles.challenge}>
-              <Ionicons name="trophy" size={28} color={colors.rating} />
-              <Text style={styles.challengeTitle}>¡Desbloqueaste todos los logros!</Text>
-            </View>
-          )}
-
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Insignias</Text>
-            <Text style={styles.sectionMeta}>{unlockedCount} de {list.length} desbloqueadas</Text>
-          </View>
-          <View style={styles.badgeGrid}>
-            {list.map((item) => (
-              <Badge key={item.id} achievement={item} />
-            ))}
-          </View>
-
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Premios para canjear</Text>
-            <Text style={styles.sectionMeta}>En cines adheridos</Text>
-          </View>
-          <FlatList
-            horizontal
-            data={REWARDS}
-            keyExtractor={(item) => item.id}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.rewardList}
-            renderItem={({ item }) => {
-              const missing = item.cost - available;
-              return (
-                <View style={styles.rewardCard}>
-                  <View style={styles.rewardIcon}>
-                    <Ionicons name={item.icon as any} size={28} color={colors.rating} />
-                  </View>
-                  <View style={styles.rewardBody}>
-                    <Text style={styles.rewardTitle} numberOfLines={1}>{item.title}</Text>
-                    <Text style={styles.rewardCost}>{item.cost} pts</Text>
-                    {missing > 0 ? (
-                      <View style={[styles.redeemButton, styles.redeemButtonDisabled]}>
-                        <Text style={styles.redeemTextDisabled}>Te faltan {missing} pts</Text>
-                      </View>
-                    ) : (
-                      <TouchableOpacity style={styles.redeemButton} onPress={() => handleRedeem(item)}>
-                        <Text style={styles.redeemText}>Canjear</Text>
-                      </TouchableOpacity>
-                    )}
+                <View style={styles.challengeBody}>
+                  <Text style={styles.challengeLabel}>Próximo logro</Text>
+                  <Text style={styles.challengeTitle}>{nextGoal.title}</Text>
+                  <Text style={styles.challengeText}>
+                    {nextGoal.description} · {nextGoal.current}/{nextGoal.goal}
+                  </Text>
+                  <View style={styles.progressTrack}>
+                    <View style={[styles.progressFill, { width: `${nextPercent}%` }]} />
                   </View>
                 </View>
-              );
-            }}
-          />
+                <Text style={styles.challengePoints}>+{nextGoal.points}</Text>
+              </View>
+            ) : (
+              <View style={styles.challenge}>
+                <Ionicons name="trophy" size={28} color={colors.rating} />
+                <Text style={styles.challengeTitle}>¡Desbloqueaste todos los logros!</Text>
+              </View>
+            )}
 
-          {rewards.redeemed.length > 0 && (
-            <View style={styles.redeemed}>
-              <Text style={styles.sectionTitle}>Mis canjes</Text>
-              {rewards.redeemed.map((r) => (
-                <Text key={r.code} style={styles.redeemedItem}>
-                  {r.title} · código {r.code}
-                </Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Todos los Logros</Text>
+              <Text style={styles.sectionMeta}>{unlockedCount} de {list.length} desbloqueadas</Text>
+            </View>
+            <View style={styles.badgeGrid}>
+              {list.map((item) => (
+                <Badge key={item.id} achievement={item} />
               ))}
             </View>
-          )}
-        </>
-      )}
-    </ScrollView>
+
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Premios para canjear</Text>
+              <Text style={styles.sectionMeta}>En cines adheridos</Text>
+            </View>
+            <FlatList
+              horizontal
+              data={REWARDS}
+              keyExtractor={(item) => item.id}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.rewardList}
+              renderItem={({ item }) => {
+                const missing = item.cost - available;
+                return (
+                  <View style={styles.rewardCard}>
+                    <View style={styles.rewardIcon}>
+                      <Ionicons name={item.icon as any} size={28} color={colors.rating} />
+                    </View>
+                    <View style={styles.rewardBody}>
+                      <Text style={styles.rewardTitle} numberOfLines={1}>{item.title}</Text>
+                      <Text style={styles.rewardCost}>{item.cost} pts</Text>
+                      {missing > 0 ? (
+                        <View style={[styles.redeemButton, styles.redeemButtonDisabled]}>
+                          <Text style={styles.redeemTextDisabled}>Te faltan {missing} pts</Text>
+                        </View>
+                      ) : (
+                        <TouchableOpacity style={styles.redeemButton} onPress={() => handleRedeem(item)}>
+                          <Text style={styles.redeemText}>Canjear</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </View>
+                );
+              }}
+            />
+
+            {rewards.redeemed.length > 0 && (
+              <View style={styles.redeemed}>
+                <Text style={styles.sectionTitle}>Mis canjes</Text>
+                {rewards.redeemed.map((r) => (
+                  <Text key={r.code} style={styles.redeemedItem}>
+                    {r.title} · código {r.code}
+                  </Text>
+                ))}
+              </View>
+            )}
+          </>
+        )}
+      </ScrollView>
+      <ConfirmModal
+        visible={rewardToRedeem !== null}
+        title="Canjear premio"
+        message={`¿Canjear "${rewardToRedeem?.title}" por ${rewardToRedeem?.cost} puntos?`}
+        confirmLabel="Canjear"
+        onConfirm={confirmRedeem}
+        onCancel={() => setRewardToRedeem(null)}
+      />
+    </>
   );
 }
 

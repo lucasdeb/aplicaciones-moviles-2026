@@ -14,6 +14,7 @@ import { formatNumber } from '../utils/formatNumber';
 import BrandLogo from '../components/BrandLogo';
 import SettingsButton from '../components/SettingsButton';
 import ReviewCard from '../components/ReviewCard';            
+import { RANKS, calculateRank } from '../utils/ranks';
 import {
   mockGetPublicProfile,
   mockRepostComment,
@@ -24,31 +25,6 @@ import {
   mockGetPendingRequests,
   mockGetFriends,
 } from '../mockData';
-
-// Cada nivel se alcanza con una cantidad de reseñas publicadas
-const LEVELS = [
-  { min: 5, name: 'Espectador', icon: 'ticket-outline' },
-  { min: 10, name: 'Cinéfilo', icon: 'film-outline' },
-  { min: 20, name: 'Crítico', icon: 'create-outline' },
-  { min: 40, name: 'Director', icon: 'trophy-outline' },
-] as const;
-
-function getLevel(reviews: number) {
-  const number = LEVELS.filter((level) => reviews >= level.min).length; // 0 = todavía no llegó a 5
-  const current = LEVELS[number - 1];
-  const next = LEVELS[number];
-  const from = current ? current.min : 0;
-  return {
-    number,
-    name: current ? current.name : 'Sin nivel',
-    next,
-    progress: next ? (reviews - from) / (next.min - from) : 1,
-  };
-}
-
-function reviewsLabel(count: number) {
-  return count === 1 ? '1 reseña' : `${count} reseñas`;
-}
 
 const TABS = [
   { key: 'comments', label: 'Comentarios' },
@@ -110,50 +86,40 @@ function StatCard({ icon, color, value, label, onPress }: StatCardProps) {
   );
 }
 
-type LevelsModalProps = {
+type RanksModalProps = {
   visible: boolean;
-  currentLevel: number;
+  currentRankIndex: number;
   reviews: number;
   onClose: () => void;
 };
 
-function LevelsModal({ visible, currentLevel, reviews, onClose }: LevelsModalProps) {
+function RanksModal({ visible, currentRankIndex, reviews, onClose }: RanksModalProps) {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
         <Pressable style={styles.sheet}>
           <View style={styles.handle} />
-          <Text style={styles.sheetTitle}>Niveles</Text>
-          <Text style={styles.sheetSubtitle}>Publicaste {reviewsLabel(reviews)}</Text>
+          <Text style={styles.sheetTitle}>Rangos</Text>
+          <Text style={styles.sheetSubtitle}>Publicaste {reviews} {reviews === 1 ? 'reseña' : 'reseñas'}</Text>
 
-          {LEVELS.map((level, index) => {
-            const number = index + 1;
-            const isCurrent = number === currentLevel;
-            const isNext = number === currentLevel + 1;
-            const reached = number <= currentLevel;
+          {RANKS.map((rank, index) => {
+            const isCurrent = index === currentRankIndex;
+            const reached = index <= currentRankIndex;
             return (
-              <View key={level.name} style={[styles.levelRow, isCurrent && styles.levelRowCurrent]}>
+              <View key={rank.name} style={[styles.levelRow, isCurrent && styles.levelRowCurrent]}>
                 <View style={[styles.levelIcon, reached && styles.levelIconReached]}>
                   <Ionicons
-                    name={reached ? level.icon : 'lock-closed'}
+                    name={reached ? rank.icon : 'lock-closed'}
                     size={18}
                     color={reached ? colors.background : colors.textMuted}
                   />
                 </View>
                 <View style={styles.levelBody}>
                   <View style={styles.levelHeader}>
-                    <Text style={styles.levelName}>Nivel {number} · {level.name}</Text>
-                    {isCurrent && <Text style={styles.currentTag}>Tu nivel</Text>}
+                    <Text style={styles.levelName}>{rank.name}</Text>
+                    {isCurrent && <Text style={styles.currentTag}>Tu rango</Text>}
                   </View>
-                  <View style={styles.requirementRow}>
-                    <Ionicons
-                      name={reached ? 'checkmark-circle' : 'ellipse-outline'}
-                      size={14}
-                      color={reached ? colors.rating : colors.textMuted}
-                    />
-                    <Text style={styles.requirementText}>Hacé {reviewsLabel(level.min)}</Text>
-                    {isNext && <Text style={styles.requirementProgress}>{reviews}/{level.min}</Text>}
-                  </View>
+                  <Text style={styles.levelMin}>Desde {rank.min} reseñas</Text>
                 </View>
               </View>
             );
@@ -203,7 +169,7 @@ function ProfileScreen({ navigation, route }) {
   const [requests, setRequests] = useState([]);                 // solo en mi perfil
   const [friends, setFriends] = useState([]);                   // solo en mi perfil
   const [tab, setTab] = useState<'comments' | 'reposts'>('comments');
-  const [levelsVisible, setLevelsVisible] = useState(false);
+  const [ranksVisible, setRanksVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);                      // evita doble toque en el botón de amistad
@@ -361,8 +327,10 @@ function ProfileScreen({ navigation, route }) {
   const isSuperadmin = isOwn && role === 'superadmin';
   const isModerator = isOwn && (role === 'moderator' || isSuperadmin);
   const earnedPoints = profile.stats.points;                                  // ganados con logros
-  const shownPoints = isOwn ? earnedPoints - rewards.spentPoints : earnedPoints; // los canjes solo se restan en el mío
-  const level = getLevel(profile.stats.comments);
+  const shownPoints = isOwn ? earnedPoints - rewards.spentPoints : earnedPoints; // los canjes solo se restan en el mio
+  const reviewCount = profile.stats.comments;
+  // Api va a agarrar el rank pero por ahora esta como mock
+  const rank = profile.rank ?? calculateRank(reviewCount);
   const unlockedCount = achievements.list.filter((a) => a.unlocked).length;
   const list = tab === 'comments' ? profile.comments : profile.reposts;
   const button = FRIEND_BUTTON[friendship.status];
@@ -373,8 +341,6 @@ function ProfileScreen({ navigation, route }) {
       contentContainerStyle={[styles.content, !isTab && styles.contentStacked]}
     >
       <LinearGradient colors={[colors.coverTop, colors.background]} style={styles.cover} />
-
-      {/* Logo + ⚙️: solo en la pestaña (apilada ya tiene el header con "atrás") */}
       {isTab && (
         <View style={styles.topRow}>
           <BrandLogo size={36} />
@@ -396,32 +362,37 @@ function ProfileScreen({ navigation, route }) {
           </View>
         </LinearGradient>
 
-        <Text style={styles.name}>{shownUser.name}</Text>
+        <View style={styles.nameRow}>
+          <Text style={styles.name}>{shownUser.name}</Text>
+          {rank.current && (
+            <TouchableOpacity
+              style={styles.rankBadge}
+              onPress={() => setRanksVisible(true)}
+              activeOpacity={0.8}
+              accessibilityLabel={`Rango ${rank.current.name}`}
+            >
+              <Ionicons name={rank.current.icon} size={14} color={colors.background} />
+              <Text style={styles.rankBadgeText}>{rank.current.name}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         <Text style={styles.friendsLine}>
           {profile.stats.friends} {profile.stats.friends === 1 ? 'amigo' : 'amigos'}
         </Text>
 
         <View style={styles.chips}>
-          <TouchableOpacity style={styles.levelChip} onPress={() => setLevelsVisible(true)} activeOpacity={0.8}>
-            <Ionicons name="star" size={12} color={colors.background} />
-            <Text style={styles.levelChipText}>
-              {level.number > 0 ? `Nivel ${level.number} · ${level.name}` : level.name}
-            </Text>
-          </TouchableOpacity>
           <View style={[styles.roleChip, { borderColor: ROLE_COLORS[role] }]}>
             <Text style={[styles.roleChipText, { color: ROLE_COLORS[role] }]}>{ROLE_LABELS[role]}</Text>
           </View>
         </View>
 
-        <TouchableOpacity style={styles.levelBox} onPress={() => setLevelsVisible(true)} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.levelBox} onPress={() => setRanksVisible(true)} activeOpacity={0.8}>
           <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${Math.round(level.progress * 100)}%` }]} />
+            <View style={[styles.progressFill, { width: `${Math.round(rank.progress * 100)}%` }]} />
           </View>
           <Text style={styles.levelHint}>
-            {level.next
-              ? `${reviewsLabel(level.next.min - profile.stats.comments)} para ${level.next.name}`
-              : 'Llegó al nivel máximo'}
-            <Text style={styles.levelLink}>  ·  Ver niveles</Text>
+            {rank.next ? `${rank.next.min - reviewCount} reseñas para ${rank.next.name}` : 'Alcanzó el rango máximo'}
+            <Text style={styles.levelLink}>  ·  Ver rangos</Text>
           </Text>
         </TouchableOpacity>
 
@@ -486,7 +457,7 @@ function ProfileScreen({ navigation, route }) {
           color={colors.accentSecondaryText}
           value={formatNumber(shownPoints)}
           label="Puntos"
-          onPress={() => (isOwn ? navigation.navigate('Logros') : setLevelsVisible(true))}
+          onPress={() => (isOwn ? navigation.navigate('Logros') : setRanksVisible(true))}
         />
       </View>
 
@@ -593,11 +564,11 @@ function ProfileScreen({ navigation, route }) {
         ))
       )}
 
-      <LevelsModal
-        visible={levelsVisible}
-        currentLevel={level.number}
-        reviews={profile.stats.comments}
-        onClose={() => setLevelsVisible(false)}
+      <RanksModal
+        visible={ranksVisible}
+        currentRankIndex={rank.index}
+        reviews={reviewCount}
+        onClose={() => setRanksVisible(false)}
       />
     </ScrollView>
   );
@@ -659,11 +630,32 @@ const styles = StyleSheet.create({
     fontSize: 40,
     fontFamily: fonts.title,
   },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    marginTop: 14,
+  },
   name: {
     color: colors.text,
     fontSize: 22,
     fontFamily: fonts.title,
-    marginTop: 14,
+  },
+  rankBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.rating,
+    borderRadius: 20,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    marginLeft: 8,
+  },
+  rankBadgeText: {
+    color: colors.background,
+    fontSize: 11,
+    fontFamily: fonts.label,
+    marginLeft: 4,
   },
   email: {
     color: colors.textMuted,
@@ -675,21 +667,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 12,
-  },
-  levelChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.rating,
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    marginRight: 8,
-  },
-  levelChipText: {
-    color: colors.background,
-    fontSize: 12,
-    fontFamily: fonts.label,
-    marginLeft: 4,
   },
   roleChip: {
     borderWidth: 1,
@@ -806,22 +783,12 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     overflow: 'hidden',
   },
-  requirementRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 6,
-  },
-  requirementText: {
-    color: colors.text,
-    fontSize: 13,
-    fontFamily: fonts.body,
-    marginLeft: 6,
-    flex: 1,
-  },
-  requirementProgress: {
-    color: colors.rating,
+  levelMin: {
+    color: colors.textMuted,
     fontSize: 12,
-    fontFamily: fonts.label,
+    fontFamily: fonts.body,
+    marginTop: 2,
+    marginBottom: 4,
   },
   closeButton: {
     marginTop: 6,
