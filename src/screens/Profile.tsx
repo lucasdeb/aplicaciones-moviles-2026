@@ -1,31 +1,31 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Modal, Pressable, StyleSheet } from 'react-native';
+import {
+  View, Text, ScrollView, TouchableOpacity, Modal, Pressable,
+  ActivityIndicator, Alert,                                   
+  StyleSheet,
+} from 'react-native';
+import { colors, fonts } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
 import { useGamification } from '../context/GamificationContext';
 import { useOnFocus } from '../hooks/useOnFocus';
-import { colors, fonts } from '../theme';
 import { formatNumber } from '../utils/formatNumber';
 import BrandLogo from '../components/BrandLogo';
 import SettingsButton from '../components/SettingsButton';
-import CommentCard from '../components/CommentCard';
-import { mockGetUserReposts, mockRepostComment } from '../mockData';
+import ReviewCard from '../components/ReviewCard';            
+import {
+  mockGetPublicProfile,
+  mockRepostComment,
+  mockGetFriendshipStatus,
+  mockSendFriendRequest,
+  mockRespondFriendRequest,
+  mockRemoveFriendship,
+  mockGetPendingRequests,
+  mockGetFriends,
+} from '../mockData';
 
-const ROLE_LABELS = {
-  user: 'Usuario',
-  moderator: 'Moderador',
-  superadmin: 'Superadmin',
-};
-
-const ROLE_COLORS = {
-  user: colors.textMuted,
-  moderator: colors.accentSecondary,
-  superadmin: colors.accentPrimarySoft,
-};
-
-// El nivel sube con los puntos que dan los logros
-const LEVELS = [
+ const LEVELS = [
   {
     min: 0,
     name: 'Espectador',
@@ -52,7 +52,7 @@ const LEVELS = [
   },
 ] as const;
 
-function getLevel(points: number) {
+ function getLevel(points: number) {
   const index = LEVELS.filter((level) => points >= level.min).length - 1;
   const next = LEVELS[index + 1];
   return {
@@ -62,6 +62,34 @@ function getLevel(points: number) {
     progress: next ? (points - LEVELS[index].min) / (next.min - LEVELS[index].min) : 1,
   };
 }
+
+const TABS = [
+  { key: 'comments', label: 'Comentarios' },
+  { key: 'reposts', label: 'Reposteados' },
+] as const;
+
+
+const FRIEND_BUTTON = {
+  none:     { label: 'Agregar amigo',     icon: 'person-add-outline', primary: true },
+  sent:     { label: 'Solicitud enviada', icon: 'time-outline',       primary: false },
+  received: { label: 'Aceptar',           icon: 'checkmark',          primary: true },
+  friends:  { label: 'Amigos',            icon: 'people',             primary: false },
+} as const;
+
+type FriendStatus = keyof typeof FRIEND_BUTTON;
+
+const ROLE_LABELS = {
+  user: 'Usuario',
+  moderator: 'Moderador',
+  superadmin: 'Superadmin',
+};
+
+const ROLE_COLORS = {
+  user: colors.textMuted,
+  moderator: colors.accentSecondary,
+  superadmin: colors.accentPrimarySoft,
+};
+
 
 type StatCardProps = {
   icon: React.ComponentProps<typeof Ionicons>['name'];
@@ -172,86 +200,204 @@ function MenuRow({ icon, title, onPress }: MenuRowProps) {
   );
 }
 
-function ProfileScreen({ navigation }) {
-  const { user, logOut } = useAuth();
+function ProfileScreen({ navigation, route }) {
+  const { user } = useAuth();
   const { achievements, rewards, fetchAchievements } = useGamification();
+  const me = user.user;
+
+  // ---------- ¿Qué perfil muestro? ----------
+  const paramUserId = route.params?.userId;     // solo viene al abrirse desde un comentario
+  const isTab = paramUserId === undefined;      // ¿me abrieron desde la pestaña Perfil?
+  const targetId = paramUserId ?? me?.id;       // dueño del perfil que se muestra
+  const isOwn = !!me && targetId === me.id;     // ¿es mi propio perfil?
+
+  // ---------- Estado ----------
+  const [profile, setProfile] = useState(null);                 // datos públicos (de quien sea)
+  const [friendship, setFriendship] = useState<{ status: FriendStatus; requestId?: number }>({ status: 'none' });
+  const [requests, setRequests] = useState([]);                 // solo en mi perfil
+  const [friends, setFriends] = useState([]);                   // solo en mi perfil
+  const [tab, setTab] = useState<'comments' | 'reposts'>('comments');
   const [levelsVisible, setLevelsVisible] = useState(false);
-  const [reposts, setReposts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);                      // evita doble toque en el botón de amistad
 
-  //Carga los reposts del usuario y los guarda en el estado
-  async function loadReposts() {
-    const userId = user.user?.id;
-
-    if (!userId) {
-      setReposts([]);
+  // ---------- Carga: todo en paralelo ----------
+  async function load() {
+    if (targetId === undefined) {        // pestaña Perfil sin sesión: no hay nada que cargar
+      setLoading(false);
       return;
     }
+    setError('');
+    try {
+      const [data, relation, pending, friendList] = await Promise.all([
+        mockGetPublicProfile(targetId),
+        me && !isOwn ? mockGetFriendshipStatus(me.id, targetId) : Promise.resolve({ status: 'none' as FriendStatus }),
+        isOwn ? mockGetPendingRequests(me.id) : Promise.resolve([]),
+        isOwn ? mockGetFriends(me.id) : Promise.resolve([]),
+      ]);
+      setProfile(data);
+      setFriendship(relation as { status: FriendStatus; requestId?: number });
+      setRequests(pending);
+      setFriends(friendList);
+      if (isOwn) fetchAchievements();    // ← mis logros (para la tarjeta de logros)
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+  useOnFocus(load, [targetId, me?.id]);
 
-    const list = await mockGetUserReposts(userId);
-    setReposts(list);
+  // ---------- Navegación ----------
+  // push (no navigate): siempre apila una pantalla nueva, así "atrás" deshace el camino en orden
+  function openMovie(movieId?: number) {
+    if (movieId) navigation.push('MovieDetail', { movieId });
+  }
+  function openUser(userId?: number) {
+    if (userId) navigation.push('UserProfile', { userId });
   }
 
-  async function removeRepost(commentId) {
-  if (!user.user?.id) return;
+  // ---------- Amistad (perfil de otro) ----------
+  async function run(action: () => Promise<void>) {
+    setBusy(true);
+    try {
+      await action();
+    } catch (e) {
+      Alert.alert('Error', e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
 
-  const result = await mockRepostComment(
-    commentId,
-    user.user.id
-  );
+  function changeFriendsCount(delta: number) {
+    setProfile((p) => ({ ...p, stats: { ...p.stats, friends: p.stats.friends + delta } }));
+  }
 
-  if (!result.reposted) {
-    setReposts((current) =>
-      current.filter(
-        (comment) => comment.id !== commentId
-      )
+  function handleFriendPress() {
+    if (!me) return navigation.navigate('Login');   // sin sesión no se puede pedir amistad
+
+    if (friendship.status === 'none') {
+      return run(async () => {
+        const request = await mockSendFriendRequest(me.id, targetId);
+        setFriendship({ status: 'sent', requestId: request.id });
+      });
+    }
+    if (friendship.status === 'received') {
+      return run(async () => {
+        await mockRespondFriendRequest(friendship.requestId, true);
+        setFriendship({ status: 'friends', requestId: friendship.requestId });
+        changeFriendsCount(+1);
+      });
+    }
+    // 'sent' o 'friends': pedir confirmación antes de deshacer
+    const isFriend = friendship.status === 'friends';
+    Alert.alert(
+      isFriend ? 'Eliminar amigo' : 'Cancelar solicitud',
+      isFriend ? `¿Querés dejar de ser amigo de ${profile.user.name}?` : '¿Querés cancelar la solicitud de amistad?',
+      [
+        { text: 'No', style: 'cancel' },
+        {
+          text: isFriend ? 'Eliminar' : 'Cancelar solicitud',
+          style: 'destructive',
+          onPress: () => run(async () => {
+            await mockRemoveFriendship(friendship.requestId);
+            setFriendship({ status: 'none' });
+            if (isFriend) changeFriendsCount(-1);
+          }),
+        },
+      ]
     );
   }
 
-  return result.reposted;
-}
+  function handleReject() {
+    run(async () => {
+      await mockRespondFriendRequest(friendship.requestId, false);
+      setFriendship({ status: 'none' });
+    });
+  }
 
-  useOnFocus(loadReposts, [user.user?.id]);
+  // ---------- Acciones de mi perfil ----------
+  async function respondRequest(requestId: number, accept: boolean) {
+    try {
+      await mockRespondFriendRequest(requestId, accept);
+      await load();                         // recarga solicitudes, amigos y la cantidad de amigos
+    } catch (e) {
+      Alert.alert('Error', e.message);
+    }
+  }
 
-  // Las estadísticas se recalculan al entrar a la solapa
-  useOnFocus(fetchAchievements, [user.user?.id]);
+  async function removeRepost(commentId: number) {
+    try {
+      const result = await mockRepostComment(commentId, me.id);   // es un interruptor: lo saca
+      if (!result.reposted) {
+        setProfile((p) => ({
+          ...p,
+          reposts: p.reposts.filter((c) => c.id !== commentId),
+          stats: { ...p.stats, reposts: p.stats.reposts - 1 },
+        }));
+      }
+    } catch (e) {
+      Alert.alert('Error', e.message);
+    }
+  }
 
-  if (!user.isLoggedIn) {
+  // ---------- Pestaña Perfil sin sesión: igual que antes ----------
+  if (isTab && !user.isLoggedIn) {
     return (
       <View style={styles.guest}>
-        <LinearGradient colors={[colors.coverTop, colors.background]} style={styles.cover} />
-        <BrandLogo size={110} />
-        <Text style={styles.guestTitle}>Tu perfil de cine</Text>
-        <Text style={styles.guestText}>
-          Ingresá para ver tus comentarios, subir de nivel y canjear premios en cines adheridos.
-        </Text>
-        <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.primaryButtonText}>Iniciar sesión</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-          <Text style={styles.linkText}>¿No tenés cuenta? Registrate</Text>
-        </TouchableOpacity>
+        {/* ← pegar acá, SIN CAMBIOS, el contenido de la vista de invitado que ya existe
+              (LinearGradient, BrandLogo, "Tu perfil de cine", botones de Login y Registro) */}
       </View>
     );
   }
 
-  const role = user.user?.role || 'user';
-  const isSuperadmin = role === 'superadmin';
-  const isModerator = role === 'moderator' || isSuperadmin;
-  const level = getLevel(achievements.totalPoints);
-  const available = achievements.totalPoints - rewards.spentPoints;
+  // ---------- Cargando / error ----------
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator color={colors.accentPrimary} />
+      </View>
+    );
+  }
+  if (error || !profile) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.hint}>{error || 'No se pudo cargar el perfil'}</Text>
+      </View>
+    );
+  }
+
+  // ---------- Datos que se muestran ----------
+  // Lo privado (email) sale de "me" SOLO si es mi perfil. Lo de otro sale del perfil público.
+  const shownUser = isOwn ? me : profile.user;
+  const role = shownUser.role || 'user';
+  const isSuperadmin = isOwn && role === 'superadmin';
+  const isModerator = isOwn && (role === 'moderator' || isSuperadmin);
+  const earnedPoints = profile.stats.points;                                  // ganados con logros
+  const shownPoints = isOwn ? earnedPoints - rewards.spentPoints : earnedPoints; // los canjes solo se restan en el mío
+  const level = getLevel(earnedPoints);
   const unlockedCount = achievements.list.filter((a) => a.unlocked).length;
-  const profile = achievements.profile;
+  const list = tab === 'comments' ? profile.comments : profile.reposts;
+  const button = FRIEND_BUTTON[friendship.status];
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={[styles.content, !isTab && styles.contentStacked]}
+    >
       <LinearGradient colors={[colors.coverTop, colors.background]} style={styles.cover} />
 
-      <View style={styles.topRow}>
-        <BrandLogo size={36} />
-        <Text style={styles.topTitle}>Perfil</Text>
-        <SettingsButton />
-      </View>
+      {/* Logo + ⚙️: solo en la pestaña (apilada ya tiene el header con "atrás") */}
+      {isTab && (
+        <View style={styles.topRow}>
+          <BrandLogo size={36} />
+          <Text style={styles.topTitle}>Perfil</Text>
+          <SettingsButton />
+        </View>
+      )}
 
+      {/* ---------- Tarjeta principal (igual para todos) ---------- */}
       <View style={styles.card}>
         <LinearGradient
           colors={[colors.accentPrimary, colors.rating]}
@@ -260,14 +406,14 @@ function ProfileScreen({ navigation }) {
           style={styles.avatarRing}
         >
           <View style={styles.avatar}>
-            <Text style={styles.avatarInitial}>
-              {(user.user?.name || '?').charAt(0).toUpperCase()}
-            </Text>
+            <Text style={styles.avatarInitial}>{(shownUser.name || '?').charAt(0).toUpperCase()}</Text>
           </View>
         </LinearGradient>
 
-        <Text style={styles.name}>{user.user?.name}</Text>
-        <Text style={styles.email}>{user.user?.email}</Text>
+        <Text style={styles.name}>{shownUser.name}</Text>
+        <Text style={styles.friendsLine}>
+          {profile.stats.friends} {profile.stats.friends === 1 ? 'amigo' : 'amigos'}
+        </Text>
 
         <View style={styles.chips}>
           <TouchableOpacity style={styles.levelChip} onPress={() => setLevelsVisible(true)} activeOpacity={0.8}>
@@ -284,108 +430,185 @@ function ProfileScreen({ navigation }) {
             <View style={[styles.progressFill, { width: `${Math.round(level.progress * 100)}%` }]} />
           </View>
           <Text style={styles.levelHint}>
-            {level.next
-              ? `${level.next.min - achievements.totalPoints} pts para ${level.next.name}`
-              : 'Llegaste al nivel máximo'}
+            {level.next ? `${level.next.min - earnedPoints} pts para ${level.next.name}` : 'Llegó al nivel máximo'}
             <Text style={styles.levelLink}>  ·  Ver niveles</Text>
           </Text>
         </TouchableOpacity>
+
+        {/* Botón de amistad: solo en el perfil de otro */}
+        {!isOwn && (
+          <>
+            <View style={styles.friendRow}>
+              <TouchableOpacity
+                style={[styles.friendButton, button.primary ? styles.friendPrimary : styles.friendSecondary]}
+                onPress={handleFriendPress}
+                disabled={busy}
+                activeOpacity={0.8}
+              >
+                {busy ? (
+                  <ActivityIndicator size="small" color={colors.onAccentPrimary} />
+                ) : (
+                  <>
+                    <Ionicons name={button.icon} size={16} color={button.primary ? colors.onAccentPrimary : colors.text} />
+                    <Text style={[styles.friendText, !button.primary && { color: colors.text }]}>{button.label}</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+              {friendship.status === 'received' && !busy && (
+                <TouchableOpacity style={[styles.friendButton, styles.friendSecondary]} onPress={handleReject}>
+                  <Text style={[styles.friendText, { color: colors.text }]}>Rechazar</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            {friendship.status === 'received' && (
+              <Text style={[styles.hint, { marginTop: 8 }]}>{shownUser.name} te envió una solicitud de amistad</Text>
+            )}
+          </>
+        )}
       </View>
 
+      {/* ---------- Estadísticas (4 tarjetas, 2x2) ---------- */}
       <Text style={styles.sectionTitle}>Estadísticas</Text>
       <View style={styles.stats}>
         <StatCard
           icon="chatbubbles"
           color={colors.accentPrimarySoft}
-          value={String(profile?.reviews ?? 0)}
+          value={formatNumber(profile.stats.comments)}
           label="Comentarios"
-          onPress={() => navigation.navigate('UserReviews', { mode: 'reviews' })}
+          onPress={() => setTab('comments')}
+        />
+        <StatCard
+          icon="repeat"
+          color={colors.accentSecondaryText}
+          value={formatNumber(profile.stats.reposts)}
+          label="Reposteados"
+          onPress={() => setTab('reposts')}
         />
         <StatCard
           icon="heart"
           color={colors.rating}
-          value={formatNumber(profile?.likes ?? 0)}
+          value={formatNumber(profile.stats.likesReceived)}
           label="Likes recibidos"
-          onPress={() => navigation.navigate('UserReviews', { mode: 'likes' })}
+          onPress={() => setTab('comments')}
         />
         <StatCard
           icon="diamond"
           color={colors.accentSecondaryText}
-          value={String(available)}
+          value={formatNumber(shownPoints)}
           label="Puntos"
-          onPress={() => navigation.navigate('Logros')}
+          onPress={() => (isOwn ? navigation.navigate('Logros') : setLevelsVisible(true))}
         />
       </View>
 
-      <TouchableOpacity style={styles.achievementsCard} onPress={() => navigation.navigate('Logros')} activeOpacity={0.85}>
-        <View style={styles.trophy}>
-          <Ionicons name="trophy" size={22} color={colors.rating} />
-        </View>
-        <View style={styles.achievementsBody}>
-          <Text style={styles.achievementsTitle}>{unlockedCount} logros desbloqueados</Text>
-          <Text style={styles.achievementsText}>de {achievements.list.length} · Ver logros y premios</Text>
-        </View>
-        <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-      </TouchableOpacity>
-
-      {isModerator && (
+      {/* ---------- Solo en MI perfil ---------- */}
+      {isOwn && (
         <>
-          <Text style={styles.sectionTitle}>Zona de moderación</Text>
-          {isSuperadmin ? (
+          <TouchableOpacity style={styles.achievementsCard} onPress={() => navigation.navigate('Logros')} activeOpacity={0.85}>
+            <View style={styles.trophy}>
+              <Ionicons name="trophy" size={22} color={colors.rating} />
+            </View>
+            <View style={styles.achievementsBody}>
+              <Text style={styles.achievementsTitle}>{unlockedCount} logros desbloqueados</Text>
+              <Text style={styles.achievementsText}>de {achievements.list.length} · Ver logros y premios</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+          </TouchableOpacity>
+
+          {requests.length > 0 && (
             <>
-              <MenuRow icon="film-outline" title="Administrar películas" onPress={() => navigation.navigate('ManageMovies')} />
-              <MenuRow icon="people-outline" title="Administrar usuarios" onPress={() => navigation.navigate('ManageUsers')} />
+              <Text style={styles.sectionTitle}>Solicitudes de amistad ({requests.length})</Text>
+              {requests.map((r) => (
+                <View key={r.id} style={styles.requestRow}>
+                  <TouchableOpacity style={{ flex: 1 }} onPress={() => openUser(r.from.id)}>
+                    <Text style={styles.requestName}>{r.from.name}</Text>
+                    <Text style={styles.hint}>quiere ser tu amigo</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.acceptButton} onPress={() => respondRequest(r.id, true)}>
+                    <Ionicons name="checkmark" size={18} color={colors.onAccentPrimary} />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.rejectButton} onPress={() => respondRequest(r.id, false)}>
+                    <Ionicons name="close" size={18} color={colors.text} />
+                  </TouchableOpacity>
+                </View>
+              ))}
             </>
+          )}
+
+          <Text style={styles.sectionTitle}>Amigos ({friends.length})</Text>
+          {friends.length === 0 ? (
+            <Text style={styles.hint}>Todavía no tenés amigos. Tocá el nombre de alguien en un comentario para agregarlo.</Text>
           ) : (
-            <Text style={styles.hint}>
-              Como moderador podés borrar cualquier comentario desde el detalle de cada película.
-            </Text>
+            friends.map((f) => (
+              <TouchableOpacity key={f.id} style={styles.requestRow} onPress={() => openUser(f.id)}>
+                <Text style={[styles.requestName, { flex: 1 }]}>{f.name}</Text>
+                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+              </TouchableOpacity>
+            ))
+          )}
+
+          {isModerator && (
+            <>
+              <Text style={styles.sectionTitle}>Zona de moderación</Text>
+              {isSuperadmin ? (
+                <>
+                  <MenuRow icon="film-outline" title="Administrar películas" onPress={() => navigation.navigate('ManageMovies')} />
+                  <MenuRow icon="people-outline" title="Administrar usuarios" onPress={() => navigation.navigate('ManageUsers')} />
+                </>
+              ) : (
+                <Text style={styles.hint}>
+                  Como moderador podés borrar cualquier comentario desde el detalle de cada película.
+                </Text>
+              )}
+            </>
           )}
         </>
       )}
-{/*
-      <TouchableOpacity style={styles.logout} onPress={logOut}>
-        <Ionicons name="log-out-outline" size={18} color={colors.danger} />
-        <Text style={styles.logoutText}>Cerrar sesión</Text>
-      </TouchableOpacity>
-*/}
-      <LevelsModal
-        visible={levelsVisible}
-        currentLevel={level.number}
-        points={achievements.totalPoints}
-        onClose={() => setLevelsVisible(false)}
-      />
-      <Text style={styles.sectionTitle}>Reposteos</Text>
 
-      {reposts.length === 0 ? (
+      {/* ---------- Comentarios / Reposteados (para todos) ---------- */}
+      <View style={styles.segment}>
+        {TABS.map((t) => (
+          <TouchableOpacity
+            key={t.key}
+            style={[styles.segmentItem, tab === t.key && styles.segmentItemActive]}
+            onPress={() => setTab(t.key)}
+          >
+            <Text style={[styles.segmentText, tab === t.key && styles.segmentTextActive]}>{t.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {list.length === 0 ? (
         <Text style={styles.hint}>
-          Todavía no reposteaste ningún comentario.
+          {tab === 'comments' ? 'Todavía no hay comentarios.' : 'Todavía no hay reposteos.'}
         </Text>
       ) : (
-        reposts.map((comment) => (
+        list.map((comment) => (
           <View key={comment.id} style={styles.repostItem}>
-            <View style={styles.repostHeader}>
-              <Ionicons
-                name="repeat"
-                size={14}
-                color={colors.accentSecondaryText}
-              />
-              <Text style={styles.repostLabel}>
-                Reposteado por vos
-              </Text>
-            </View>
-
-            <CommentCard
-              comment={comment}
-              canDelete={false}
-              onLike={() => {}}
-              onRepost={() => removeRepost(comment.id)}
-              onDelete={() => {}}
-              initialReposted={true}
-            />
+            {tab === 'reposts' && (
+              <View style={styles.repostHeader}>
+                <Ionicons name="repeat" size={14} color={colors.accentSecondaryText} />
+                <TouchableOpacity style={{ flex: 1 }} onPress={() => openUser(comment.author?.id)}>
+                  <Text style={styles.repostLabel}>Comentario de {comment.author?.name ?? 'Usuario'}</Text>
+                </TouchableOpacity>
+                {isOwn && (
+                  <TouchableOpacity onPress={() => removeRepost(comment.id)} hitSlop={8}>
+                    <Text style={styles.removeRepost}>Quitar</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+            {/* Tocar el comentario abre la película donde se publicó */}
+            <ReviewCard review={comment} onPress={() => openMovie(comment.movie?.id)} />
           </View>
         ))
       )}
+
+      <LevelsModal
+        visible={levelsVisible}
+        currentLevel={level.number}
+        points={earnedPoints}
+        onClose={() => setLevelsVisible(false)}
+      />
     </ScrollView>
   );
 }
@@ -634,9 +857,11 @@ const styles = StyleSheet.create({
   stats: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',          // ← NUEVO: pasa a la línea siguiente
+    rowGap: 10,  
   },
   statCard: {
-    width: '31%',
+    width: '48%',
     paddingVertical: 14,
     paddingHorizontal: 12,
     borderRadius: 16,
@@ -779,20 +1004,54 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     marginTop: 16,
   },
-  repostItem: {
-    marginBottom: 8,
+  repostItem: { 
+    marginBottom: 6 
   },
-  repostHeader: {
-    flexDirection: 'row',
+repostHeader: { 
+  flexDirection: 'row',
+   alignItems: 'center',
+    gap: 6,
+     marginBottom: 4
+     },
+repostLabel: { 
+  color: colors.accentSecondaryText, 
+  fontFamily: fonts.body, 
+  fontSize: 12 },
+
+  contentStacked: { paddingTop: 16 },    
+centered: { flex: 1,
+   justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
-  },
-  repostLabel: {
-    color: colors.textMuted,
-    fontSize: 12,
-    fontFamily: fonts.label,
-    marginLeft: 6,
-  },
+     backgroundColor: colors.background,
+      padding: 24
+     },
+friendsLine: { color: colors.textMuted, fontFamily: fonts.body, fontSize: 13, marginTop: 4 },
+
+friendRow: { flexDirection: 'row', gap: 10, justifyContent: 'center', marginTop: 16 },
+friendButton: {
+  flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+  borderRadius: 24, paddingVertical: 10, paddingHorizontal: 18, minWidth: 140,
+},
+friendPrimary: { backgroundColor: colors.accentPrimary },
+friendSecondary: { backgroundColor: colors.surfaceHigh, borderWidth: 1, borderColor: colors.border },
+friendText: { color: colors.onAccentPrimary, fontFamily: fonts.label, fontSize: 14 },
+
+requestRow: {
+  flexDirection: 'row', alignItems: 'center', gap: 10,
+  backgroundColor: colors.surface, borderRadius: 14, padding: 12, marginBottom: 8,
+},
+requestName: { color: colors.text, fontFamily: fonts.label, fontSize: 15 },
+acceptButton: { backgroundColor: colors.accentPrimary, borderRadius: 18, padding: 8 },
+rejectButton: { backgroundColor: colors.surfaceHigh, borderRadius: 18, padding: 8 },
+
+segment: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: 12, padding: 4, marginTop: 24, marginBottom: 14 },
+segmentItem: { flex: 1, paddingVertical: 8, borderRadius: 10, alignItems: 'center' },
+segmentItemActive: { backgroundColor: colors.accentPrimary },
+segmentText: { color: colors.textMuted, fontFamily: fonts.label, fontSize: 13 },
+segmentTextActive: { color: colors.onAccentPrimary },
+
+removeRepost: { color: colors.danger, fontFamily: fonts.label, fontSize: 12 },
+
 });
 
 export default ProfileScreen;

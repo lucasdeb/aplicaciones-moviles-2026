@@ -60,6 +60,11 @@ function RootNavigator() {
       {/* Visibles para todos */}
       <Stack.Screen name="Main" component={MainTabs} />
       <Stack.Screen name="MovieDetail" component={MovieDetailScreen} />
+      <Stack.Screen
+       name="UserProfile"
+        component={ProfileScreen}                              
+        options={{ ...headerOptions, headerTitle: 'Perfil' }}  // ← header con flecha "atrás"
+      />
 
       {user.isLoggedIn ? (
         <>

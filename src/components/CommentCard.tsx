@@ -9,7 +9,7 @@ import { Image } from 'react-native';
 const SWIPE_THRESHOLD = -80;
 const MAX_SWIPE = -110;
 
-export default function CommentCard({ comment, onLike, onRepost, canDelete, onDelete, initialReposted = false }) {
+export default function CommentCard({ comment, onLike, onRepost, canDelete,onPressAuthor, onDelete, initialReposted = false }) {
   const [liked, setLiked] = useState(false);
   const [reposted, setReposted] = useState(initialReposted);
   const translateX = useRef(new Animated.Value(0)).current;
@@ -76,18 +76,22 @@ export default function CommentCard({ comment, onLike, onRepost, canDelete, onDe
         style={[styles.row, { transform: [{ translateX }] }]}
         {...panResponder.panHandlers}
       >
-        <LinearGradient
-          colors={[colors.accentPrimary, colors.accentSecondary]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.avatar}
-        >
-          <Text style={styles.avatarInitial}>{authorName.charAt(0).toUpperCase()}</Text>
-        </LinearGradient>
+        <TouchableOpacity onPress={onPressAuthor} disabled={!onPressAuthor} activeOpacity={0.7}>
+          <LinearGradient
+            colors={[colors.accentPrimary, colors.accentSecondary]}
+             start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+             style={styles.avatar}
+                >
+            <Text style={styles.avatarInitial}>{authorName.charAt(0).toUpperCase()}</Text>
+          </LinearGradient>
+        </TouchableOpacity>
 
         <View style={styles.bubble}>
           <View style={styles.headerRow}>
-            <Text style={styles.author}>{authorName}</Text>
+            <TouchableOpacity onPress={onPressAuthor} disabled={!onPressAuthor} hitSlop={6}>
+              <Text style={styles.author}>{authorName}</Text>
+            </TouchableOpacity>
             <View style={styles.dot} />
             <Text style={styles.time}>{timeAgo(comment.createdAt)}</Text>
           </View>

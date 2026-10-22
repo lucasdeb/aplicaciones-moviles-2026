@@ -101,7 +101,11 @@ function MovieDetailScreen({ navigation, route }) {
   const me = user.user;
   const canModerate = me?.role === 'moderator' || me?.role === 'superadmin';
   const requireLogin = (fn) => () => (me ? fn() : navigation.navigate('Login'));
-
+  function openAuthor(authorId?: number) {
+  if (!authorId) return;
+  if (authorId === me?.id) navigation.navigate('Main', { screen: 'Profile' });
+  else navigation.push('UserProfile', { userId: authorId });
+}
   async function attach(source: 'camera' | 'gallery') {
     const uri = await pickPhoto(source);
     if (uri) setPhoto(uri);
@@ -260,6 +264,7 @@ function MovieDetailScreen({ navigation, route }) {
             <CommentCard
               key={comment.id}
               comment={comment}
+              onPressAuthor={() => openAuthor(comment.author?.id)}
               onLike={requireLogin(() => likeComment(comment.id))}
               onRepost={requireLogin(() => repostComment(comment.id, me?.id))}
               canDelete={canModerate || comment.author.id === me?.id}

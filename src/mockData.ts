@@ -601,3 +601,103 @@ export async function mockGetAchievements(userId) {
   };
   return { list, totalPoints, profile };
 }
+
+
+let mockFriendships = [
+  { id: 1, fromId: 2, toId: 1, status: 'pending', createdAt: new Date().toISOString() },  
+  { id: 2, fromId: 3, toId: 4, status: 'accepted', createdAt: new Date().toISOString() }, 
+];
+let nextFriendshipId = mockFriendships.length + 1;
+
+
+function findFriendship(a, b) {
+  return mockFriendships.find(
+    (f) => (f.fromId === a && f.toId === b) || (f.fromId === b && f.toId === a)
+  );
+}
+
+function toUserSummary(userId) {
+  const u = mockUsers.find((x) => x.id === userId);
+  return u ? { id: u.id, name: u.name, role: u.role } : { id: userId, name: 'Usuario', role: 'user' };
+}
+
+export async function mockGetFriendshipStatus(meId, otherId) {
+  await wait();
+  const f = findFriendship(meId, otherId);
+  if (!f) return { status: 'none' };
+  if (f.status === 'accepted') return { status: 'friends', requestId: f.id };
+  return { status: f.fromId === meId ? 'sent' : 'received', requestId: f.id };
+}
+
+export async function mockSendFriendRequest(fromId, toId) {
+  await wait();
+  if (fromId === toId) throw new Error('No podés agregarte a vos mismo');
+  if (findFriendship(fromId, toId)) throw new Error('Ya hay una solicitud o ya son amigos');
+  const request = { id: nextFriendshipId++, fromId, toId, status: 'pending', createdAt: new Date().toISOString() };
+  mockFriendships.push(request);
+  return request;
+}
+
+
+export async function mockRespondFriendRequest(requestId, accept) {
+  await wait();
+  const request = mockFriendships.find((f) => f.id === requestId);
+  if (!request || request.status !== 'pending') throw new Error('La solicitud ya no existe');
+  if (accept) request.status = 'accepted';
+  else mockFriendships = mockFriendships.filter((f) => f.id !== requestId);
+}
+
+
+export async function mockRemoveFriendship(requestId) {
+  await wait();
+  mockFriendships = mockFriendships.filter((f) => f.id !== requestId);
+}
+
+
+export async function mockGetPendingRequests(userId) {
+  await wait();
+  return mockFriendships
+    .filter((f) => f.toId === userId && f.status === 'pending')
+    .map((f) => ({ id: f.id, from: toUserSummary(f.fromId), createdAt: f.createdAt }));
+}
+
+export async function mockGetFriends(userId) {
+  await wait();
+  return mockFriendships
+    .filter((f) => f.status === 'accepted' && (f.fromId === userId || f.toId === userId))
+    .map((f) => ({ requestId: f.id, ...toUserSummary(f.fromId === userId ? f.toId : f.fromId) }));
+}
+
+
+export async function mockGetPublicProfile(userId) {
+  const user = mockUsers.find((u) => u.id === userId);
+  if (!user) throw new Error('Usuario no encontrado');
+
+  
+  const [achievements, reposts] = await Promise.all([
+    mockGetAchievements(userId),   
+    mockGetUserReposts(userId),    
+  ]);
+
+  const comments = mockComments
+    .filter((c) => c.authorId === userId)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .map(toPublicComment);         
+
+  const friends = mockFriendships.filter(
+    (f) => f.status === 'accepted' && (f.fromId === userId || f.toId === userId)
+  ).length;
+
+  return {
+    user: { id: user.id, name: user.name, role: user.role },  
+    comments,
+    reposts,
+    stats: {
+      comments: comments.length,
+      reposts: reposts.length,
+      likesReceived: achievements.profile.likes,
+      points: achievements.totalPoints,
+      friends,
+    },
+  };
+}
