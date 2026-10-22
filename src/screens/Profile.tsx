@@ -327,10 +327,9 @@ function ProfileScreen({ navigation, route }) {
   const isSuperadmin = isOwn && role === 'superadmin';
   const isModerator = isOwn && (role === 'moderator' || isSuperadmin);
   const earnedPoints = profile.stats.points;                                  // ganados con logros
-  const shownPoints = isOwn ? earnedPoints - rewards.spentPoints : earnedPoints; // los canjes solo se restan en el mío
+  const shownPoints = isOwn ? earnedPoints - rewards.spentPoints : earnedPoints; // los canjes solo se restan en el mio
   const reviewCount = profile.stats.comments;
-  // The API normally supplies rank. The fallback keeps old cached/Fast Refresh
-  // profile responses from crashing while the response contract is upgraded.
+  // Api va a agarrar el rank pero por ahora esta como mock
   const rank = profile.rank ?? calculateRank(reviewCount);
   const unlockedCount = achievements.list.filter((a) => a.unlocked).length;
   const list = tab === 'comments' ? profile.comments : profile.reposts;
@@ -342,8 +341,6 @@ function ProfileScreen({ navigation, route }) {
       contentContainerStyle={[styles.content, !isTab && styles.contentStacked]}
     >
       <LinearGradient colors={[colors.coverTop, colors.background]} style={styles.cover} />
-
-      {/* Logo + ⚙️: solo en la pestaña (apilada ya tiene el header con "atrás") */}
       {isTab && (
         <View style={styles.topRow}>
           <BrandLogo size={36} />

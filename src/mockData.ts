@@ -30,7 +30,6 @@ const mockMovies = [
     rating: 4.2,
     posterUrl: poster('El Último Horizonte', '1c2228', 'ff8000'),
     backdropUrl: null,
-    views: 812340,
     featured: false,
   },
   {
@@ -43,7 +42,6 @@ const mockMovies = [
     rating: 3.9,
     posterUrl: poster('Código Rojo', '1c2228', 'ff8000'),
     backdropUrl: null,
-    views: 634210,
     featured: false,
   },
   {
@@ -56,7 +54,6 @@ const mockMovies = [
     rating: 4.5,
     posterUrl: poster('La Última Estación', '1c2228', '40bcf4'),
     backdropUrl: null,
-    views: 921450,
     featured: true,
   },
   {
@@ -69,7 +66,6 @@ const mockMovies = [
     rating: 4.1,
     posterUrl: poster('Cartas sin Enviar', '1c2228', '40bcf4'),
     backdropUrl: null,
-    views: 545300,
     featured: false,
   },
   {
@@ -82,7 +78,6 @@ const mockMovies = [
     rating: 3.7,
     posterUrl: poster('Vecinos Ruidosos', '1c2228', 'ffd166'),
     backdropUrl: null,
-    views: 402110,
     featured: false,
   },
   {
@@ -95,7 +90,6 @@ const mockMovies = [
     rating: 3.5,
     posterUrl: poster('Reunión de Ex', '1c2228', 'ffd166'),
     backdropUrl: null,
-    views: 318900,
     featured: false,
   },
   {
@@ -108,7 +102,6 @@ const mockMovies = [
     rating: 4.6,
     posterUrl: poster('Órbita Cero', '1c2228', '00e054'),
     backdropUrl: null,
-    views: 1034200,
     featured: true,
   },
   {
@@ -121,7 +114,6 @@ const mockMovies = [
     rating: 4.3,
     posterUrl: poster('Sintéticos', '1c2228', '00e054'),
     backdropUrl: null,
-    views: 789600,
     featured: true,
   },
   {
@@ -134,7 +126,6 @@ const mockMovies = [
     rating: 3.8,
     posterUrl: poster('La Casa del Fondo', '1c2228', 'ff4d4d'),
     backdropUrl: null,
-    views: 456700,
     featured: false,
   },
   {
@@ -147,7 +138,6 @@ const mockMovies = [
     rating: 3.6,
     posterUrl: poster('Medianoche en el Bosque', '1c2228', 'ff4d4d'),
     backdropUrl: null,
-    views: 389400,
     featured: false,
   },
   {
@@ -160,7 +150,6 @@ const mockMovies = [
     rating: 4.0,
     posterUrl: poster('Corazón de Neón', '1c2228', '40bcf4'),
     backdropUrl: null,
-    views: 512800,
     featured: false,
   },
   {
@@ -173,7 +162,6 @@ const mockMovies = [
     rating: 3.8,
     posterUrl: poster('Persecución Final', '1c2228', 'ff8000'),
     backdropUrl: null,
-    views: 467300,
     featured: false,
   },
   {
@@ -186,7 +174,6 @@ const mockMovies = [
     rating: 4.7,
     posterUrl: 'https://images.unsplash.com/photo-1531259683007-016a7b628fc3?w=500&q=60',
     backdropUrl: 'https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?w=1200&q=60',
-    views: 1284900,
     featured: true,
   },
 ];
@@ -298,7 +285,6 @@ export async function mockGetMovie(id) {
   await wait();
   const movie = mockMovies.find((m) => m.id === id);
   if (!movie) return null;
-  movie.views += 1;
   return movie;
 }
 
@@ -323,7 +309,6 @@ export async function mockCreateMovie(data) {
     rating: Number(data.rating),
     posterUrl: data.posterUrl || poster(data.title, '1c2228', '40bcf4'),
     backdropUrl: data.backdropUrl || null,
-    views: 0,
     featured: Boolean(data.featured),
   };
   mockMovies.push(movie);
@@ -399,7 +384,7 @@ export async function mockDeleteComment(commentId) {
 export async function mockLikeComment(commentId) {
   await wait();
   const comment = mockComments.find((c) => c.id === commentId);
-  if (!comment) throw new Error('Comentario no encontrado');
+  if (!comment) throw new Error('Reseña no encontrada');
   comment.likes += 1;
   return toPublicComment(comment);
 }
@@ -419,7 +404,7 @@ export async function mockRepostComment(
   );
 
   if (!comment) {
-    throw new Error('Comentario no encontrado');
+    throw new Error('Reseña no encontrada');
   }
 
   if (!user) {
@@ -514,8 +499,8 @@ interface AchievementDef {
 const ACHIEVEMENTS: AchievementDef[] = [
   {
     id: 'first_review',
-    title: 'Primer comentario',
-    description: 'Publicá tu primer comentario',
+    title: 'Primer Reseña',
+    description: 'Publicá tu primer reseña',
     icon: 'create-outline',
     stat: 'totalReviews',
     goal: 1,
@@ -524,7 +509,7 @@ const ACHIEVEMENTS: AchievementDef[] = [
   {
     id: 'active_critic',
     title: 'Crítico en marcha',
-    description: 'Publicá 5 comentarios',
+    description: 'Publicá 5 Reseñas',
     icon: 'chatbubbles-outline',
     stat: 'totalReviews',
      goal: 5,
@@ -533,7 +518,7 @@ const ACHIEVEMENTS: AchievementDef[] = [
   {
     id: 'expert_critic',
     title: 'Crítico experto',
-    description: 'Publicá 15 comentarios',
+    description: 'Publicá 15 Reseñas',
     icon: 'ribbon-outline',
     stat: 'totalReviews',
     goal: 15,
@@ -541,8 +526,8 @@ const ACHIEVEMENTS: AchievementDef[] = [
   },
   {
     id: 'viral_review',
-    title: 'Comentario viral',
-    description: 'Conseguí 100 likes o más en un solo comentario',
+    title: 'Reseña viral',
+    description: 'Conseguí 100 likes o más en una sola reseña',
     icon: 'flame-outline',
     stat: 'maxLikesOnReview',
     goal: 100,
@@ -566,7 +551,7 @@ const ACHIEVEMENTS: AchievementDef[] = [
     goal: 5,
     points: 15,
   },
-  { id: 'cinema_photo', title: 'Fui al cine', description: 'Subí un comentario con foto', icon: 'camera-outline', stat: 'totalPhotos', goal: 1, points: 20 },
+  { id: 'cinema_photo', title: 'Fui al cine', description: 'Subí una reseña con foto', icon: 'camera-outline', stat: 'totalPhotos', goal: 1, points: 20 },
 ];
 
 export const REWARDS = [

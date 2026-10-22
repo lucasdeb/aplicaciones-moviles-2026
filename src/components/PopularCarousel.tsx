@@ -100,8 +100,7 @@ export default function PopularCarousel({ movies, onPressMovie }) {
                   {item.genre} · {item.year}
                 </Text>
                 <View style={styles.statsRow}>
-                  <Ionicons name="eye-outline" size={12} color={colors.textMuted} />
-                  <Text style={styles.statText}>{formatNumber(item.views)}</Text>
+    
                   <Ionicons
                     name="chatbubble-outline"
                     size={12}
