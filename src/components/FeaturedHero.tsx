@@ -69,10 +69,6 @@ export default function FeaturedHero({ movies, onPressMovie }) {
             <Text style={styles.metaText}>
               {movie.genre} · {movie.year}
             </Text>
-            <View style={styles.statsRow}>
-              <Ionicons name="eye-outline" size={13} color={colors.textMuted} />
-              <Text style={styles.statText}>{formatNumber(movie.views)}</Text>
-            </View>
           </View>
         </LinearGradient>
       </Animated.View>
