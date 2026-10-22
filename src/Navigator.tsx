@@ -1,4 +1,5 @@
 import React from 'react';
+import { TouchableOpacity, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -76,7 +77,21 @@ function RootNavigator() {
 
         </>
       ) : (
-        <Stack.Group screenOptions={{ presentation: 'modal' }}>
+        <Stack.Group
+          screenOptions={({ navigation }) => ({
+            presentation: 'modal',
+            headerShown: true,
+            headerTransparent: true,
+            title: '',
+            // Flecha para volver a la pantalla anterior (en Android y web el modal no tiene otra salida)
+            // Mismo botón redondo que el de MovieDetail
+            headerLeft: () => (
+              <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} hitSlop={8}>
+                <Ionicons name="arrow-back" size={20} color={colors.text} />
+              </TouchableOpacity>
+            ),
+          })}
+        >
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register" component={RegisterScreen} />
         </Stack.Group>
@@ -85,5 +100,19 @@ function RootNavigator() {
     </NavigationContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  backButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginLeft: 16,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
 
 export default RootNavigator;
