@@ -5,12 +5,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, fonts } from '../theme';
 import { timeAgo } from '../utils/timeAgo';
 import { Image } from 'react-native';
+import StarRating from './StarRating';
 
 const SWIPE_THRESHOLD = -80;
 const MAX_SWIPE = -110;
 
-export default function CommentCard({ comment, onLike, onRepost, canDelete,onPressAuthor, onDelete, initialReposted = false }) {
-  const [liked, setLiked] = useState(false);
+export default function CommentCard({ comment, onLike, onRepost, canDelete,onPressAuthor, onDelete, initialReposted = false ,initialLiked = false, }) {
+  const [liked, setLiked] = useState(initialLiked);
   const [reposted, setReposted] = useState(initialReposted);
   const translateX = useRef(new Animated.Value(0)).current;
   const authorName = comment.author?.name ?? 'Usuario';
@@ -52,10 +53,9 @@ export default function CommentCard({ comment, onLike, onRepost, canDelete,onPre
     })
   ).current;
 
-  function handleLike() {
-    if (liked) return;
-    setLiked(true);
-    onLike();
+  async function handleLike() {
+    const isNowLiked = await onLike();
+    if (typeof isNowLiked === 'boolean') setLiked(isNowLiked);
   }
 
   async function handleRepost() {
@@ -95,6 +95,11 @@ export default function CommentCard({ comment, onLike, onRepost, canDelete,onPre
             <View style={styles.dot} />
             <Text style={styles.time}>{timeAgo(comment.createdAt)}</Text>
           </View>
+          {comment.rating !== null && comment.rating !== undefined && (
+          <View style={styles.stars}>
+            <StarRating rating={comment.rating} size={12} />
+          </View>
+          )}
 
           <Text style={styles.text}>{comment.text}</Text>
           {comment.photo && <Image source={{ uri: comment.photo }} style={styles.photo} />}
@@ -265,5 +270,8 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     marginLeft: 'auto',
     fontStyle: 'italic',
+  },
+  stars: {
+    marginTop: 4,
   },
 });

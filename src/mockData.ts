@@ -3,11 +3,11 @@ function wait(ms = 300) {
 }
 
 const mockUsers = [
-  { id: 1, name: 'Admin WhatNext', email: 'admin.demo@whatsnext.app', role: 'superadmin', password: 'Demo1234', reposts: [] },
-  { id: 2, name: 'Sofía Ramírez',   email: 'sofia.demo@whatsnext.app', role: 'moderator', password: 'Demo1234', reposts: [] },
-  { id: 3, name: 'Mateo Duarte',    email: 'mateo.demo@whatsnext.app', role: 'user', password: 'Demo1234', reposts: [] },
-  { id: 4, name: 'Lucía Fernández', email: 'lucia.demo@whatsnext.app', role: 'user', password: 'Demo1234', reposts: [] },
-  { id: 5, name: 'Nicolás Peralta', email: 'nicolas.demo@whatsnext.app', role: 'user', password: 'Demo1234', reposts: [] },
+  { id: 1, name: 'Admin WhatNext', email: 'admin.demo@whatsnext.app', role: 'superadmin', password: 'Demo1234', reposts: [],likes: [] },
+  { id: 2, name: 'Sofía Ramírez',   email: 'sofia.demo@whatsnext.app', role: 'moderator', password: 'Demo1234', reposts: [],likes: [] },
+  { id: 3, name: 'Mateo Duarte',    email: 'mateo.demo@whatsnext.app', role: 'user', password: 'Demo1234', reposts: [],likes: [] },
+  { id: 4, name: 'Lucía Fernández', email: 'lucia.demo@whatsnext.app', role: 'user', password: 'Demo1234', reposts: [],likes: [] },
+  { id: 5, name: 'Nicolás Peralta', email: 'nicolas.demo@whatsnext.app', role: 'user', password: 'Demo1234', reposts: [],likes: [] },
 ];
 
 let nextUserId = mockUsers.length + 1;
@@ -236,10 +236,17 @@ function toPublicComment(comment) {
   };
 }
 
+function averageRating(movieId) {
+  const rated = mockComments.filter((c) => c.movieId === movieId && c.rating !== null);
+  if (!rated.length) return null;
+  return Math.round((rated.reduce((sum, c) => sum + c.rating, 0) / rated.length) * 10) / 10;
+}
+
 function withCommentsCount(movie) {
   const commentsCount = mockComments.filter((c) => c.movieId === movie.id).length;
-  return { ...movie, commentsCount };
+  return { ...movie, commentsCount, rating: averageRating(movie.id) };
 }
+
 
 export async function mockLogin({ email, password }) {
   await wait();
@@ -254,7 +261,7 @@ export async function mockRegister({ name, email, password }) {
   await wait();
   const exists = mockUsers.some((u) => u.email.toLowerCase() === email.toLowerCase());
   if (exists) throw new Error('Ya existe una cuenta con ese email');
-  const user = { id: nextUserId++, name, email, role: 'user', password, reposts: [] };
+  const user = { id: nextUserId++, name, email, role: 'user', password, reposts: [], likes: [] };
   mockUsers.push(user);
   return toPublicUser(user);
 }
@@ -269,13 +276,14 @@ export async function mockUpdateUser(userId, { name, email }) {
 }
 
 
-function toPublicUser({ password, ...user }: { id: number; name: string; email: string; role: string; password: string, reposts: any[] }) {
+
+function toPublicUser({ password, ...user }: { id: number; name: string; email: string; role: string; password: string, reposts: any[], likes: any[] }) {
   return user;
 }
 
 export async function mockGetMovies() {
     await wait();
-    return [...mockMovies].sort((a, b) => b.rating - a.rating).map(withCommentsCount);
+    return mockMovies.map(withCommentsCount).sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
   }
 
 
@@ -283,7 +291,7 @@ export async function mockGetMovie(id) {
   await wait();
   const movie = mockMovies.find((m) => m.id === id);
   if (!movie) return null;
-  return movie;
+  return withCommentsCount(movie);
 }
 
 export async function mockGetRecommendations(id) {
@@ -291,9 +299,10 @@ export async function mockGetRecommendations(id) {
   const movie = mockMovies.find((m) => m.id === id);
   if (!movie) return [];
   return mockMovies
-    .filter((m) => m.genre === movie.genre && m.id !== movie.id)
-    .sort((a, b) => b.rating - a.rating)
-    .slice(0, 6);
+  .filter((m) => m.genre === movie.genre && m.id !== movie.id)
+  .map(withCommentsCount)
+  .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
+  .slice(0, 6);
 }
 
 export async function mockCreateMovie(data) {
@@ -379,12 +388,22 @@ export async function mockDeleteComment(commentId) {
   if (index !== -1) mockComments.splice(index, 1);
 }
 
-export async function mockLikeComment(commentId) {
+export async function mockLikeComment(commentId, userId) {
   await wait();
   const comment = mockComments.find((c) => c.id === commentId);
+  const user = mockUsers.find((u) => u.id === userId);
   if (!comment) throw new Error('Reseña no encontrada');
-  comment.likes += 1;
-  return toPublicComment(comment);
+  if (!user) throw new Error('Usuario no encontrado');
+
+  const index = user.likes.indexOf(commentId);
+  if (index === -1) {
+    user.likes.push(commentId);
+    comment.likes += 1;
+    return { comment: toPublicComment(comment), liked: true };
+  }
+  user.likes.splice(index, 1);
+  comment.likes = Math.max(0, comment.likes - 1);     
+  return { comment: toPublicComment(comment), liked: false };
 }
 
 export async function mockRepostComment(

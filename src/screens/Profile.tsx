@@ -346,9 +346,20 @@ function ProfileScreen({ navigation, route }) {
   if (isTab && !user.isLoggedIn) {
     return (
       <View style={styles.guest}>
-        {/* ← pegar acá, SIN CAMBIOS, el contenido de la vista de invitado que ya existe
-              (LinearGradient, BrandLogo, "Tu perfil de cine", botones de Login y Registro) */}
-      </View>
+        <LinearGradient colors={[colors.coverTop, colors.background]} style={styles.cover} />
+        <BrandLogo size={110} />
+        <Text style={styles.guestTitle}>Tu perfil de cine</Text>
+        <Text style={styles.guestText}>
+          Ingresá para ver tus comentarios, subir de nivel y canjear premios en cines adheridos.
+        </Text>
+      <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('Login')}>
+      <Text style={styles.primaryButtonText}>Iniciar sesión</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+      <Text style={styles.linkText}>¿No tenés cuenta? Registrate</Text>
+      </TouchableOpacity>
+    </View>
+
     );
   }
 
