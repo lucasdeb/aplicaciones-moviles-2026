@@ -25,42 +25,29 @@ import {
   mockGetFriends,
 } from '../mockData';
 
- const LEVELS = [
-  {
-    min: 0,
-    name: 'Espectador',
-    icon: 'ticket-outline',
-    benefits: ['Comentar y calificar películas', 'Avisos el día del estreno'],
-  },
-  {
-    min: 50,
-    name: 'Cinéfilo',
-    icon: 'film-outline',
-    benefits: ['Insignia de Cinéfilo en tu perfil', 'Canje de premios en cines adheridos'],
-  },
-  {
-    min: 100,
-    name: 'Crítico',
-    icon: 'create-outline',
-    benefits: ['Tus comentarios pueden aparecer en Comentarios populares', 'Acceso a preventas anticipadas'],
-  },
-  {
-    min: 150,
-    name: 'Director',
-    icon: 'trophy-outline',
-    benefits: ['Premios exclusivos para Directores', 'Prioridad en preventas y estrenos'],
-  },
+// Cada nivel se alcanza con una cantidad de reseñas publicadas
+const LEVELS = [
+  { min: 5, name: 'Espectador', icon: 'ticket-outline' },
+  { min: 10, name: 'Cinéfilo', icon: 'film-outline' },
+  { min: 20, name: 'Crítico', icon: 'create-outline' },
+  { min: 40, name: 'Director', icon: 'trophy-outline' },
 ] as const;
 
- function getLevel(points: number) {
-  const index = LEVELS.filter((level) => points >= level.min).length - 1;
-  const next = LEVELS[index + 1];
+function getLevel(reviews: number) {
+  const number = LEVELS.filter((level) => reviews >= level.min).length; // 0 = todavía no llegó a 5
+  const current = LEVELS[number - 1];
+  const next = LEVELS[number];
+  const from = current ? current.min : 0;
   return {
-    number: index + 1,
-    name: LEVELS[index].name,
+    number,
+    name: current ? current.name : 'Sin nivel',
     next,
-    progress: next ? (points - LEVELS[index].min) / (next.min - LEVELS[index].min) : 1,
+    progress: next ? (reviews - from) / (next.min - from) : 1,
   };
+}
+
+function reviewsLabel(count: number) {
+  return count === 1 ? '1 reseña' : `${count} reseñas`;
 }
 
 const TABS = [
@@ -126,22 +113,23 @@ function StatCard({ icon, color, value, label, onPress }: StatCardProps) {
 type LevelsModalProps = {
   visible: boolean;
   currentLevel: number;
-  points: number;
+  reviews: number;
   onClose: () => void;
 };
 
-function LevelsModal({ visible, currentLevel, points, onClose }: LevelsModalProps) {
+function LevelsModal({ visible, currentLevel, reviews, onClose }: LevelsModalProps) {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
         <Pressable style={styles.sheet}>
           <View style={styles.handle} />
           <Text style={styles.sheetTitle}>Niveles</Text>
-          <Text style={styles.sheetSubtitle}>Tenés {points} pts ganados con tus logros</Text>
+          <Text style={styles.sheetSubtitle}>Publicaste {reviewsLabel(reviews)}</Text>
 
           {LEVELS.map((level, index) => {
             const number = index + 1;
             const isCurrent = number === currentLevel;
+            const isNext = number === currentLevel + 1;
             const reached = number <= currentLevel;
             return (
               <View key={level.name} style={[styles.levelRow, isCurrent && styles.levelRowCurrent]}>
@@ -157,17 +145,15 @@ function LevelsModal({ visible, currentLevel, points, onClose }: LevelsModalProp
                     <Text style={styles.levelName}>Nivel {number} · {level.name}</Text>
                     {isCurrent && <Text style={styles.currentTag}>Tu nivel</Text>}
                   </View>
-                  <Text style={styles.levelMin}>Desde {level.min} pts</Text>
-                  {level.benefits.map((benefit) => (
-                    <View key={benefit} style={styles.benefitRow}>
-                      <Ionicons
-                        name={reached ? 'checkmark-circle' : 'ellipse-outline'}
-                        size={14}
-                        color={reached ? colors.rating : colors.textMuted}
-                      />
-                      <Text style={styles.benefitText}>{benefit}</Text>
-                    </View>
-                  ))}
+                  <View style={styles.requirementRow}>
+                    <Ionicons
+                      name={reached ? 'checkmark-circle' : 'ellipse-outline'}
+                      size={14}
+                      color={reached ? colors.rating : colors.textMuted}
+                    />
+                    <Text style={styles.requirementText}>Hacé {reviewsLabel(level.min)}</Text>
+                    {isNext && <Text style={styles.requirementProgress}>{reviews}/{level.min}</Text>}
+                  </View>
                 </View>
               </View>
             );
@@ -376,7 +362,7 @@ function ProfileScreen({ navigation, route }) {
   const isModerator = isOwn && (role === 'moderator' || isSuperadmin);
   const earnedPoints = profile.stats.points;                                  // ganados con logros
   const shownPoints = isOwn ? earnedPoints - rewards.spentPoints : earnedPoints; // los canjes solo se restan en el mío
-  const level = getLevel(earnedPoints);
+  const level = getLevel(profile.stats.comments);
   const unlockedCount = achievements.list.filter((a) => a.unlocked).length;
   const list = tab === 'comments' ? profile.comments : profile.reposts;
   const button = FRIEND_BUTTON[friendship.status];
@@ -418,7 +404,9 @@ function ProfileScreen({ navigation, route }) {
         <View style={styles.chips}>
           <TouchableOpacity style={styles.levelChip} onPress={() => setLevelsVisible(true)} activeOpacity={0.8}>
             <Ionicons name="star" size={12} color={colors.background} />
-            <Text style={styles.levelChipText}>Nivel {level.number} · {level.name}</Text>
+            <Text style={styles.levelChipText}>
+              {level.number > 0 ? `Nivel ${level.number} · ${level.name}` : level.name}
+            </Text>
           </TouchableOpacity>
           <View style={[styles.roleChip, { borderColor: ROLE_COLORS[role] }]}>
             <Text style={[styles.roleChipText, { color: ROLE_COLORS[role] }]}>{ROLE_LABELS[role]}</Text>
@@ -430,7 +418,9 @@ function ProfileScreen({ navigation, route }) {
             <View style={[styles.progressFill, { width: `${Math.round(level.progress * 100)}%` }]} />
           </View>
           <Text style={styles.levelHint}>
-            {level.next ? `${level.next.min - earnedPoints} pts para ${level.next.name}` : 'Llegó al nivel máximo'}
+            {level.next
+              ? `${reviewsLabel(level.next.min - profile.stats.comments)} para ${level.next.name}`
+              : 'Llegó al nivel máximo'}
             <Text style={styles.levelLink}>  ·  Ver niveles</Text>
           </Text>
         </TouchableOpacity>
@@ -606,7 +596,7 @@ function ProfileScreen({ navigation, route }) {
       <LevelsModal
         visible={levelsVisible}
         currentLevel={level.number}
-        points={earnedPoints}
+        reviews={profile.stats.comments}
         onClose={() => setLevelsVisible(false)}
       />
     </ScrollView>
@@ -816,24 +806,22 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     overflow: 'hidden',
   },
-  levelMin: {
-    color: colors.textMuted,
-    fontSize: 12,
-    fontFamily: fonts.body,
-    marginTop: 2,
-    marginBottom: 4,
-  },
-  benefitRow: {
+  requirementRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 6,
   },
-  benefitText: {
+  requirementText: {
     color: colors.text,
     fontSize: 13,
     fontFamily: fonts.body,
     marginLeft: 6,
     flex: 1,
+  },
+  requirementProgress: {
+    color: colors.rating,
+    fontSize: 12,
+    fontFamily: fonts.label,
   },
   closeButton: {
     marginTop: 6,
