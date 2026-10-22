@@ -18,6 +18,7 @@ import { colors, fonts } from '../theme';
 import BrandLogo from '../components/BrandLogo';
 import SettingsButton from '../components/SettingsButton';
 import ConfirmModal from '../components/ConfirmModal';
+import GuestPrompt from '../components/GuestPrompt';
 
 type Achievement = {
   id: string;
@@ -66,21 +67,16 @@ function AchievementsScreen({ navigation }) {
   const [rewardToRedeem, setRewardToRedeem] = useState<Reward | null>(null);
   const [redeemError, setRedeemError] = useState('');
 
-  // Se recalcula al entrar a la solapa, así refleja los comentarios nuevos
+  // Se recalcula al entrar a la solapa, así refleja las reseñas nuevas
   useOnFocus(fetchAchievements, [user.user?.id]);
 
   if (!user.isLoggedIn) {
     return (
-      <View style={styles.guest}>
-        <BrandLogo size={96} />
-        <Text style={styles.guestTitle}>Ganá puntos con tus comentarios</Text>
-        <Text style={styles.guestText}>
-          Iniciá sesión para ver tus logros y canjear premios en cines adheridos.
-        </Text>
-        <TouchableOpacity style={styles.guestButton} onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.guestButtonText}>Iniciar sesión</Text>
-        </TouchableOpacity>
-      </View>
+      <GuestPrompt
+        title="Ganá puntos con tus reseñas"
+        description="Iniciá sesión para ver tus logros y canjear premios en cines adheridos."
+        onLogin={() => navigation.navigate('Login')}
+      />
     );
   }
 
@@ -450,38 +446,6 @@ const styles = StyleSheet.create({
   redeemedItem: {
     color: colors.textMuted,
     marginTop: 6,
-  },
-  guest: {
-    flex: 1,
-    backgroundColor: colors.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
-  guestTitle: {
-    color: colors.text,
-    fontSize: 20,
-    fontFamily: fonts.title,
-    marginTop: 16,
-    textAlign: 'center',
-  },
-  guestText: {
-    color: colors.textMuted,
-    fontSize: 14,
-    fontFamily: fonts.body,
-    marginTop: 6,
-    textAlign: 'center',
-  },
-  guestButton: {
-    backgroundColor: colors.accentPrimary,
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 28,
-    marginTop: 20,
-  },
-  guestButtonText: {
-    color: colors.onAccentPrimary,
-    fontFamily: fonts.label,
   },
 });
 

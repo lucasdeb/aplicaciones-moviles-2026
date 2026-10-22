@@ -92,12 +92,10 @@ function AddMovieScreen({ navigation, route }) {
   const { movies, createMovie, updateMovie } = useMovies();
   const movieId = route.params?.movieId;
   const editingMovie = movieId ? movies.list.find((m) => m.id === movieId) : null;
-
   const [title, setTitle] = useState(editingMovie?.title || '');
   const [overview, setOverview] = useState(editingMovie?.overview || '');
   const [year, setYear] = useState(editingMovie ? String(editingMovie.year) : '');
   const [genre, setGenre] = useState(editingMovie?.genre || '');
-  const [rating, setRating] = useState(editingMovie ? String(editingMovie.rating) : '');
   const [featured, setFeatured] = useState(editingMovie?.featured || false);
   const [posterUrl, setPosterUrl] = useState(editingMovie?.posterUrl || null);
   const [backdropUrl, setBackdropUrl] = useState(editingMovie?.backdropUrl || null);
@@ -110,9 +108,8 @@ function AddMovieScreen({ navigation, route }) {
       return;
     }
     const yearNumber = Number(year);
-    const ratingNumber = Number(rating);
-    if (!yearNumber || ratingNumber < 0 || ratingNumber > 5) {
-      setError('Año o rating inválido (rating entre 0 y 5)');
+    if (!yearNumber) {
+      setError('Año inválido');
       return;
     }
     if (!editingMovie && !posterUrl) {
@@ -128,7 +125,7 @@ function AddMovieScreen({ navigation, route }) {
       overview: overview.trim(),
       year: yearNumber,
       genre: genre.trim(),
-      rating: ratingNumber,
+      rating: 0,
       featured,
       ...(posterUrl && { posterUrl }),
       ...(backdropUrl && { backdropUrl }),
@@ -196,17 +193,6 @@ function AddMovieScreen({ navigation, route }) {
             keyboardType="numeric"
             value={year}
             onChangeText={setYear}
-          />
-        </View>
-        <View style={styles.inputHalf}>
-          <Text style={styles.label}>Rating (0-5)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="4.5"
-            placeholderTextColor={colors.textMuted}
-            keyboardType="numeric"
-            value={rating}
-            onChangeText={setRating}
           />
         </View>
       </View>

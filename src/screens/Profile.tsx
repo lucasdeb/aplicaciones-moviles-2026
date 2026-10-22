@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, Modal, Pressable,
   ActivityIndicator, Alert,                                   
@@ -12,6 +12,7 @@ import { useGamification } from '../context/GamificationContext';
 import { useOnFocus } from '../hooks/useOnFocus';
 import { formatNumber } from '../utils/formatNumber';
 import BrandLogo from '../components/BrandLogo';
+import GuestPrompt from '../components/GuestPrompt';
 import SettingsButton from '../components/SettingsButton';
 import ReviewCard from '../components/ReviewCard';            
 import { RANKS, calculateRank } from '../utils/ranks';
@@ -27,10 +28,12 @@ import {
 } from '../mockData';
 
 const TABS = [
-  { key: 'comments', label: 'Comentarios' },
+  { key: 'comments', label: 'Reseñas' },
+  { key: 'likes', label: 'Likes' },
   { key: 'reposts', label: 'Reposteados' },
 ] as const;
 
+type ActivityTab = (typeof TABS)[number]['key'];
 
 const FRIEND_BUTTON = {
   none:     { label: 'Agregar amigo',     icon: 'person-add-outline', primary: true },
@@ -168,11 +171,13 @@ function ProfileScreen({ navigation, route }) {
   const [friendship, setFriendship] = useState<{ status: FriendStatus; requestId?: number }>({ status: 'none' });
   const [requests, setRequests] = useState([]);                 // solo en mi perfil
   const [friends, setFriends] = useState([]);                   // solo en mi perfil
-  const [tab, setTab] = useState<'comments' | 'reposts'>('comments');
+  const [tab, setTab] = useState<ActivityTab>('comments');
   const [ranksVisible, setRanksVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);                      // evita doble toque en el botón de amistad
+  const scrollRef = useRef<ScrollView>(null);
+  const [reviewsSectionY, setReviewsSectionY] = useState(0);
 
   // ---------- Carga: todo en paralelo ----------
   async function load() {
@@ -208,6 +213,13 @@ function ProfileScreen({ navigation, route }) {
   }
   function openUser(userId?: number) {
     if (userId) navigation.push('UserProfile', { userId });
+  }
+
+  function openActivityTab(nextTab: ActivityTab) {
+    setTab(nextTab);
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ y: Math.max(reviewsSectionY - 16, 0), animated: true });
+    });
   }
 
   // ---------- Amistad (perfil de otro) ----------
@@ -297,21 +309,11 @@ function ProfileScreen({ navigation, route }) {
   // ---------- Pestaña Perfil sin sesión: igual que antes ----------
   if (isTab && !user.isLoggedIn) {
     return (
-      <View style={styles.guest}>
-        <LinearGradient colors={[colors.coverTop, colors.background]} style={styles.cover} />
-        <BrandLogo size={110} />
-        <Text style={styles.guestTitle}>Tu perfil de cine</Text>
-        <Text style={styles.guestText}>
-          Ingresá para ver tus comentarios, subir de nivel y canjear premios en cines adheridos.
-        </Text>
-      <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('Login')}>
-      <Text style={styles.primaryButtonText}>Iniciar sesión</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-      <Text style={styles.linkText}>¿No tenés cuenta? Registrate</Text>
-      </TouchableOpacity>
-    </View>
-
+      <GuestPrompt
+        title="Tu perfil de cine"
+        description="Iniciá sesión para ver tus reseñas, subir de nivel y canjear premios."
+        onLogin={() => navigation.navigate('Login')}
+      />
     );
   }
 
@@ -343,11 +345,16 @@ function ProfileScreen({ navigation, route }) {
   // Api va a agarrar el rank pero por ahora esta como mock
   const rank = profile.rank ?? calculateRank(reviewCount);
   const unlockedCount = achievements.list.filter((a) => a.unlocked).length;
-  const list = tab === 'comments' ? profile.comments : profile.reposts;
+  const list = tab === 'reposts'
+    ? profile.reposts
+    : tab === 'likes'
+      ? [...profile.comments].sort((a, b) => b.likes - a.likes)
+      : profile.comments;
   const button = FRIEND_BUTTON[friendship.status];
 
   return (
     <ScrollView
+      ref={scrollRef}
       style={styles.container}
       contentContainerStyle={[styles.content, !isTab && styles.contentStacked]}
     >
@@ -446,22 +453,22 @@ function ProfileScreen({ navigation, route }) {
           icon="chatbubbles"
           color={colors.accentPrimarySoft}
           value={formatNumber(profile.stats.comments)}
-          label="Comentarios"
-          onPress={() => setTab('comments')}
+          label="Reseñas"
+          onPress={() => openActivityTab('comments')}
         />
         <StatCard
           icon="repeat"
           color={colors.accentSecondaryText}
           value={formatNumber(profile.stats.reposts)}
           label="Reposteados"
-          onPress={() => setTab('reposts')}
+          onPress={() => openActivityTab('reposts')}
         />
         <StatCard
           icon="heart"
           color={colors.rating}
           value={formatNumber(profile.stats.likesReceived)}
           label="Likes recibidos"
-          onPress={() => setTab('comments')}
+          onPress={() => openActivityTab('likes')}
         />
         <StatCard
           icon="diamond"
@@ -508,7 +515,7 @@ function ProfileScreen({ navigation, route }) {
 
           <Text style={styles.sectionTitle}>Amigos ({friends.length})</Text>
           {friends.length === 0 ? (
-            <Text style={styles.hint}>Todavía no tenés amigos. Tocá el nombre de alguien en un comentario para agregarlo.</Text>
+            <Text style={styles.hint}>Todavía no tenés amigos. Tocá el nombre de alguien en una reseña para agregarlo.</Text>
           ) : (
             friends.map((f) => (
               <TouchableOpacity key={f.id} style={styles.requestRow} onPress={() => openUser(f.id)}>
@@ -528,7 +535,7 @@ function ProfileScreen({ navigation, route }) {
                 </>
               ) : (
                 <Text style={styles.hint}>
-                  Como moderador podés borrar cualquier comentario desde el detalle de cada película.
+                  Como moderador podés borrar cualquier reseña desde el detalle de cada película.
                 </Text>
               )}
             </>
@@ -536,22 +543,31 @@ function ProfileScreen({ navigation, route }) {
         </>
       )}
 
-      {/* ---------- Comentarios / Reposteados (para todos) ---------- */}
-      <View style={styles.segment}>
+      {/* ---------- Reseñas / Likes / Reposteados (para todos) ---------- */}
+      <View
+        style={styles.segment}
+        onLayout={(event) => setReviewsSectionY(event.nativeEvent.layout.y)}
+      >
         {TABS.map((t) => (
           <TouchableOpacity
             key={t.key}
             style={[styles.segmentItem, tab === t.key && styles.segmentItemActive]}
             onPress={() => setTab(t.key)}
           >
-            <Text style={[styles.segmentText, tab === t.key && styles.segmentTextActive]}>{t.label}</Text>
+            <Text style={[styles.segmentText, tab === t.key && styles.segmentTextActive]}>
+              {t.key === 'comments' && isOwn ? 'Mis reseñas' : t.label}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
 
       {list.length === 0 ? (
         <Text style={styles.hint}>
-          {tab === 'comments' ? 'Todavía no hay comentarios.' : 'Todavía no hay reposteos.'}
+          {tab === 'reposts'
+            ? 'Todavía no hay reposteos.'
+            : tab === 'likes'
+              ? 'Todavía no hay reseñas con likes.'
+              : 'Todavía no hay reseñas.'}
         </Text>
       ) : (
         list.map((comment) => (
@@ -560,7 +576,7 @@ function ProfileScreen({ navigation, route }) {
               <View style={styles.repostHeader}>
                 <Ionicons name="repeat" size={14} color={colors.accentSecondaryText} />
                 <TouchableOpacity style={{ flex: 1 }} onPress={() => openUser(comment.author?.id)}>
-                  <Text style={styles.repostLabel}>Comentario de {comment.author?.name ?? 'Usuario'}</Text>
+                  <Text style={styles.repostLabel}>Reseña de {comment.author?.name ?? 'Usuario'}</Text>
                 </TouchableOpacity>
                 {isOwn && (
                   <TouchableOpacity onPress={() => removeRepost(comment.id)} hitSlop={8}>
@@ -569,7 +585,7 @@ function ProfileScreen({ navigation, route }) {
                 )}
               </View>
             )}
-            {/* Tocar el comentario abre la película donde se publicó */}
+            {/* Tocar la reseña abre la película donde se publicó */}
             <ReviewCard review={comment} onPress={() => openMovie(comment.movie?.id)} />
           </View>
         ))
@@ -930,45 +946,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: fonts.label,
     marginLeft: 8,
-  },
-  guest: {
-    flex: 1,
-    backgroundColor: colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-  },
-  guestTitle: {
-    color: colors.text,
-    fontSize: 22,
-    fontFamily: fonts.title,
-    marginTop: 18,
-  },
-  guestText: {
-    color: colors.textMuted,
-    fontSize: 14,
-    fontFamily: fonts.body,
-    textAlign: 'center',
-    marginTop: 6,
-  },
-  primaryButton: {
-    alignSelf: 'stretch',
-    alignItems: 'center',
-    marginTop: 24,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: colors.accentPrimary,
-  },
-  primaryButtonText: {
-    color: colors.onAccentPrimary,
-    fontSize: 16,
-    fontFamily: fonts.label,
-  },
-  linkText: {
-    color: colors.accentSecondaryText,
-    fontSize: 14,
-    fontFamily: fonts.body,
-    marginTop: 16,
   },
   repostItem: { 
     marginBottom: 6 

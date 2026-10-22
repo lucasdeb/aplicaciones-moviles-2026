@@ -22,146 +22,146 @@ function poster(title, bg, fg) {
 const mockMovies = [
   {
     id: 1,
-    title: 'El Último Horizonte',
+    title: 'Top Gun: Maverick',
     overview:
-      'Un piloto retirado debe volver a los mandos para una misión de rescate que lo obliga a enfrentar su propio pasado.',
-    year: 2023,
+      'Tras más de treinta años de servicio, Maverick entrena a una nueva generación de pilotos para una misión que exige el máximo sacrificio.',
+    year: 2022,
     genre: 'Acción',
-    rating: 4.2,
-    posterUrl: poster('El Último Horizonte', '1c2228', 'ff8000'),
-    backdropUrl: null,
+    rating: 4.1,
+    posterUrl: 'https://image.tmdb.org/t/p/w500/AlWpEpQq0RgZIXVHAHZtFhEvRgd.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/w1280/AaV1YIdWKnjAIAOe8UUKBFm327v.jpg',
     featured: false,
   },
   {
     id: 2,
-    title: 'Código Rojo',
+    title: 'John Wick 4',
     overview:
-      'Un grupo de hackers descubre una conspiración que amenaza con colapsar la red eléctrica de toda una ciudad.',
-    year: 2022,
+      'John Wick descubre una forma de derrotar a la Alta Mesa, pero antes deberá enfrentarse a un nuevo enemigo con poderosas alianzas en todo el mundo.',
+    year: 2023,
     genre: 'Acción',
     rating: 3.9,
-    posterUrl: poster('Código Rojo', '1c2228', 'ff8000'),
-    backdropUrl: null,
+    posterUrl: 'https://image.tmdb.org/t/p/w500/mj2Z9HnRSIEk3n7yVPoOY4Uzzfh.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/w1280/7I6VUdPj6tQECNHdviJkUHD2u89.jpg',
     featured: false,
   },
   {
     id: 3,
-    title: 'La Última Estación',
+    title: 'Oppenheimer',
     overview:
-      'Dos hermanos separados por años de silencio se reencuentran en un tren nocturno rumbo a despedir a su padre.',
-    year: 2021,
+      'El físico J. Robert Oppenheimer lidera el proyecto que desarrolla la bomba atómica y debe afrontar las consecuencias de su creación.',
+    year: 2023,
     genre: 'Drama',
-    rating: 4.5,
-    posterUrl: poster('La Última Estación', '1c2228', '40bcf4'),
-    backdropUrl: null,
+    rating: 4.0,
+    posterUrl: 'https://image.tmdb.org/t/p/w500/mJRUREPjTqqMEKwEiM2sdmIGngz.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/w1280/neeNHeXjMF5fXoCJRsOmkNGC7q.jpg',
     featured: true,
   },
   {
     id: 4,
-    title: 'Cartas sin Enviar',
+    title: 'Cadena perpetua',
     overview:
-      'Una escritora encuentra las cartas que nunca envió su abuela y reconstruye una historia de amor olvidada.',
-    year: 2020,
+      'Condenado a cadena perpetua por un crimen que asegura no haber cometido, Andy Dufresne encuentra amistad y esperanza dentro de la prisión de Shawshank.',
+    year: 1994,
     genre: 'Drama',
-    rating: 4.1,
-    posterUrl: poster('Cartas sin Enviar', '1c2228', '40bcf4'),
-    backdropUrl: null,
+    rating: 4.4,
+    posterUrl: 'https://image.tmdb.org/t/p/w500/uRRTV7p6l2ivtODWJVVAMRrwTn2.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/w1280/pNjh59JSxChQktamG3LMp9ZoQzp.jpg',
     featured: false,
   },
   {
     id: 5,
-    title: 'Vecinos Ruidosos',
+    title: 'Barbie',
     overview:
-      'Una pareja intenta sobrevivir a su primer año de casados mientras lidian con los vecinos más caóticos del barrio.',
+      'Barbie abandona la perfección de Barbieland para descubrir el mundo real y encontrar el origen de una crisis que amenaza su existencia.',
     year: 2023,
     genre: 'Comedia',
-    rating: 3.7,
-    posterUrl: poster('Vecinos Ruidosos', '1c2228', 'ffd166'),
-    backdropUrl: null,
+    rating: 3.5,
+    posterUrl: 'https://image.tmdb.org/t/p/w500/fNtqD4BTFj0Bgo9lyoAtmNFzxHN.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/w1280/1esAE8sLJRWWFsLLeh5r3g2WanI.jpg',
     featured: false,
   },
   {
     id: 6,
-    title: 'Reunión de Ex',
+    title: 'Resacón en Las Vegas',
     overview:
-      'Cinco amigos de la secundaria organizan una reunión que se sale de control apenas veinte minutos después de empezar.',
-    year: 2019,
+      'Tres amigos despiertan después de una despedida de soltero en Las Vegas sin recordar la noche anterior y con el novio desaparecido.',
+    year: 2009,
     genre: 'Comedia',
-    rating: 3.5,
-    posterUrl: poster('Reunión de Ex', '1c2228', 'ffd166'),
-    backdropUrl: null,
+    rating: 3.7,
+    posterUrl: 'https://image.tmdb.org/t/p/w500/rqeim09TdaflSvPNVnCTBjUHlKu.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/w1280/iuRVt8tFiXDPGgzavhuSa3QHRxD.jpg',
     featured: false,
   },
   {
     id: 7,
-    title: 'Órbita Cero',
+    title: 'Interstellar',
     overview:
-      'La tripulación de una estación espacial debe decidir quién regresa a la Tierra cuando los recursos empiezan a escasear.',
-    year: 2024,
+      'Un grupo de exploradores atraviesa un agujero de gusano en busca de un nuevo hogar para la humanidad mientras la Tierra se vuelve inhabitable.',
+    year: 2014,
     genre: 'Ciencia Ficción',
-    rating: 4.6,
-    posterUrl: poster('Órbita Cero', '1c2228', '00e054'),
-    backdropUrl: null,
+    rating: 4.2,
+    posterUrl: 'https://image.tmdb.org/t/p/w500/d1QKiYtceF3GDtxvTFXFAqwwah9.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/w1280/8sNiAPPYU14PUepFNeSNGUTiHW.jpg',
     featured: true,
   },
   {
     id: 8,
-    title: 'Sintéticos',
+    title: 'Dune: Parte dos',
     overview:
-      'En una ciudad donde los androides conviven con humanos, un detective investiga el primer crimen cometido por una IA.',
-    year: 2022,
+      'Paul Atreides se une a Chani y los Fremen para vengar la destrucción de su familia mientras intenta evitar un futuro terrible.',
+    year: 2024,
     genre: 'Ciencia Ficción',
-    rating: 4.3,
-    posterUrl: poster('Sintéticos', '1c2228', '00e054'),
-    backdropUrl: null,
+    rating: 4.1,
+    posterUrl: 'https://image.tmdb.org/t/p/w500/xCHmhHeO7aOCMlzcNukGH6Q7EiD.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/w1280/eZ239CUp1d6OryZEBPnO2n87gMG.jpg',
     featured: true,
   },
   {
     id: 9,
-    title: 'La Casa del Fondo',
+    title: 'Expediente Warren',
     overview:
-      'Una familia se muda a una casa antigua y empieza a notar que algo dentro de las paredes los está observando.',
-    year: 2023,
+      'Los investigadores paranormales Ed y Lorraine Warren ayudan a una familia aterrorizada por una presencia oscura en su nueva casa.',
+    year: 2013,
     genre: 'Terror',
     rating: 3.8,
-    posterUrl: poster('La Casa del Fondo', '1c2228', 'ff4d4d'),
-    backdropUrl: null,
+    posterUrl: 'https://image.tmdb.org/t/p/w500/sKuHxkCogdk6YWzTyXYPoo9qd9n.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/w1280/ecKQlAEG95k62SMGhvX83oEqANK.jpg',
     featured: false,
   },
   {
     id: 10,
-    title: 'Medianoche en el Bosque',
+    title: 'Un lugar tranquilo',
     overview:
-      'Un grupo de excursionistas se pierde en un bosque donde las leyendas locales resultan ser más reales de lo que creían.',
-    year: 2021,
+      'Una familia debe vivir en completo silencio para sobrevivir a criaturas que cazan guiándose exclusivamente por el sonido.',
+    year: 2018,
     genre: 'Terror',
-    rating: 3.6,
-    posterUrl: poster('Medianoche en el Bosque', '1c2228', 'ff4d4d'),
-    backdropUrl: null,
+    rating: 3.7,
+    posterUrl: 'https://image.tmdb.org/t/p/w500/5pairI20KJs1SEa4Z8yAsPR779m.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/w1280/nHRUtBwFNnNN70vcQ7lAsjc2T6S.jpg',
     featured: false,
   },
   {
     id: 11,
-    title: 'Corazón de Neón',
+    title: 'La ciudad de las estrellas (La La Land)',
     overview:
-      'En una ciudad futurista, una cantante underground lucha por mantener viva su música frente a las grandes discográficas.',
-    year: 2024,
+      'Una aspirante a actriz y un pianista de jazz se enamoran en Los Ángeles mientras sus ambiciones profesionales ponen a prueba la relación.',
+    year: 2016,
     genre: 'Drama',
-    rating: 4.0,
-    posterUrl: poster('Corazón de Neón', '1c2228', '40bcf4'),
-    backdropUrl: null,
+    rating: 3.9,
+    posterUrl: 'https://image.tmdb.org/t/p/w500/7pFsAaJmiOppVHcldBzg8JKBHwe.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/w1280/nlPCdZlHtRNcF6C9hzUH4ebmV1w.jpg',
     featured: false,
   },
   {
     id: 12,
-    title: 'Persecución Final',
+    title: 'Mad Max: Furia en la carretera',
     overview:
-      'Un expolicía debe atravesar medio país en 24 horas para entregar evidencia clave antes de que sea destruida.',
-    year: 2020,
+      'Max se une a Furiosa y a un grupo de rebeldes que escapan de un tirano a través del desierto en una persecución implacable.',
+    year: 2015,
     genre: 'Acción',
     rating: 3.8,
-    posterUrl: poster('Persecución Final', '1c2228', 'ff8000'),
-    backdropUrl: null,
+    posterUrl: 'https://image.tmdb.org/t/p/w500/fnY0VRsb31A5RLVCBjuR6EFUlo2.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/w1280/gqrnQA6Xppdl8vIb2eJc58VC1tW.jpg',
     featured: false,
   },
   {
@@ -171,9 +171,9 @@ const mockMovies = [
       'Un vigilante enmascarado protege Ciudad Gótica de la corrupción y el crimen que consumieron a su familia.',
     year: 2022,
     genre: 'Acción',
-    rating: 4.7,
-    posterUrl: 'https://images.unsplash.com/photo-1531259683007-016a7b628fc3?w=500&q=60',
-    backdropUrl: 'https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?w=1200&q=60',
+    rating: 3.8,
+    posterUrl: 'https://image.tmdb.org/t/p/w500/mo7teil1qH0SxgLijnqeYP1Eb4w.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/w1280/rvtdN5XkWAfGX6xDuPL6yYS2seK.jpg',
     featured: true,
   },
 ];
@@ -232,6 +232,7 @@ function toPublicComment(comment) {
     likes: comment.likes,
     reposts: comment.reposts,
     createdAt: comment.createdAt,
+    updatedAt: comment.updatedAt ?? null,
     photo: comment.photo ?? null,
     author: author ? { id: author.id, name: author.name } : null,
     movie: movie ? { id: movie.id, title: movie.title, year: movie.year, posterUrl: movie.posterUrl } : undefined,
@@ -384,6 +385,22 @@ export async function mockGetUserComments(userId) {
 
 export async function mockPostComment(movieId, authorId, text, rating?: number, photo?: string){
   await wait();
+  const numericAuthorId = Number(authorId);
+  if (!mockUsers.some((user) => user.id === numericAuthorId)) {
+    throw new Error('Usuario no encontrado');
+  }
+  if (!mockMovies.some((movie) => movie.id === movieId)) {
+    throw new Error('Película no encontrada');
+  }
+  const existingReview = mockComments.find(
+    (comment) => comment.movieId === movieId && comment.authorId === numericAuthorId
+  );
+  if (existingReview) {
+    const error = new Error('Ya reseñaste esta película. Podés editar tu reseña existente.');
+    (error as Error & { code: string }).code = 'REVIEW_ALREADY_EXISTS';
+    throw error;
+  }
+
   const comment = {
     id: nextCommentId++,
     text,
@@ -391,7 +408,7 @@ export async function mockPostComment(movieId, authorId, text, rating?: number, 
     likes: 0,
     reposts: 0,
     createdAt: new Date().toISOString(),
-    authorId: Number(authorId),
+    authorId: numericAuthorId,
     movieId,
     photo: photo ?? null,
   };
@@ -399,10 +416,49 @@ export async function mockPostComment(movieId, authorId, text, rating?: number, 
   return toPublicComment(comment);
 }
 
-export async function mockDeleteComment(commentId) {
+export async function mockUpdateComment(
+  commentId,
+  authorId,
+  { text, rating, photo }: { text: string; rating?: number | null; photo?: string | null }
+) {
+  await wait();
+  const comment = mockComments.find((item) => item.id === commentId);
+  if (!comment) throw new Error('Reseña no encontrada');
+  if (comment.authorId !== Number(authorId)) {
+    throw new Error('No tenés permiso para editar esta reseña');
+  }
+
+  Object.assign(comment, {
+    text,
+    rating: rating ?? null,
+    photo: photo ?? null,
+    updatedAt: new Date().toISOString(),
+  });
+  return toPublicComment(comment);
+}
+
+export async function mockDeleteComment(commentId, requesterId) {
   await wait();
   const index = mockComments.findIndex((c) => c.id === commentId);
-  if (index !== -1) mockComments.splice(index, 1);
+  if (index === -1) throw new Error('Reseña no encontrada');
+
+  const requester = mockUsers.find((user) => user.id === Number(requesterId));
+  if (!requester) throw new Error('Usuario no encontrado');
+
+  const comment = mockComments[index];
+  const canModerate = requester.role === 'moderator' || requester.role === 'superadmin';
+  if (comment.authorId !== requester.id && !canModerate) {
+    throw new Error('No tenés permiso para borrar esta reseña');
+  }
+
+  mockComments.splice(index, 1);
+  for (const user of mockUsers) {
+    const likeIndex = user.likes.indexOf(commentId);
+    if (likeIndex !== -1) user.likes.splice(likeIndex, 1);
+    const repostIndex = user.reposts.indexOf(commentId);
+    if (repostIndex !== -1) user.reposts.splice(repostIndex, 1);
+  }
+  mockReposts = mockReposts.filter((repost) => repost.commentId !== commentId);
 }
 
 export async function mockLikeComment(commentId, userId) {
@@ -533,8 +589,8 @@ interface AchievementDef {
 const ACHIEVEMENTS: AchievementDef[] = [
   {
     id: 'first_review',
-    title: 'Primer Reseña',
-    description: 'Publicá tu primer reseña',
+    title: 'Primera reseña',
+    description: 'Publicá tu primera reseña',
     icon: 'create-outline',
     stat: 'totalReviews',
     goal: 1,
@@ -543,7 +599,7 @@ const ACHIEVEMENTS: AchievementDef[] = [
   {
     id: 'active_critic',
     title: 'Crítico en marcha',
-    description: 'Publicá 5 Reseñas',
+    description: 'Publicá 5 reseñas',
     icon: 'chatbubbles-outline',
     stat: 'totalReviews',
      goal: 5,
@@ -552,7 +608,7 @@ const ACHIEVEMENTS: AchievementDef[] = [
   {
     id: 'expert_critic',
     title: 'Crítico experto',
-    description: 'Publicá 15 Reseñas',
+    description: 'Publicá 15 reseñas',
     icon: 'ribbon-outline',
     stat: 'totalReviews',
     goal: 15,

@@ -44,7 +44,7 @@ export default function CommentCard({ comment, onLike, onRepost, canDelete,onPre
 
     if (result?.success === false) {
       setDeleting(false);
-      setDeleteError(result.error || 'No se pudo borrar el comentario.');
+      setDeleteError(result.error || 'No se pudo borrar la reseña.');
       resetPosition();
     }
   }
@@ -82,10 +82,10 @@ export default function CommentCard({ comment, onLike, onRepost, canDelete,onPre
 
       <ConfirmModal
         visible={deleteVisible}
-        title="Borrar comentario"
+        title="Borrar reseña"
         message={
           deleteError ||
-          '¿Seguro que querés borrar este comentario? Esta acción no se puede deshacer.'
+          '¿Seguro que querés borrar esta reseña? Esta acción no se puede deshacer.'
         }
         confirmLabel={deleteError ? 'Reintentar' : 'Borrar'}
         destructive

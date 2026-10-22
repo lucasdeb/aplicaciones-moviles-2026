@@ -24,7 +24,6 @@ async function get(path: string): Promise<TmdbMovie[]> {
   const res = await fetch(`${BASE_URL}${path}?api_key=${API_KEY}&language=es-AR&region=AR&page=1`);
   if (!res.ok) throw new Error(`TMDB respondió ${res.status}`);
   const json = await res.json();
-  console.log(json.results);
   return json.results.map((m: any) => ({
     id: m.id,
     title: m.title,

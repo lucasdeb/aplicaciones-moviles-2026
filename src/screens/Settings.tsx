@@ -137,23 +137,6 @@ function SettingsScreen() {
             )}
           </TouchableOpacity>
         </View>
-
-        <Text style={styles.sectionTitle}>Preferencias</Text>
-        <View style={styles.card}>
-          <View style={styles.row}>
-            <Ionicons name="notifications-outline" size={20} color={colors.accentPrimarySoft} />
-            <View style={styles.rowText}>
-              <Text style={styles.rowTitle}>Avisos de estrenos</Text>
-              <Text style={styles.rowSubtitle}>Te avisamos el día que se estrena una película</Text>
-            </View>
-            <Switch
-              value={notificationsOn}
-              onValueChange={onToggleNotifications}
-              trackColor={{ false: colors.surfaceHigh, true: colors.accentPrimary }}
-              thumbColor={colors.onAccentPrimary}
-            />
-          </View>
-        </View>
         <TouchableOpacity style={styles.logout} onPress={onLogOut}>
           <Ionicons name="log-out-outline" size={20} color={colors.danger} />
           <Text style={styles.logoutText}>Cerrar sesión</Text>

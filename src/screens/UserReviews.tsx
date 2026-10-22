@@ -28,7 +28,7 @@ type Review = {
 };
 
 const MODES: { key: Mode; label: string }[] = [
-  { key: 'reviews', label: 'Reseñas' },
+  { key: 'reviews', label: 'Mis reseñas' },
   { key: 'likes', label: 'Likes' },
 ];
 
@@ -54,11 +54,11 @@ function UserReviewsScreen({ navigation, route }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{mode === 'likes' ? 'Likes recibidos' : 'Mis Reseñas'}</Text>
+      <Text style={styles.title}>{mode === 'likes' ? 'Likes recibidos' : 'Mis reseñas'}</Text>
       <Text style={styles.subtitle}>
         {mode === 'likes'
-          ? `${formatNumber(totalLikes)} likes en ${list.length} Reseñas`
-          : `${list.length} Reseñas publicadas`}
+          ? `${formatNumber(totalLikes)} likes en ${list.length} reseñas`
+          : `${list.length} reseñas publicadas`}
       </Text>
 
       <View style={styles.segment}>
@@ -85,7 +85,7 @@ function UserReviewsScreen({ navigation, route }) {
           data={data}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={styles.list}
-          ListEmptyComponent={<Text style={styles.empty}>Todavía no publicaste Reseñas.</Text>}
+          ListEmptyComponent={<Text style={styles.empty}>Todavía no publicaste reseñas.</Text>}
           renderItem={({ item, index }) => (
             <TouchableOpacity
               style={styles.card}

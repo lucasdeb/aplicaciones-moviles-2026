@@ -22,6 +22,7 @@ import {
   mockGetRecommendations,
   mockGetComments,
   mockPostComment,
+  mockUpdateComment,
   mockLikeComment,
   mockRepostComment,
   mockDeleteComment,
@@ -46,6 +47,9 @@ function MovieDetailScreen({ navigation, route }) {
   const [error, setError] = useState('');
   const [commentText, setCommentText] = useState('');
   const [photo, setPhoto] = useState<string | null>(null);
+  const [editingReviewId, setEditingReviewId] = useState<number | null>(null);
+  const [savingReview, setSavingReview] = useState(false);
+  const [composerError, setComposerError] = useState('');
 
   // Se recarga cada vez que la pantalla queda visible (por ejemplo, al volver de una recomendada)
   useOnFocus(loadMovie, [movieId]);
@@ -94,8 +98,9 @@ function MovieDetailScreen({ navigation, route }) {
 
   async function deleteComment(commentId) {
     try {
-      await mockDeleteComment(commentId);
-      setComments((current) => current.filter((c) => c.id !== commentId));
+      await mockDeleteComment(commentId, me.id);
+      if (editingReviewId === commentId) resetComposer();
+      await loadMovie();
       return { success: true };
     } catch (e) {
       return { success: false, error: e.message };
@@ -104,6 +109,8 @@ function MovieDetailScreen({ navigation, route }) {
 
   const me = user.user;
   const canModerate = me?.role === 'moderator' || me?.role === 'superadmin';
+  const myReview = me ? comments.find((comment) => comment.author?.id === me.id) : null;
+  const isEditingMyReview = Boolean(myReview && editingReviewId === myReview.id);
   const requireLogin = (fn) => () => (me ? fn() : navigation.navigate('Login'));
   function openAuthor(authorId?: number) {
   if (!authorId) return;
@@ -134,14 +141,46 @@ function MovieDetailScreen({ navigation, route }) {
   ].filter(Boolean);
   const canPublish = missing.length === 0;
 
-function handlePublish() {
-  if (!canPublish || !me) return;
-  mockPostComment(movieId, me.id, commentText.trim(), rating, photo)
-    .then((comment) => setComments((current) => [comment, ...current]));
-  setCommentText('');
-  setPhoto(null);
-  setRating(null);
-}
+  function resetComposer() {
+    setCommentText('');
+    setPhoto(null);
+    setRating(null);
+    setEditingReviewId(null);
+    setComposerError('');
+  }
+
+  function startEditingReview() {
+    if (!myReview) return;
+    setCommentText(myReview.text);
+    setPhoto(myReview.photo ?? null);
+    setRating(myReview.rating ?? null);
+    setEditingReviewId(myReview.id);
+    setComposerError('');
+  }
+
+  async function handlePublish() {
+    if (!canPublish || !me || savingReview) return;
+    setSavingReview(true);
+    setComposerError('');
+    try {
+      if (isEditingMyReview) {
+        await mockUpdateComment(editingReviewId, me.id, {
+          text: commentText.trim(),
+          rating,
+          photo,
+        });
+      } else {
+        await mockPostComment(movieId, me.id, commentText.trim(), rating, photo);
+      }
+      resetComposer();
+      await loadMovie();
+    } catch (e) {
+      setComposerError(e.message || 'No se pudo guardar la reseña.');
+      if (e.code === 'REVIEW_ALREADY_EXISTS') await loadMovie();
+    } finally {
+      setSavingReview(false);
+    }
+  }
 const rated = comments.filter((c) => c.rating !== null && c.rating !== undefined);
 const communityAvg = rated.length
   ? (rated.reduce((sum, c) => sum + c.rating, 0) / rated.length).toFixed(1)
@@ -235,7 +274,23 @@ const communityAvg = rated.length
           </View>
         </View>
 
-        {me ? (
+        {me && myReview && !isEditingMyReview ? (
+          <View style={styles.existingReviewNotice}>
+            <View style={styles.existingReviewIcon}>
+              <Ionicons name="checkmark" size={18} color={colors.onAccentPrimary} />
+            </View>
+            <View style={styles.existingReviewCopy}>
+              <Text style={styles.existingReviewTitle}>Ya reseñaste esta película</Text>
+              <Text style={styles.existingReviewText}>
+                Podés editar tu reseña actual o borrarla para publicar una nueva.
+              </Text>
+            </View>
+            <TouchableOpacity style={styles.editReviewButton} onPress={startEditingReview} activeOpacity={0.8}>
+              <Ionicons name="pencil-outline" size={15} color={colors.accentPrimary} />
+              <Text style={styles.editReviewButtonText}>Editar</Text>
+            </TouchableOpacity>
+          </View>
+        ) : me ? (
           <View style={styles.composer}>
             <View style={styles.composerHeader}>
               <LinearGradient
@@ -247,8 +302,12 @@ const communityAvg = rated.length
                 <Text style={styles.composerAvatarInitial}>{me.name.charAt(0).toUpperCase()}</Text>
               </LinearGradient>
               <View>
-                <Text style={styles.composerTitle}>Tu reseña</Text>
-                <Text style={styles.composerSubtitle}>¿Qué te pareció {movie.title}?</Text>
+                <Text style={styles.composerTitle}>
+                  {isEditingMyReview ? 'Editá tu reseña' : 'Tu reseña'}
+                </Text>
+                <Text style={styles.composerSubtitle}>
+                  {isEditingMyReview ? 'Los cambios no cuentan como una reseña nueva' : `¿Qué te pareció ${movie.title}?`}
+                </Text>
               </View>
             </View>
 
@@ -278,20 +337,37 @@ const communityAvg = rated.length
                 <Ionicons name={photo ? 'images-outline' : 'camera-outline'} size={16} color={colors.accentPrimarySoft} />
                 <Text style={styles.photoButtonText}>{photo ? 'Cambiar foto' : 'Agregar foto'}</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.sendButton, !canPublish && styles.sendButtonDisabled]}
-                onPress={handlePublish}
-                disabled={!canPublish}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.sendButtonText, !canPublish && styles.sendButtonTextDisabled]}>Publicar</Text>
-                <Ionicons name="send" size={14} color={canPublish ? colors.onAccentPrimary : colors.textMuted} />
-              </TouchableOpacity>
+              <View style={styles.composerSubmitActions}>
+                {isEditingMyReview && (
+                  <TouchableOpacity style={styles.cancelEditButton} onPress={resetComposer} disabled={savingReview}>
+                    <Text style={styles.cancelEditButtonText}>Cancelar</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  style={[styles.sendButton, (!canPublish || savingReview) && styles.sendButtonDisabled]}
+                  onPress={handlePublish}
+                  disabled={!canPublish || savingReview}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.sendButtonText, (!canPublish || savingReview) && styles.sendButtonTextDisabled]}>
+                    {savingReview ? 'Guardando...' : isEditingMyReview ? 'Guardar' : 'Publicar'}
+                  </Text>
+                  {!savingReview && (
+                    <Ionicons
+                      name={isEditingMyReview ? 'checkmark' : 'send'}
+                      size={14}
+                      color={canPublish ? colors.onAccentPrimary : colors.textMuted}
+                    />
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
 
-            {!canPublish && (
+            {composerError ? (
+              <Text style={styles.composerError}>{composerError}</Text>
+            ) : !canPublish ? (
               <Text style={styles.composerHint}>Falta: {missing.join(', ')}</Text>
-            )}
+            ) : null}
           </View>
         ) : (
           <TouchableOpacity
@@ -511,6 +587,54 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     marginLeft: 4,
   },
+  existingReviewNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.accentPrimary,
+    padding: 14,
+    marginBottom: 20,
+    gap: 10,
+  },
+  existingReviewIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.accentPrimary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  existingReviewCopy: {
+    flex: 1,
+  },
+  existingReviewTitle: {
+    color: colors.text,
+    fontFamily: fonts.bodyBold,
+    fontSize: 14,
+  },
+  existingReviewText: {
+    color: colors.textMuted,
+    fontFamily: fonts.body,
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 2,
+  },
+  editReviewButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 16,
+    backgroundColor: colors.surfaceAlt,
+  },
+  editReviewButtonText: {
+    color: colors.accentPrimary,
+    fontFamily: fonts.label,
+    fontSize: 12,
+  },
   composer: {
     backgroundColor: colors.surface,
     borderRadius: 18,
@@ -566,6 +690,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  composerSubmitActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  cancelEditButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 9,
+  },
+  cancelEditButtonText: {
+    color: colors.textMuted,
+    fontFamily: fonts.label,
+    fontSize: 13,
+  },
   photoButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -604,6 +742,13 @@ const styles = StyleSheet.create({
   },
   composerHint: {
     color: colors.textMuted,
+    fontFamily: fonts.body,
+    fontSize: 12,
+    marginTop: 10,
+    textAlign: 'right',
+  },
+  composerError: {
+    color: colors.danger,
     fontFamily: fonts.body,
     fontSize: 12,
     marginTop: 10,
