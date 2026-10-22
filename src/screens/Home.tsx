@@ -121,7 +121,17 @@ function HomeScreen({ navigation }) {
   );
 
   const isInitialLoading = movies.isFetching && movies.list.length === 0;
-  const heroMovies = movies.featured.length > 0 ? movies.featured : movies.list.slice(0, 1);
+  const moviesByRating = movies.list
+    .filter((movie) => Number.isFinite(movie.rating))
+    .sort((a, b) => b.rating - a.rating);
+  const heroMovies = moviesByRating.slice(0, 4);
+  const trendingMovies = [...movies.list]
+    .filter((movie) => movie.reviewsLast30Days > 0)
+    .sort(
+      (a, b) =>
+        b.reviewsLast30Days - a.reviewsLast30Days ||
+        (b.rating ?? 0) - (a.rating ?? 0)
+    );
 
   return (
     <View style={styles.container}>
@@ -191,8 +201,16 @@ function HomeScreen({ navigation }) {
             </View>
           ) : null}
 
-          <SectionHeader title="En tendencia ahora" />
-          <PopularCarousel movies={heroMovies} onPressMovie={goToMovie} />
+          {trendingMovies.length > 0 ? (
+            <>
+              <SectionHeader title="En tendencia ahora" />
+              <PopularCarousel
+                movies={trendingMovies}
+                onPressMovie={goToMovie}
+                showRecentReviewCount
+              />
+            </>
+          ) : null}
 
           {feed.popularReviews.length > 0 && (
             <RevealOnScroll scrollY={scrollY}>
@@ -221,7 +239,11 @@ function HomeScreen({ navigation }) {
               columnWrapperStyle={styles.gridRow}
               contentContainerStyle={styles.gridList}
               renderItem={({ item }) => (
-                <MovieCard movie={item} onPress={() => goToMovie(item.id)} />
+                <MovieCard
+                  movie={item}
+                  onPress={() => goToMovie(item.id)}
+                  style={styles.gridCard}
+                />
               )}
             />
           </RevealOnScroll>
@@ -431,6 +453,10 @@ const styles = StyleSheet.create({
   },
   gridList: {
     paddingBottom: 24,
+  },
+  gridCard: {
+    width: '31%',
+    marginBottom: 16,
   },
   searchInput: {
     marginHorizontal: 16,

@@ -1,15 +1,14 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Image, Animated, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, fonts } from '../theme';
-import { formatNumber } from '../utils/formatNumber';
+import { View, Animated, StyleSheet } from 'react-native';
+import { colors } from '../theme';
+import MovieCard from './MovieCard';
 
 const CARD_WIDTH = 148;
 const CARD_SPACING = 14;
 const ITEM_SIZE = CARD_WIDTH + CARD_SPACING;
 const AUTOPLAY_INTERVAL = 3500;
 
-export default function PopularCarousel({ movies, onPressMovie }) {
+export default function PopularCarousel({ movies, onPressMovie, showRecentReviewCount = false }) {
   const scrollX = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef(null);
   const indexRef = useRef(0);
@@ -78,39 +77,18 @@ export default function PopularCarousel({ movies, onPressMovie }) {
           });
 
           return (
-            <TouchableOpacity
+            <Animated.View
               key={item.id}
-              activeOpacity={0.85}
-              onPress={() => onPressMovie(item.id)}
+              style={[styles.card, { opacity, transform: [{ scale }, { translateY }] }]}
             >
-              <Animated.View
-                style={[styles.card, { opacity, transform: [{ scale }, { translateY }] }]}
-              >
-                <View>
-                  <Image source={{ uri: item.posterUrl }} style={styles.poster} />
-                  <View style={styles.ratingBadge}>
-                    <Ionicons name="star" size={10} color={colors.background} />
-                    <Text style={styles.ratingBadgeText}>{item.rating}</Text>
-                  </View>
-                </View>
-                <Text style={styles.title} numberOfLines={1}>
-                  {item.title}
-                </Text>
-                <Text style={styles.subtitle} numberOfLines={1}>
-                  {item.genre} · {item.year}
-                </Text>
-                <View style={styles.statsRow}>
-    
-                  <Ionicons
-                    name="chatbubble-outline"
-                    size={12}
-                    color={colors.textMuted}
-                    style={styles.statSpacing}
-                  />
-                  <Text style={styles.statText}>{item.commentsCount}</Text>
-                </View>
-              </Animated.View>
-            </TouchableOpacity>
+              <MovieCard
+                movie={item}
+                onPress={() => onPressMovie(item.id)}
+                reviewCount={
+                  showRecentReviewCount ? item.reviewsLast30Days : item.commentsCount
+                }
+              />
+            </Animated.View>
           );
         })}
       </Animated.ScrollView>
@@ -151,55 +129,6 @@ const styles = StyleSheet.create({
   card: {
     width: CARD_WIDTH,
     marginRight: CARD_SPACING,
-  },
-  poster: {
-    width: '100%',
-    aspectRatio: 2 / 3,
-    borderRadius: 10,
-    backgroundColor: colors.surfaceAlt,
-  },
-  ratingBadge: {
-    position: 'absolute',
-    left: 8,
-    bottom: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.rating,
-    borderRadius: 20,
-    paddingVertical: 3,
-    paddingHorizontal: 7,
-  },
-  ratingBadgeText: {
-    color: colors.background,
-    fontSize: 10,
-    fontFamily: fonts.label,
-    marginLeft: 3,
-  },
-  title: {
-    color: colors.text,
-    fontSize: 13,
-    fontFamily: fonts.bodyBold,
-    marginTop: 8,
-  },
-  subtitle: {
-    color: colors.textMuted,
-    fontSize: 11,
-    fontFamily: fonts.body,
-    marginTop: 2,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 6,
-  },
-  statText: {
-    color: colors.textMuted,
-    fontSize: 11,
-    fontFamily: fonts.body,
-    marginLeft: 3,
-  },
-  statSpacing: {
-    marginLeft: 8,
   },
   dots: {
     flexDirection: 'row',

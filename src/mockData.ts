@@ -211,7 +211,7 @@ for (const movie of mockMovies) {
     mockComments.push({
       id: nextCommentId++,
       text: commentTemplates[templateIndex % commentTemplates.length],
-      rating: hasRating ? Math.round((2 + ((templateIndex * 37) % 6)) * 2) / 2 : null,
+      rating: hasRating ? Math.round((2 + ((templateIndex * 37) % 4)) * 2) / 2 : null,
       likes: (templateIndex * 53) % 400,
       reposts: (templateIndex * 7) % 20,
       createdAt: new Date(Date.now() - templateIndex * 3600 * 1000).toISOString(),
@@ -244,9 +244,24 @@ function averageRating(movieId) {
   return Math.round((rated.reduce((sum, c) => sum + c.rating, 0) / rated.length) * 10) / 10;
 }
 
+function reviewsInLast30Days(movieId) {
+  const now = Date.now();
+  const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
+
+  return mockComments.filter((comment) => {
+    const createdAt = new Date(comment.createdAt).getTime();
+    return comment.movieId === movieId && createdAt >= thirtyDaysAgo && createdAt <= now;
+  }).length;
+}
+
 function withCommentsCount(movie) {
   const commentsCount = mockComments.filter((c) => c.movieId === movie.id).length;
-  return { ...movie, commentsCount, rating: averageRating(movie.id) };
+  return {
+    ...movie,
+    commentsCount,
+    reviewsLast30Days: reviewsInLast30Days(movie.id),
+    rating: averageRating(movie.id),
+  };
 }
 
 

@@ -20,7 +20,7 @@ import CinemasScreen from './screens/Cinemas';
 import BrandLogo from './components/BrandLogo';
 import UserReviewsScreen from './screens/UserReviews';
 import SettingsScreen from './screens/Settings';
-import { TouchableOpacity, StyleSheet } from 'react-native';
+
 
 
 const Stack = createNativeStackNavigator();
@@ -115,10 +115,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-});
-
-export default RootNavigator;
-const styles = StyleSheet.create({
   closeButton: {
     width: 36,
     height: 36,
@@ -131,3 +127,5 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
 });
+
+export default RootNavigator;
