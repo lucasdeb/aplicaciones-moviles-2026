@@ -182,12 +182,8 @@ function ReleasesScreen({ navigation }) {
                   <View style={styles.metaRow}>
                     <Ionicons name="calendar-outline" size={12} color={colors.accentSecondary} />
                     <Text style={styles.metaText}>{formatDate(item.releaseDate)}</Text>
-                    {item.rating > 0 && (
-                      <>
-                        <Ionicons name="star" size={12} color={colors.rating} style={{ marginLeft: 10 }} />
-                        <Text style={styles.metaText}>{item.rating}</Text>
-                      </>
-                    )}
+                    <Ionicons name="star" size={12} color={colors.rating} style={{ marginLeft: 10 }} />
+                    <Text style={styles.metaText}>{item.rating}</Text>
                   </View>
                   <Text style={styles.overview} numberOfLines={3}>
                     {item.overview || 'Sin sinopsis disponible.'}

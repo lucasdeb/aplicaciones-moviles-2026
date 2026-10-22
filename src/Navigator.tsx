@@ -20,6 +20,8 @@ import CinemasScreen from './screens/Cinemas';
 import BrandLogo from './components/BrandLogo';
 import UserReviewsScreen from './screens/UserReviews';
 import SettingsScreen from './screens/Settings';
+import { TouchableOpacity, StyleSheet } from 'react-native';
+
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -116,3 +118,16 @@ const styles = StyleSheet.create({
 });
 
 export default RootNavigator;
+const styles = StyleSheet.create({
+  closeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.surfaceHigh,
+    borderWidth: 1,
+    borderColor: colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+});

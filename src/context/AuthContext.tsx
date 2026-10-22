@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 import { mockLogin, mockRegister, mockUpdateUser } from '../mockData';
 
-export type User = { id: number; name: string; email: string; role: string, reposts: any[] };
+export type User = { id: number; name: string; email: string; role: string, reposts: any[], likes: any[] };
 type AuthState = { user: User | null; isFetching: boolean; isLoggedIn: boolean };
 type Result = { success: boolean; error?: string };
 

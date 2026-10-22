@@ -5,33 +5,48 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, fonts } from '../theme';
 import { timeAgo } from '../utils/timeAgo';
 import { Image } from 'react-native';
+import StarRating from './StarRating';
+import ConfirmModal from './ConfirmModal';
 
 const SWIPE_THRESHOLD = -80;
 const MAX_SWIPE = -110;
 
-export default function CommentCard({ comment, onLike, onRepost, canDelete,onPressAuthor, onDelete, initialReposted = false }) {
-  const [liked, setLiked] = useState(false);
+export default function CommentCard({ comment, onLike, onRepost, canDelete,onPressAuthor, onDelete, initialReposted = false ,initialLiked = false, }) {
+  const [liked, setLiked] = useState(initialLiked);
   const [reposted, setReposted] = useState(initialReposted);
   const translateX = useRef(new Animated.Value(0)).current;
   const authorName = comment.author?.name ?? 'Usuario';
+  const [deleteVisible, setDeleteVisible] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   function resetPosition() {
     Animated.spring(translateX, { toValue: 0, useNativeDriver: false }).start();
   }
 
-  async function handleConfirmDelete() {
-    const result = await onDelete();
-    if (result && result.success === false) {
-      resetPosition();
-      Alert.alert('No se pudo borrar', result.error || 'Probá de nuevo.');
-    }
+  function requestDelete() {
+    setDeleteError('');
+    setDeleteVisible(true);
   }
 
-  function confirmDelete() {
-    Alert.alert('Borrar reseña', '¿Seguro que querés borrar esta reseña?', [
-      { text: 'Cancelar', onPress: resetPosition },
-      { text: 'Borrar', style: 'destructive', onPress: handleConfirmDelete },
-    ]);
+  function cancelDelete() {
+    if (deleting) return;
+
+    setDeleteVisible(false);
+    setDeleteError('');
+    resetPosition();
+  }
+
+  async function handleConfirmDelete() {
+    setDeleting(true);
+
+    const result = await onDelete();
+
+    if (result?.success === false) {
+      setDeleting(false);
+      setDeleteError(result.error || 'No se pudo borrar el comentario.');
+      resetPosition();
+    }
   }
 
   const panResponder = useRef(
@@ -43,7 +58,7 @@ export default function CommentCard({ comment, onLike, onRepost, canDelete,onPre
       },
       onPanResponderRelease: (evt, gestureState) => {
         if (gestureState.dx < SWIPE_THRESHOLD) {
-          confirmDelete();
+          requestDelete();
         } else {
           resetPosition();
         }
@@ -52,10 +67,9 @@ export default function CommentCard({ comment, onLike, onRepost, canDelete,onPre
     })
   ).current;
 
-  function handleLike() {
-    if (liked) return;
-    setLiked(true);
-    onLike();
+  async function handleLike() {
+    const isNowLiked = await onLike();
+    if (typeof isNowLiked === 'boolean') setLiked(isNowLiked);
   }
 
   async function handleRepost() {
@@ -65,12 +79,20 @@ export default function CommentCard({ comment, onLike, onRepost, canDelete,onPre
 
   return (
     <View style={styles.container}>
-      {canDelete && (
-        <View style={styles.deleteBackground}>
-          <Ionicons name="trash" size={16} color="#fff" />
-          <Text style={styles.deleteBackgroundText}>Borrar</Text>
-        </View>
-      )}
+
+      <ConfirmModal
+        visible={deleteVisible}
+        title="Borrar comentario"
+        message={
+          deleteError ||
+          '¿Seguro que querés borrar este comentario? Esta acción no se puede deshacer.'
+        }
+        confirmLabel={deleteError ? 'Reintentar' : 'Borrar'}
+        destructive
+        loading={deleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={cancelDelete}
+      />
 
       <Animated.View
         style={[styles.row, { transform: [{ translateX }] }]}
@@ -95,6 +117,11 @@ export default function CommentCard({ comment, onLike, onRepost, canDelete,onPre
             <View style={styles.dot} />
             <Text style={styles.time}>{timeAgo(comment.createdAt)}</Text>
           </View>
+          {comment.rating !== null && comment.rating !== undefined && (
+          <View style={styles.stars}>
+            <StarRating rating={comment.rating} size={12} />
+          </View>
+          )}
 
           <Text style={styles.text}>{comment.text}</Text>
           {comment.photo && <Image source={{ uri: comment.photo }} style={styles.photo} />}
@@ -265,5 +292,8 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     marginLeft: 'auto',
     fontStyle: 'italic',
+  },
+  stars: {
+    marginTop: 4,
   },
 });
