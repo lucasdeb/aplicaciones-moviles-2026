@@ -1,9 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, Animated, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, fonts } from '../theme';
-import { formatNumber } from '../utils/formatNumber';
 
 const ROTATE_INTERVAL = 5000;
 const FADE_DURATION = 450;
@@ -144,16 +143,6 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 13,
     fontFamily: fonts.body,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statText: {
-    color: colors.textMuted,
-    fontSize: 12,
-    fontFamily: fonts.body,
-    marginLeft: 4,
   },
   dots: {
     position: 'absolute',

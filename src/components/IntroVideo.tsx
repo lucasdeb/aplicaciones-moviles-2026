@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { fonts } from '../theme';

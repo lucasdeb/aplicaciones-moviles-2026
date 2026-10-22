@@ -1,4 +1,3 @@
-import React from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -18,7 +17,6 @@ import ReleasesScreen from './screens/Releases';
 import { colors, fonts } from './theme';
 import CinemasScreen from './screens/Cinemas';
 import BrandLogo from './components/BrandLogo';
-import UserReviewsScreen from './screens/UserReviews';
 import SettingsScreen from './screens/Settings';
 
 
@@ -74,7 +72,6 @@ function RootNavigator() {
         <Stack.Screen name="ManageMovies" component={ManageMoviesScreen} options={headerOptions} />
         <Stack.Screen name="AddMovie" component={AddMovieScreen} options={headerOptions} />
         <Stack.Screen name="ManageUsers" component={ManageUsersScreen} options={headerOptions} />
-        <Stack.Screen name="UserReviews" component={UserReviewsScreen} options={headerOptions} />
         <Stack.Screen name="Settings" component={SettingsScreen} options={{ ...headerOptions, headerTitle: 'Configuración' }} />
 
         </>
@@ -114,17 +111,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  closeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.surfaceHigh,
-    borderWidth: 1,
-    borderColor: colors.border,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
   },
 });
 

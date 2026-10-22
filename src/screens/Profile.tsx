@@ -65,17 +65,6 @@ type StatCardProps = {
   onPress: () => void;
 };
 
-type CommentCardProps = {
-  commentId: string;
-  authorName: string;
-  text: string;
-  createdAt: string;
-  likes: number;
-  reposts: number;
-  onPress: () => void;
-};
-
-
 function StatCard({ icon, color, value, label, onPress }: StatCardProps) {
   return (
     <TouchableOpacity style={styles.statCard} onPress={onPress} activeOpacity={0.8}>
@@ -684,12 +673,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.label,
     marginLeft: 4,
   },
-  email: {
-    color: colors.textMuted,
-    fontSize: 13,
-    fontFamily: fonts.body,
-    marginTop: 2,
-  },
   chips: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -930,22 +913,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: fonts.body,
     lineHeight: 18,
-  },
-  logout: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 28,
-    paddingVertical: 13,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.danger,
-  },
-  logoutText: {
-    color: colors.danger,
-    fontSize: 15,
-    fontFamily: fonts.label,
-    marginLeft: 8,
   },
   repostItem: { 
     marginBottom: 6 

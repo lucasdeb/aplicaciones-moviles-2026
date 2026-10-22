@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -65,7 +64,6 @@ function AchievementsScreen({ navigation }) {
   const { user } = useAuth();
   const { achievements, rewards, fetchAchievements, redeemReward } = useGamification();
   const [rewardToRedeem, setRewardToRedeem] = useState<Reward | null>(null);
-  const [redeemError, setRedeemError] = useState('');
 
   // Se recalcula al entrar a la solapa, así refleja las reseñas nuevas
   useOnFocus(fetchAchievements, [user.user?.id]);
@@ -89,7 +87,6 @@ function AchievementsScreen({ navigation }) {
   const nextPercent = nextGoal ? Math.round((nextGoal.current / nextGoal.goal) * 100) : 100;
 
   function handleRedeem(reward: Reward) {
-    setRedeemError('');
     setRewardToRedeem(reward);
   }
 
@@ -99,12 +96,10 @@ function AchievementsScreen({ navigation }) {
     const result = redeemReward(rewardToRedeem);
 
     if (!result.success) {
-      setRedeemError(result.error ?? 'No se pudo realizar el canje.');
       return;
     }
 
     setRewardToRedeem(null);
-    setRedeemError('');
   }
 
   return (

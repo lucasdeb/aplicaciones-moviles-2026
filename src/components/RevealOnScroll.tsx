@@ -1,5 +1,5 @@
-import React, { useState, type ReactNode } from 'react';
-import { Animated, Dimensions, StyleSheet } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import { Animated, Dimensions } from 'react-native';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 

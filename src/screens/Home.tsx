@@ -1,22 +1,19 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
-  Image,
   FlatList,
   Animated,
   RefreshControl,
   TouchableOpacity,
-  Modal,
   ActivityIndicator,
   TextInput,
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
 import { useMovies } from '../context/MovieContext';
-import { mockGetPopularReviews, mockGetPopularReviewers } from '../mockData';
+import { mockGetPopularReviews } from '../mockData';
 import MovieCard from '../components/MovieCard';
 import ReviewCard from '../components/ReviewCard';
 import PopularCarousel from '../components/PopularCarousel';
@@ -26,45 +23,6 @@ import BrandLogo from '../components/BrandLogo';
 import { colors, fonts } from '../theme';
 import SettingsButton from '../components/SettingsButton';
 
-/**const MENU_ITEMS = [
-  { key: 'achievements', label: 'Logros', icon: 'trophy-outline' as const, screen: 'Logros' },
-];
-
-function HeaderMenu({ navigation }) {
-  const { user } = useAuth();
-  const [visible, setVisible] = useState(false);
-
-  function goTo(screen) {
-    setVisible(false);
-    navigation.navigate(user.isLoggedIn ? screen : 'Login');
-  }
-
-  return (
-    <>
-      <TouchableOpacity style={styles.menuButton} onPress={() => setVisible(true)} hitSlop={8}>
-        <Ionicons name="menu" size={22} color={colors.accentPrimarySoft} />
-      </TouchableOpacity>
-
-      <Modal visible={visible} transparent animationType="fade" onRequestClose={() => setVisible(false)}>
-        <TouchableOpacity style={styles.menuBackdrop} activeOpacity={1} onPress={() => setVisible(false)}>
-          <View style={styles.menuCard}>
-            {MENU_ITEMS.map((item) => (
-              <TouchableOpacity
-                key={item.key}
-                style={styles.menuItem}
-                onPress={() => goTo(item.screen)}
-              >
-                <Ionicons name={item.icon} size={18} color={colors.text} />
-                <Text style={styles.menuItemText}>{item.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </TouchableOpacity>
-      </Modal>
-    </>
-  );
-}
-**/
 function SectionHeader({ title }) {
   return (
     <View style={styles.sectionHeader}>
@@ -78,7 +36,7 @@ function HomeScreen({ navigation }) {
   const { user: { user: currentUser } } = useAuth();
   const { movies, fetchMovies } = useMovies();
   // El feed solo lo usa Home: estado local, no global
-  const [feed, setFeed] = useState({ popularReviews: [], popularReviewers: [] });
+  const [popularReviews, setPopularReviews] = useState([]);
   const [showSearch, setShowSearch] = useState(false);
   const [search, setSearch] = useState('');
 
@@ -95,11 +53,7 @@ function HomeScreen({ navigation }) {
   async function refreshAll() {
     fetchMovies();
     try {
-      const [popularReviews, popularReviewers] = await Promise.all([
-        mockGetPopularReviews(),
-        mockGetPopularReviewers(),
-      ]);
-      setFeed({ popularReviews, popularReviewers });
+      setPopularReviews(await mockGetPopularReviews());
     } catch (error) {
       console.warn('No se pudo cargar el feed', error);
     }
@@ -212,11 +166,11 @@ function HomeScreen({ navigation }) {
             </>
           ) : null}
 
-          {feed.popularReviews.length > 0 && (
+          {popularReviews.length > 0 && (
             <RevealOnScroll scrollY={scrollY}>
               <SectionHeader title="Reseñas populares" />
               <View style={styles.reviewsList}>
-                {feed.popularReviews.slice(0, 5).map((review) => (
+                {popularReviews.slice(0, 5).map((review) => (
                   <ReviewCard
                     key={review.id}
                     review={review}
@@ -320,48 +274,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 10,
   },
-  menuButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  menuBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-  },
-  menuCard: {
-    position: 'absolute',
-    top: 96,
-    right: 16,
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingVertical: 6,
-    minWidth: 160,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 6,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  menuItemText: {
-    color: colors.text,
-    fontSize: 14,
-    fontFamily: fonts.body,
-    marginLeft: 10,
-  },
   loader: {
     marginTop: 40,
   },
@@ -389,63 +301,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: fonts.bodyBold,
   },
-  carouselList: {
-    paddingHorizontal: 16,
-  },
   reviewsList: {
     paddingHorizontal: 16,
-  },
-  pickCard: {
-    width: 100,
-    marginRight: 14,
-    alignItems: 'center',
-  },
-  pickBorder: {
-    padding: 2,
-    borderRadius: 12,
-  },
-  pickPoster: {
-    width: '100%',
-    aspectRatio: 2 / 3,
-    borderRadius: 10,
-    backgroundColor: colors.surfaceAlt,
-  },
-  pickTitle: {
-    color: colors.text,
-    fontSize: 11,
-    fontFamily: fonts.body,
-    marginTop: 6,
-    textAlign: 'center',
-  },
-  reviewerCard: {
-    width: 90,
-    marginRight: 14,
-    alignItems: 'center',
-  },
-  reviewerAvatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  reviewerInitial: {
-    color: colors.onAccentPrimary,
-    fontSize: 20,
-    fontFamily: fonts.title,
-  },
-  reviewerName: {
-    color: colors.text,
-    fontSize: 12,
-    fontFamily: fonts.bodySemiBold,
-    marginTop: 6,
-    textAlign: 'center',
-  },
-  reviewerCount: {
-    color: colors.textMuted,
-    fontSize: 11,
-    fontFamily: fonts.body,
-    marginTop: 2,
   },
   gridRow: {
     justifyContent: 'space-between',

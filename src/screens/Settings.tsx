@@ -1,24 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  Switch,
   ScrollView,
   ActivityIndicator,
   Alert,
-  AppState,
-  Linking,
-  Platform,
   StyleSheet,
-  Modal,
-  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { getPermissionsAsync } from 'expo-notifications/build/NotificationPermissions';
 import { useAuth } from '../context/AuthContext';
-import { ensureNotificationPermission } from '../utils/reminders';
 import { isValidEmail } from '../utils/validators';
 import { colors, fonts } from '../theme';
 import ConfirmModal from '../components/ConfirmModal';
@@ -29,24 +21,7 @@ function SettingsScreen() {
   const [email, setEmail] = useState(user.user?.email ?? '');
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
-  const [notificationsOn, setNotificationsOn] = useState(false);
   const [logoutVisible, setLogoutVisible] = useState(false);
-
-  // El permiso se puede cambiar desde los ajustes del teléfono,
-  // así que lo volvemos a leer cada vez que la app vuelve al frente
-  useEffect(() => {
-    if (Platform.OS === 'web') return;
-    function readPermission() {
-      getPermissionsAsync()
-        .then((status) => setNotificationsOn(status.granted))
-        .catch(() => setNotificationsOn(false));
-    }
-    readPermission();
-    const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') readPermission();
-    });
-    return () => subscription.remove();
-  }, []);
 
   const hasChanges = name.trim() !== user.user?.name || email.trim() !== user.user?.email;
 
@@ -61,33 +36,6 @@ function SettingsScreen() {
     else setFormError(result.error ?? 'No se pudieron guardar los cambios');
   }
 
-  async function onToggleNotifications(value: boolean) {
-    if (Platform.OS === 'web') {
-      Alert.alert('No disponible', 'Los avisos funcionan solo en el celular.');
-      return;
-    }
-    // Una app no puede quitarse el permiso sola: para apagarlo hay que ir a los ajustes
-    if (!value) {
-      Alert.alert('Desactivar avisos', 'Podés desactivar las notificaciones desde los ajustes del teléfono.', [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Abrir ajustes', onPress: () => Linking.openSettings() },
-      ]);
-      return;
-    }
-    try {
-      const { granted, canAskAgain } = await ensureNotificationPermission();
-      setNotificationsOn(granted);
-      if (!granted && !canAskAgain) {
-        Alert.alert('Notificaciones bloqueadas', 'Activalas en los ajustes del teléfono para recibir avisos.', [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Abrir ajustes', onPress: () => Linking.openSettings() },
-        ]);
-      }
-    } catch (error) {
-      Alert.alert('Error', 'No se pudo pedir el permiso: ' + error.message);
-    }
-  }
-
   function onLogOut() {
     setLogoutVisible(true);
   }
@@ -99,7 +47,6 @@ function SettingsScreen() {
   return (
     <>
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        {/* Keep all existing settings content here */}
         <Text style={styles.sectionTitle}>Cuenta</Text>
         <View style={styles.card}>
           <Text style={styles.label}>Nombre</Text>
@@ -217,25 +164,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.label,
     fontSize: 16,
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  rowText: {
-    flex: 1,
-    marginHorizontal: 12,
-  },
-  rowTitle: {
-    color: colors.text,
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 15,
-  },
-  rowSubtitle: {
-    color: colors.textMuted,
-    fontFamily: fonts.body,
-    fontSize: 12,
-    marginTop: 2,
-  },
   logout: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -250,73 +178,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.label,
     fontSize: 16,
     marginLeft: 8,
-  },
-  modalOverlay: {
-  flex: 1,
-  justifyContent: 'center',
-  alignItems: 'center',
-  padding: 24,
-  backgroundColor: 'rgba(0, 0, 0, 0.7)',
-  },
-  modalCard: {
-    width: '100%',
-    maxWidth: 360,
-    padding: 24,
-    borderRadius: 16,
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  modalIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 14,
-    backgroundColor: colors.surfaceHigh,
-  },
-  modalTitle: {
-    color: colors.text,
-    fontSize: 20,
-    fontFamily: fonts.title,
-  },
-  modalText: {
-    color: colors.textMuted,
-    fontSize: 14,
-    fontFamily: fonts.body,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  modalActions: {
-    width: '100%',
-    flexDirection: 'row',
-    marginTop: 24,
-    gap: 12,
-  },
-  cancelButton: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  cancelButtonText: {
-    color: colors.text,
-    fontFamily: fonts.label,
-  },
-  confirmButton: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: colors.danger,
-  },
-  confirmButtonText: {
-    color: colors.onAccentPrimary,
-    fontFamily: fonts.label,
   },
 });
 

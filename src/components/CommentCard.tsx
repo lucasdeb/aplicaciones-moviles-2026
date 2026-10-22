@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Animated, PanResponder, Alert, StyleSheet } from 'react-native';
+import { useRef, useState } from 'react';
+import { View, Text, TouchableOpacity, Animated, PanResponder, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, fonts } from '../theme';
@@ -51,12 +51,12 @@ export default function CommentCard({ comment, onLike, onRepost, canDelete,onPre
 
   const panResponder = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: (evt, gestureState) =>
+      onMoveShouldSetPanResponder: (_event, gestureState) =>
         canDelete && Math.abs(gestureState.dx) > 6 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy),
-      onPanResponderMove: (evt, gestureState) => {
+      onPanResponderMove: (_event, gestureState) => {
         translateX.setValue(Math.max(MAX_SWIPE, Math.min(0, gestureState.dx)));
       },
-      onPanResponderRelease: (evt, gestureState) => {
+      onPanResponderRelease: (_event, gestureState) => {
         if (gestureState.dx < SWIPE_THRESHOLD) {
           requestDelete();
         } else {
@@ -169,25 +169,6 @@ export default function CommentCard({ comment, onLike, onRepost, canDelete,onPre
 const styles = StyleSheet.create({
   container: {
     marginBottom: 14,
-  },
-  deleteBackground: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: colors.danger,
-    borderRadius: 18,
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    paddingRight: 22,
-  },
-  deleteBackgroundText: {
-    color: '#fff',
-    fontFamily: fonts.bodyBold,
-    fontSize: 13,
-    marginLeft: 6,
   },
   row: {
     flexDirection: 'row',

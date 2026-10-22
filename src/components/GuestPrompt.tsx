@@ -1,4 +1,3 @@
-import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors, fonts } from '../theme';
 import BrandLogo from './BrandLogo';

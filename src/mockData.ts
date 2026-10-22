@@ -178,15 +178,6 @@ const mockMovies = [
   },
 ];
 
-let mockReposts = [
-  {
-    id: 1,
-    userId: 0,
-    commentId: 12,
-    createdAt: new Date().toISOString(),
-  },
-];
-
 let nextMovieId = mockMovies.length + 1;
 
 const commentTemplates = [
@@ -458,7 +449,6 @@ export async function mockDeleteComment(commentId, requesterId) {
     const repostIndex = user.reposts.indexOf(commentId);
     if (repostIndex !== -1) user.reposts.splice(repostIndex, 1);
   }
-  mockReposts = mockReposts.filter((repost) => repost.commentId !== commentId);
 }
 
 export async function mockLikeComment(commentId, userId) {
@@ -530,19 +520,6 @@ export async function mockGetPopularReviews() {
     .sort((a, b) => b.likes - a.likes)
     .slice(0, 10)
     .map(toPublicComment);
-}
-
-export async function mockGetPopularReviewers() {
-  await wait();
-  const counts = new Map();
-  for (const c of mockComments) counts.set(c.authorId, (counts.get(c.authorId) || 0) + 1);
-  return [...counts.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([authorId, reviewCount]) => {
-      const user = mockUsers.find((u) => u.id === authorId);
-      return { id: authorId, name: user ? user.name : 'Usuario', reviewCount };
-    });
 }
 
 export async function mockGetAllUsers() {

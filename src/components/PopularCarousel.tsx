@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { View, Animated, StyleSheet } from 'react-native';
 import { colors } from '../theme';
 import MovieCard from './MovieCard';
