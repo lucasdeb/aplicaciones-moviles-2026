@@ -1,6 +1,5 @@
 import { View, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../theme';
+import AppIcon from './AppIcon';
 
 export default function StarRating({ rating, size = 13 }) {
   const stars = [];
@@ -15,11 +14,10 @@ export default function StarRating({ rating, size = 13 }) {
   return (
     <View style={styles.row}>
       {stars.map((name, index) => (
-        <Ionicons
+        <AppIcon
           key={index}
           name={name}
           size={size}
-          color={colors.accentSecondary}
           style={styles.star}
         />
       ))}

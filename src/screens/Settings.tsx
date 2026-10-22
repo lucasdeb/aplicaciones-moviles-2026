@@ -9,7 +9,7 @@ import {
   Alert,
   StyleSheet,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../components/AppIcon';
 import { useAuth } from '../context/AuthContext';
 import { isValidEmail } from '../utils/validators';
 import { colors, fonts } from '../theme';
@@ -85,7 +85,7 @@ function SettingsScreen() {
           </TouchableOpacity>
         </View>
         <TouchableOpacity style={styles.logout} onPress={onLogOut}>
-          <Ionicons name="log-out-outline" size={20} color={colors.danger} />
+          <AppIcon name="log-out-outline" size={20} />
           <Text style={styles.logoutText}>Cerrar sesión</Text>
         </TouchableOpacity>
       </ScrollView>

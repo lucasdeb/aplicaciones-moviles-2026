@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, Animated, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from './AppIcon';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, fonts } from '../theme';
+import { formatRating, getMovieYear, getPrimaryGenre } from '../utils/movieMetadata';
 
 const ROTATE_INTERVAL = 5000;
 const FADE_DURATION = 450;
@@ -48,8 +49,8 @@ export default function FeaturedHero({ movies, onPressMovie }) {
 
         <View style={styles.topRow}>
           <View style={styles.ratingBadge}>
-            <Ionicons name="star" size={12} color={colors.background} />
-            <Text style={styles.ratingBadgeText}>{movie.rating}</Text>
+            <AppIcon name="star" size={12} tone="movieRating" />
+            <Text style={styles.ratingBadgeText}>{formatRating(movie.communityRating)}</Text>
           </View>
         </View>
 
@@ -62,7 +63,7 @@ export default function FeaturedHero({ movies, onPressMovie }) {
           </Text>
           <View style={styles.metaRow}>
             <Text style={styles.metaText}>
-              {movie.genre} · {movie.year}
+              {getPrimaryGenre(movie)} · {getMovieYear(movie)}
             </Text>
           </View>
         </LinearGradient>
@@ -108,13 +109,15 @@ const styles = StyleSheet.create({
   ratingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.rating,
+    backgroundColor: colors.surfaceHigh,
+    borderWidth: 1,
+    borderColor: colors.movieRating,
     borderRadius: 20,
     paddingVertical: 5,
     paddingHorizontal: 10,
   },
   ratingBadgeText: {
-    color: colors.background,
+    color: colors.movieRating,
     fontSize: 12,
     fontFamily: fonts.label,
     marginLeft: 4,

@@ -2,7 +2,7 @@ import { TouchableOpacity, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from './components/AppIcon';
 import { useAuth } from './context/AuthContext';
 import LoginScreen from './screens/Login';
 import RegisterScreen from './screens/Register';
@@ -36,11 +36,11 @@ function MainTabs() {
         tabBarLabelStyle: { fontFamily: fonts.label },
       }}
     >
-      <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Populares', tabBarIcon: ({color, size, focused})=>(<Ionicons name={focused ? 'flame': 'flame-outline'} size={size} color={color} />) }} />
-      {user.isLoggedIn && (<Tab.Screen name="Cinemas" component={CinemasScreen} options={{ tabBarLabel: 'Cines' , tabBarIcon: ({color, size, focused})=>(<Ionicons name={focused ? 'map': 'map-outline'} size={size} color={color} />) }} />)}
-      <Tab.Screen name="Releases" component={ReleasesScreen} options={{ tabBarLabel: 'Estrenos' , tabBarIcon: ({color, size, focused})=>(<Ionicons name={focused ? 'calendar': 'calendar-outline'} size={size} color={color} />) }} />
-      <Tab.Screen name="Logros" component={AchievementsScreen} options={{ tabBarLabel: 'Logros', tabBarIcon: ({color, size, focused})=>(<Ionicons name={focused ? 'trophy': 'trophy-outline'} size={size} color={color} />) }} />
-      <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarLabel: 'Perfil', tabBarIcon: ({color, size, focused})=>(<Ionicons name={focused ? 'person-circle': 'person-circle-outline'} size={size} color={color} />) }} />
+      <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Populares', tabBarIcon: ({ size, focused }) => (<AppIcon name={focused ? 'flame' : 'flame-outline'} size={size} />) }} />
+      {user.isLoggedIn && (<Tab.Screen name="Cinemas" component={CinemasScreen} options={{ tabBarLabel: 'Cines', tabBarIcon: ({ size, focused }) => (<AppIcon name={focused ? 'map' : 'map-outline'} size={size} />) }} />)}
+      <Tab.Screen name="Releases" component={ReleasesScreen} options={{ tabBarLabel: 'Estrenos', tabBarIcon: ({ size, focused }) => (<AppIcon name={focused ? 'calendar' : 'calendar-outline'} size={size} />) }} />
+      <Tab.Screen name="Logros" component={AchievementsScreen} options={{ tabBarLabel: 'Logros', tabBarIcon: ({ size, focused }) => (<AppIcon name={focused ? 'trophy' : 'trophy-outline'} size={size} />) }} />
+      <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarLabel: 'Perfil', tabBarIcon: ({ size, focused }) => (<AppIcon name={focused ? 'person-circle' : 'person-circle-outline'} size={size} />) }} />
     </Tab.Navigator>
   );
 }
@@ -69,11 +69,14 @@ function RootNavigator() {
 
       {user.isLoggedIn ? (
         <>
-        <Stack.Screen name="ManageMovies" component={ManageMoviesScreen} options={headerOptions} />
-        <Stack.Screen name="AddMovie" component={AddMovieScreen} options={headerOptions} />
-        <Stack.Screen name="ManageUsers" component={ManageUsersScreen} options={headerOptions} />
-        <Stack.Screen name="Settings" component={SettingsScreen} options={{ ...headerOptions, headerTitle: 'Configuración' }} />
-
+          {user.user?.role === 'superadmin' && (
+            <>
+              <Stack.Screen name="ManageMovies" component={ManageMoviesScreen} options={headerOptions} />
+              <Stack.Screen name="AddMovie" component={AddMovieScreen} options={headerOptions} />
+              <Stack.Screen name="ManageUsers" component={ManageUsersScreen} options={headerOptions} />
+            </>
+          )}
+          <Stack.Screen name="Settings" component={SettingsScreen} options={{ ...headerOptions, headerTitle: 'Configuración' }} />
         </>
       ) : (
         <Stack.Group
@@ -86,7 +89,7 @@ function RootNavigator() {
             // Mismo botón redondo que el de MovieDetail
             headerLeft: () => (
               <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} hitSlop={8}>
-                <Ionicons name="arrow-back" size={20} color={colors.text} />
+                <AppIcon name="arrow-back" size={20} />
               </TouchableOpacity>
             ),
           })}

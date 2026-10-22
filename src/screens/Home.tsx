@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -10,10 +10,10 @@ import {
   TextInput,
   StyleSheet,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../components/AppIcon';
 import { useAuth } from '../context/AuthContext';
 import { useMovies } from '../context/MovieContext';
-import { mockGetPopularReviews } from '../mockData';
+import { mockGetFriendReviews, mockGetPopularReviews } from '../mockData';
 import MovieCard from '../components/MovieCard';
 import ReviewCard from '../components/ReviewCard';
 import PopularCarousel from '../components/PopularCarousel';
@@ -22,6 +22,7 @@ import RevealOnScroll from '../components/RevealOnScroll';
 import BrandLogo from '../components/BrandLogo';
 import { colors, fonts } from '../theme';
 import SettingsButton from '../components/SettingsButton';
+import { useOnFocus } from '../hooks/useOnFocus';
 
 function SectionHeader({ title }) {
   return (
@@ -37,6 +38,7 @@ function HomeScreen({ navigation }) {
   const { movies, fetchMovies } = useMovies();
   // El feed solo lo usa Home: estado local, no global
   const [popularReviews, setPopularReviews] = useState([]);
+  const [friendReviews, setFriendReviews] = useState([]);
   const [showSearch, setShowSearch] = useState(false);
   const [search, setSearch] = useState('');
 
@@ -53,15 +55,18 @@ function HomeScreen({ navigation }) {
   async function refreshAll() {
     fetchMovies();
     try {
-      setPopularReviews(await mockGetPopularReviews());
+      const [popular, friends] = await Promise.all([
+        mockGetPopularReviews(),
+        currentUser ? mockGetFriendReviews(currentUser.id) : Promise.resolve([]),
+      ]);
+      setPopularReviews(popular);
+      setFriendReviews(friends);
     } catch (error) {
       console.warn('No se pudo cargar el feed', error);
     }
   }
 
-  useEffect(() => {
-    refreshAll();
-  }, []);
+  useOnFocus(refreshAll, [currentUser?.id]);
 
 
   function goToMovie(movieId) {
@@ -76,15 +81,17 @@ function HomeScreen({ navigation }) {
 
   const isInitialLoading = movies.isFetching && movies.list.length === 0;
   const moviesByRating = movies.list
-    .filter((movie) => Number.isFinite(movie.rating))
-    .sort((a, b) => b.rating - a.rating);
-  const heroMovies = moviesByRating.slice(0, 4);
+    .filter((movie) => Number.isFinite(movie.communityRating))
+    .sort((a, b) => b.communityRating - a.communityRating);
+  const heroMovies = movies.featured.length > 0
+    ? movies.featured
+    : moviesByRating.slice(0, 4);
   const trendingMovies = [...movies.list]
     .filter((movie) => movie.reviewsLast30Days > 0)
     .sort(
       (a, b) =>
         b.reviewsLast30Days - a.reviewsLast30Days ||
-        (b.rating ?? 0) - (a.rating ?? 0)
+        (b.communityRating ?? 0) - (a.communityRating ?? 0)
     );
 
   return (
@@ -99,7 +106,7 @@ function HomeScreen({ navigation }) {
 
         <View style={styles.brandIcons}>
           <TouchableOpacity style={styles.iconButton} hitSlop={8} onPress={toggleSearch}>
-            <Ionicons name={showSearch ? 'close' : 'search-outline'} size={18} color={colors.accentPrimarySoft} />
+            <AppIcon name={showSearch ? 'close' : 'search-outline'} size={18} />
           </TouchableOpacity>
             <SettingsButton />
         </View>
@@ -108,7 +115,7 @@ function HomeScreen({ navigation }) {
       {currentUser?.name ? (
         <View style={styles.greetingPillWrap}>
           <TouchableOpacity style={styles.greetingPill}>
-            <Ionicons name="person-circle-outline" size={16} color={colors.accentPrimarySoft} />
+            <AppIcon name="person-circle-outline" size={16} />
             <Text style={styles.greetingText} numberOfLines={1}>
               Hola, {currentUser.name.split(' ')[0]}
             </Text>
@@ -181,7 +188,26 @@ function HomeScreen({ navigation }) {
             </RevealOnScroll>
           )}
 
-
+          {currentUser && (
+            <RevealOnScroll scrollY={scrollY}>
+              <SectionHeader title="Reseñas de amigos" />
+              {friendReviews.length > 0 ? (
+                <View style={styles.reviewsList}>
+                  {friendReviews.slice(0, 5).map((review) => (
+                    <ReviewCard
+                      key={review.id}
+                      review={review}
+                      onPress={() => review.movie && goToMovie(review.movie.id)}
+                    />
+                  ))}
+                </View>
+              ) : (
+                <Text style={styles.emptyReviews}>
+                  Todavía no hay reseñas de tus amigos.
+                </Text>
+              )}
+            </RevealOnScroll>
+          )}
 
           <RevealOnScroll scrollY={scrollY}>
             <SectionHeader title="Explorar todas" />
@@ -303,6 +329,13 @@ const styles = StyleSheet.create({
   },
   reviewsList: {
     paddingHorizontal: 16,
+  },
+  emptyReviews: {
+    color: colors.textMuted,
+    fontSize: 13,
+    fontFamily: fonts.body,
+    paddingHorizontal: 16,
+    marginBottom: 4,
   },
   gridRow: {
     justifyContent: 'space-between',

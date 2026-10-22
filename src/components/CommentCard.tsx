@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, Animated, PanResponder, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from './AppIcon';
 import { colors, fonts } from '../theme';
 import { timeAgo } from '../utils/timeAgo';
 import { Image } from 'react-native';
@@ -131,10 +131,9 @@ export default function CommentCard({ comment, onLike, onRepost, canDelete,onPre
               onPress={handleLike}
               activeOpacity={0.7}
             >
-              <Ionicons
+              <AppIcon
                 name={liked ? 'heart' : 'heart-outline'}
                 size={15}
-                color={liked ? colors.accentSecondary : colors.textMuted}
               />
               <Text style={[styles.actionCount, liked && styles.actionCountActive]}>
                 {comment.likes}
@@ -146,10 +145,9 @@ export default function CommentCard({ comment, onLike, onRepost, canDelete,onPre
               onPress={handleRepost}
               activeOpacity={0.7}
             >
-              <Ionicons
+              <AppIcon
                 name="repeat"
                 size={15}
-                color={reposted ? colors.accentPrimary : colors.textMuted}
               />
               <Text style={[styles.actionCount, reposted && styles.actionCountActivePrimary]}>
                 {comment.reposts}

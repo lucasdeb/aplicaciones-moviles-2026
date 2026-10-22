@@ -11,7 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import * as Location from 'expo-location';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../components/AppIcon';
 import { colors, fonts } from '../theme';
 import { fetchNearbyCinemas, type Cinema } from '../utils/geo';
 import BrandLogo from '../components/BrandLogo';
@@ -122,7 +122,7 @@ function CinemasScreen() {
     const denied = status === 'denied';
     return (
       <View style={styles.centered}>
-        <Ionicons name={denied ? 'location-outline' : 'cloud-offline-outline'} size={40} color={colors.textMuted} />
+        <AppIcon name={denied ? 'location-outline' : 'cloud-offline-outline'} size={40} />
         <Text style={styles.mutedText}>
           {denied
             ? 'Necesitamos tu ubicación para mostrarte los cines cercanos.'
@@ -161,7 +161,7 @@ function CinemasScreen() {
         renderItem={({ item }) => (
           <View style={styles.card}>
             <View style={styles.iconCircle}>
-              <Ionicons name="film-outline" size={22} color={colors.accentPrimary} />
+              <AppIcon name="film-outline" size={22} />
             </View>
             <View style={styles.cardBody}>
               <Text style={styles.cardTitle} numberOfLines={1}>{item.name}</Text>
@@ -169,7 +169,7 @@ function CinemasScreen() {
               <Text style={styles.cardDistance}>{formatDistance(item.distanceKm)}</Text>
             </View>
             <TouchableOpacity style={styles.directionsButton} onPress={() => openDirections(item)} activeOpacity={0.8}>
-              <Ionicons name="navigate" size={16} color={colors.onAccentPrimary} />
+              <AppIcon name="navigate" size={16} />
               <Text style={styles.directionsText}>Ir</Text>
             </TouchableOpacity>
           </View>
@@ -226,12 +226,14 @@ const styles = StyleSheet.create({
   directionsButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.accentPrimary,
+    backgroundColor: colors.surfaceHigh,
+    borderWidth: 1,
+    borderColor: colors.accentPrimary,
     borderRadius: 18,
     paddingVertical: 8,
     paddingHorizontal: 12,
   },
-  directionsText: { color: colors.onAccentPrimary, fontFamily: fonts.bodyBold, fontSize: 12, marginLeft: 4 },
+  directionsText: { color: colors.accentPrimary, fontFamily: fonts.bodyBold, fontSize: 12, marginLeft: 4 },
 });
 
 export default CinemasScreen;

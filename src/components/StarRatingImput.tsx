@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from './AppIcon';
 import { colors, fonts } from '../theme';
+import { formatRating } from '../utils/movieMetadata';
 
 type Props = {
   value: number | null;              
@@ -13,14 +14,15 @@ export default function StarRatingInput({ value, onChange, size = 26 }: Props) {
     <View style={styles.row}>
       {[1, 2, 3, 4, 5].map((n) => (
         <TouchableOpacity key={n} onPress={() => onChange(value === n ? n - 1 : n)} hitSlop={4}>
-          <Ionicons
+          <AppIcon
             name={value !== null && value >= n ? 'star' : 'star-outline'}
             size={size}
-            color={colors.rating}
           />
         </TouchableOpacity>
       ))}
-      <Text style={styles.label}>{value === null ? 'Puntuá la película' : `${value} de 5`}</Text>
+      <Text style={styles.label}>
+        {value === null ? 'Puntuá la película' : `${formatRating(value)} de 5.0`}
+      </Text>
     </View>
   );
 }

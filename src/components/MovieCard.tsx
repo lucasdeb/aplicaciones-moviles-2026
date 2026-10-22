@@ -7,8 +7,9 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from './AppIcon';
 import { colors, fonts } from '../theme';
+import { formatRating, getMovieYear, getPrimaryGenre } from '../utils/movieMetadata';
 
 type MovieCardProps = {
   movie: any;
@@ -29,8 +30,8 @@ export default function MovieCard({ movie, onPress, reviewCount, style }: MovieC
       <View>
         <Image source={{ uri: movie.posterUrl }} style={styles.poster} />
         <View style={styles.ratingBadge}>
-          <Ionicons name="star" size={10} color={colors.background} />
-          <Text style={styles.ratingBadgeText}>{movie.rating ?? '—'}</Text>
+          <AppIcon name="star" size={10} tone="movieRating" />
+          <Text style={styles.ratingBadgeText}>{formatRating(movie.communityRating)}</Text>
         </View>
       </View>
       <Text style={styles.title} numberOfLines={1}>
@@ -38,12 +39,12 @@ export default function MovieCard({ movie, onPress, reviewCount, style }: MovieC
       </Text>
       <View style={styles.subtitleRow}>
         <Text style={styles.genre} numberOfLines={1}>
-          {movie.genre}
+          {getPrimaryGenre(movie)}
         </Text>
-        <Text style={styles.year}> · {movie.year}</Text>
+        <Text style={styles.year}> · {getMovieYear(movie)}</Text>
       </View>
       <View style={styles.statsRow}>
-        <Ionicons name="chatbubble-outline" size={12} color={colors.textMuted} />
+        <AppIcon name="chatbubble-outline" size={12} />
         <Text style={styles.statText}>{displayedReviewCount}</Text>
       </View>
     </TouchableOpacity>
@@ -66,13 +67,15 @@ const styles = StyleSheet.create({
     bottom: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.rating,
+    backgroundColor: colors.surfaceHigh,
+    borderWidth: 1,
+    borderColor: colors.movieRating,
     borderRadius: 20,
     paddingVertical: 3,
     paddingHorizontal: 7,
   },
   ratingBadgeText: {
-    color: colors.background,
+    color: colors.movieRating,
     fontSize: 10,
     fontFamily: fonts.label,
     marginLeft: 3,

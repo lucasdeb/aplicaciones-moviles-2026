@@ -1,5 +1,6 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 import { mockGetMovies, mockCreateMovie, mockUpdateMovie, mockDeleteMovie } from '../mockData';
+import { useAuth } from './AuthContext';
 
 type Result = { success: boolean; error?: string };
 type MoviesState = { list: any[]; isFetching: boolean; error: string | false };
@@ -16,6 +17,7 @@ const MoviesContext = createContext<MoviesContextValue | undefined>(undefined);
 
 // Catálogo: lo comparten Home, ManageMovies y AddMovie
 export function MoviesProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [movies, setMovies] = useState<MoviesState>({ list: [], isFetching: false, error: false });
 
   // Las destacadas se derivan de la lista: no hace falta otro fetch ni otro estado
@@ -47,21 +49,21 @@ export function MoviesProvider({ children }: { children: ReactNode }) {
       fetchMovies,
       createMovie: (data) =>
         mutate(async () => {
-          const movie = await mockCreateMovie(data);
+          const movie = await mockCreateMovie(data, user.user?.id);
           setMovies((c) => ({ ...c, list: [movie, ...c.list] }));
         }),
       updateMovie: (movieId, data) =>
         mutate(async () => {
-          const movie = await mockUpdateMovie(movieId, data);
+          const movie = await mockUpdateMovie(movieId, data, user.user?.id);
           setMovies((c) => ({ ...c, list: c.list.map((m) => (m.id === movie.id ? movie : m)) }));
         }),
       deleteMovie: (movieId) =>
         mutate(async () => {
-          await mockDeleteMovie(movieId);
+          await mockDeleteMovie(movieId, user.user?.id);
           setMovies((c) => ({ ...c, list: c.list.filter((m) => m.id !== movieId) }));
         }),
     }),
-    [movies, featured]
+    [movies, featured, user.user?.id]
   );
 
   return <MoviesContext.Provider value={value}>{children}</MoviesContext.Provider>;

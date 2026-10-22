@@ -1,9 +1,10 @@
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from './AppIcon';
 import { colors, fonts } from '../theme';
 import { timeAgo } from '../utils/timeAgo';
 import { formatNumber } from '../utils/formatNumber';
 import StarRating from './StarRating';
+import { getMovieYear } from '../utils/movieMetadata';
 
 export default function ReviewCard({ review, onPress }) {
   return (
@@ -12,7 +13,10 @@ export default function ReviewCard({ review, onPress }) {
 
       <View style={styles.body}>
         <Text style={styles.movieTitle} numberOfLines={1}>
-          {review.movie?.title} <Text style={styles.movieYear}>{review.movie?.year}</Text>
+          {review.movie?.title}{' '}
+          <Text style={styles.movieYear}>
+            {review.movie ? getMovieYear(review.movie) : ''}
+          </Text>
         </Text>
 
         <View style={styles.authorRow}>
@@ -30,7 +34,7 @@ export default function ReviewCard({ review, onPress }) {
         </Text>
 
         <View style={styles.footerRow}>
-          <Ionicons name="heart-outline" size={13} color={colors.textMuted} />
+          <AppIcon name="heart-outline" size={13} />
           <Text style={styles.likes}>{formatNumber(review.likes)} likes</Text>
           <Text style={styles.dot}>·</Text>
           <Text style={styles.time}>{timeAgo(review.createdAt)}</Text>

@@ -1,19 +1,22 @@
-import { TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { TouchableOpacity, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import AppIcon from './AppIcon';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../theme';
 
-export default function SettingsButton() {
+type SettingsButtonProps = {
+  style?: StyleProp<ViewStyle>;
+};
+
+export default function SettingsButton({ style }: SettingsButtonProps) {
   const navigation = useNavigation<any>();
   const { user } = useAuth();
   return (
     <TouchableOpacity
-      style={styles.button}
+      style={[styles.button, style]}
       hitSlop={8}
       onPress={() => navigation.navigate(user.isLoggedIn ? 'Settings' : 'Login')}
     >
-      <Ionicons name="settings-outline" size={20} color={colors.accentPrimarySoft} />
+      <AppIcon name="settings-outline" size={20} />
     </TouchableOpacity>
   );
 }

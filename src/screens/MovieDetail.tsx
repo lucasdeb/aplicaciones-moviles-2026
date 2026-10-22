@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -10,11 +10,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Linking,
   StyleSheet,
   Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../components/AppIcon';
 import { useAuth } from '../context/AuthContext';
 import { useOnFocus } from '../hooks/useOnFocus';
 import {
@@ -31,11 +32,94 @@ import CommentCard from '../components/CommentCard';
 import { colors, fonts } from '../theme';
 import { pickPhoto } from '../utils/pickPhoto';
 import StarRatingInput from '../components/StarRatingImput';
+import { formatRating, getMovieYear, getPrimaryGenre } from '../utils/movieMetadata';
 
+const HERO_HEIGHT = 300;
+
+const CREW_JOB_LABELS = {
+  Writer: 'Guion',
+  Screenplay: 'Guion',
+  'Director of Photography': 'Fotografía',
+  'Original Music Composer': 'Música',
+  Editor: 'Montaje',
+  Producer: 'Producción',
+};
+
+const PROVIDER_LOGOS: Record<string, string> = {
+  'Amazon Prime Video': 'https://image.tmdb.org/t/p/w92/gMZdpavHmxFNnLpMHwVxfqeux2g.png',
+  'Amazon Video': 'https://image.tmdb.org/t/p/w92/jn6TLbtaTZntTRX9UYucHJvpQx1.png',
+  'Apple TV Store': 'https://image.tmdb.org/t/p/w92/qdEGArH3lKfFnAtYXMkSYk5wxuG.png',
+  'Claro video': 'https://image.tmdb.org/t/p/w92/zTJg0WVErBkcJv4S9FkQRUyXjnq.png',
+  'Filmelier Plus Amazon Channel': 'https://image.tmdb.org/t/p/w92/qsa5pNRHmZReAhr4CFBQoaPh253.png',
+  'HBO Max': 'https://image.tmdb.org/t/p/w92/skypuy7SXuugIQeYg0IglmzoKaS.png',
+  'Lionsgate+ Amazon Channel': 'https://image.tmdb.org/t/p/w92/1356slxu4QrHOMrEVDKHJXRo5sW.png',
+  'MovistarTV': 'https://image.tmdb.org/t/p/w92/kxUmV9TCZHfukpVOMuN90Jibbnm.png',
+  'Netflix': 'https://image.tmdb.org/t/p/w92/rK1KljqmbvO9HQa1PBFLILWah72.png',
+  'Paramount Plus': 'https://image.tmdb.org/t/p/w92/pkx3klJlwW5JdtaulvDx6hDNtch.png',
+  'Paramount+ Amazon Channel': 'https://image.tmdb.org/t/p/w92/bxX0YVOCY7bI85BKRlJAAQ2EjUR.png',
+  'Universal+ Amazon Channel': 'https://image.tmdb.org/t/p/w92/j3Q750FwRyIejO5MrNu25Kia57.png',
+  'ViX Premium Amazon Channel': 'https://image.tmdb.org/t/p/w92/dZn7SR1rarhMVKnO0OXCAvMjbcv.png',
+};
+
+function formatReleaseDate(value?: string) {
+  if (!value) return 'Sin fecha';
+  const [year, month, day] = value.split('-').map(Number);
+  if (!year || !month || !day) return value;
+  return new Intl.DateTimeFormat('es-AR', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(year, month - 1, day));
+}
+
+function DetailSectionTitle({ children }) {
+  return (
+    <View style={styles.sectionHeader}>
+      <View style={styles.sectionBar} />
+      <Text style={styles.sectionTitle}>{children}</Text>
+    </View>
+  );
+}
+
+function ProviderGroup({ icon, label, providers }) {
+  if (!providers?.length) return null;
+  return (
+    <View style={styles.providerGroup}>
+      <View style={styles.providerGroupTitle}>
+        <AppIcon name={icon} size={16} />
+        <Text style={styles.providerGroupLabel}>{label}</Text>
+      </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.providerList}
+      >
+        {providers.map((provider) => (
+          <View key={provider} style={styles.providerChip}>
+            {PROVIDER_LOGOS[provider] ? (
+              <Image
+                source={{ uri: PROVIDER_LOGOS[provider] }}
+                style={styles.providerLogo}
+                resizeMode="contain"
+              />
+            ) : (
+              <View style={styles.providerLogoFallback}>
+                <AppIcon name="tv-outline" size={22} />
+              </View>
+            )}
+            <Text style={styles.providerChipText}>{provider}</Text>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
 
 function MovieDetailScreen({ navigation, route }) {
   const { user } = useAuth();
   const { movieId } = route.params;
+  const scrollViewRef = useRef<ScrollView>(null);
+  const reviewsSectionY = useRef(0);
   // Solo los usa esta pantalla: estado local. Al salir se descartan solos,
   // por eso ya no hacen falta clearMovieDetail ni clearComments.
   const [movie, setMovie] = useState(null);
@@ -149,6 +233,13 @@ function MovieDetailScreen({ navigation, route }) {
     setComposerError('');
   }
 
+  function scrollToReviews() {
+    scrollViewRef.current?.scrollTo({
+      y: Math.max(reviewsSectionY.current - 12, 0),
+      animated: true,
+    });
+  }
+
   function startEditingReview() {
     if (!myReview) return;
     setCommentText(myReview.text);
@@ -181,11 +272,12 @@ function MovieDetailScreen({ navigation, route }) {
       setSavingReview(false);
     }
   }
-const rated = comments.filter((c) => c.rating !== null && c.rating !== undefined);
-const communityAvg = rated.length
-  ? (rated.reduce((sum, c) => sum + c.rating, 0) / rated.length).toFixed(1)
-  : '–';
-
+  const rated = comments.filter((c) => c.rating !== null && c.rating !== undefined);
+  const communityAvg = rated.length
+    ? (rated.reduce((sum, c) => sum + c.rating, 0) / rated.length).toFixed(1)
+    : '–';
+  const argentinaProviders = movie?.watchProviders?.AR;
+  const firstTrailer = movie?.trailers?.[0];
 
   return (loading || !movie) && !error ? (
     <View style={styles.centered}>
@@ -197,13 +289,13 @@ const communityAvg = rated.length
       <Text style={styles.errorText}>{error}</Text>
     </View>
   ) : (
-    <ScrollView style={styles.container}>
+    <ScrollView ref={scrollViewRef} style={styles.container}>
       <ImageBackground
         source={{ uri: movie.backdropUrl || movie.posterUrl }}
         style={styles.hero}
       >
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} hitSlop={8}>
-          <Ionicons name="arrow-back" size={20} color={colors.text} />
+          <AppIcon name="arrow-back" size={20} />
         </TouchableOpacity>
 
         <LinearGradient
@@ -214,28 +306,130 @@ const communityAvg = rated.length
 
           <View style={styles.chipRow}>
             <View style={styles.chip}>
-              <Text style={styles.chipText}>{movie.year}</Text>
+              <Text style={styles.chipText}>{getMovieYear(movie)}</Text>
             </View>
             <View style={styles.chip}>
-              <Text style={styles.chipText}>{movie.genre}</Text>
+              <Text style={styles.chipText}>{getPrimaryGenre(movie)}</Text>
             </View>
             <View style={styles.ratingChip}>
-              <Ionicons name="star" size={12} color={colors.background} />
-              <Text style={styles.ratingChipText}>{movie.rating}</Text>
+              <AppIcon name="star" size={12} tone="movieRating" />
+              <Text style={styles.ratingChipText}>{formatRating(movie.communityRating)}</Text>
             </View>
           </View>
         </LinearGradient>
       </ImageBackground>
 
       <View style={styles.content}>
-        <Text style={styles.overview}>{movie.overview}</Text>
+        <View style={styles.quickActions}>
+          <TouchableOpacity
+            style={styles.quickActionButton}
+            onPress={scrollToReviews}
+            activeOpacity={0.8}
+          >
+            <AppIcon name="chatbubbles-outline" size={16} />
+            <Text style={styles.quickActionText}>Reseñas</Text>
+            <AppIcon name="arrow-down" size={14} />
+          </TouchableOpacity>
+
+          {firstTrailer && (
+            <TouchableOpacity
+              style={styles.quickActionButton}
+              activeOpacity={0.8}
+              onPress={() => Linking.openURL(`https://www.youtube.com/watch?v=${firstTrailer.key}`)}
+            >
+              <AppIcon name="play-circle-outline" size={17} />
+              <Text style={styles.quickActionText}>Tráiler</Text>
+              <AppIcon name="open-outline" size={13} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <View style={styles.summaryRow}>
+          <Image source={{ uri: movie.posterUrl }} style={styles.detailPoster} />
+          <Text style={styles.overview}>{movie.overview}</Text>
+        </View>
+
+        <View style={styles.metadataCard}>
+          <View style={styles.metadataCardHeader}>
+            <AppIcon name="information-circle-outline" size={19} />
+            <Text style={styles.metadataCardTitle}>Información</Text>
+          </View>
+          <View style={styles.metadataStats}>
+            <View style={styles.metadataStat}>
+              <AppIcon name="time-outline" size={16} />
+              <View>
+                <Text style={styles.metadataLabel}>Duración</Text>
+                <Text style={styles.metadataValue}>
+                  {movie.runtime ? `${movie.runtime} min` : 'Sin datos'}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.metadataStat}>
+              <AppIcon name="calendar-outline" size={16} />
+              <View>
+                <Text style={styles.metadataLabel}>Estreno</Text>
+                <Text style={styles.metadataValue}>{formatReleaseDate(movie.releaseDate)}</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.metadataRow}>
+            <Text style={styles.metadataRowLabel}>Géneros</Text>
+            <Text style={styles.metadataRowValue}>
+              {movie.genres?.join(' · ') || 'Sin género'}
+            </Text>
+          </View>
+          {movie.directors?.length > 0 && (
+            <View style={styles.metadataRow}>
+              <Text style={styles.metadataRowLabel}>Dirección</Text>
+              <Text style={styles.metadataRowValue}>{movie.directors.join(' · ')}</Text>
+            </View>
+          )}
+          {movie.actors?.length > 0 && (
+            <View style={styles.metadataRow}>
+              <Text style={styles.metadataRowLabel}>Reparto</Text>
+              <Text style={styles.metadataRowValue}>
+                {movie.actors
+                  .map((actor) => `${actor.name} como ${actor.character}`)
+                  .join(' · ')}
+              </Text>
+            </View>
+          )}
+          {movie.crew?.length > 0 && (
+            <View style={[styles.metadataRow, styles.metadataRowLast]}>
+              <Text style={styles.metadataRowLabel}>Equipo</Text>
+              <Text style={styles.metadataRowValue}>
+                {movie.crew
+                  .map((member) => `${CREW_JOB_LABELS[member.job] ?? member.job}: ${member.name}`)
+                  .join(' · ')}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        <DetailSectionTitle>Dónde ver</DetailSectionTitle>
+        <View style={styles.providersCard}>
+          <View style={styles.providersHeader}>
+            <View>
+              <Text style={styles.providersTitle}>Disponibilidad en Argentina</Text>
+              <Text style={styles.providersUpdated}>La disponibilidad puede cambiar</Text>
+            </View>
+            <AppIcon name="location-outline" size={20} />
+          </View>
+          {argentinaProviders ? (
+            <>
+              <ProviderGroup icon="play-circle-outline" label="Con suscripción" providers={argentinaProviders.stream} />
+              <ProviderGroup icon="card-outline" label="Alquiler" providers={argentinaProviders.rent} />
+              <ProviderGroup icon="bag-check-outline" label="Compra" providers={argentinaProviders.buy} />
+            </>
+          ) : (
+            <Text style={styles.noProviders}>No hay opciones informadas para este país.</Text>
+          )}
+        </View>
 
         {recommendations.length > 0 && (
           <>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionBar} />
-              <Text style={styles.sectionTitle}>Recomendadas para vos</Text>
-            </View>
+            <DetailSectionTitle>Recomendadas para vos</DetailSectionTitle>
             <FlatList
               data={recommendations}
               keyExtractor={(item) => String(item.id)}
@@ -253,8 +447,8 @@ const communityAvg = rated.length
                     {item.title}
                   </Text>
                   <View style={styles.recommendationRatingRow}>
-                    <Ionicons name="star" size={11} color={colors.accentSecondary} />
-                    <Text style={styles.recommendationRating}>{item.rating}</Text>
+                    <AppIcon name="star" size={11} tone="movieRating" />
+                    <Text style={styles.recommendationRating}>{formatRating(item.communityRating)}</Text>
                   </View>
                 </TouchableOpacity>
               )}
@@ -262,13 +456,18 @@ const communityAvg = rated.length
           </>
         )}
 
-        <View style={[styles.sectionHeader, styles.sectionHeaderRow]}>
+        <View
+          style={[styles.sectionHeader, styles.sectionHeaderRow]}
+          onLayout={({ nativeEvent }) => {
+            reviewsSectionY.current = HERO_HEIGHT + nativeEvent.layout.y;
+          }}
+        >
           <View style={styles.sectionHeaderLeft}>
             <View style={styles.sectionBar} />
             <Text style={styles.sectionTitle}>Reseñas</Text>
           </View>
           <View style={styles.ratingSummary}>
-            <Ionicons name="star" size={14} color={colors.rating} />
+            <AppIcon name="star" size={14} tone="movieRating" />
             <Text style={styles.ratingSummaryText}>{communityAvg}</Text>
             <Text style={styles.ratingSummaryCount}>({rated.length})</Text>
           </View>
@@ -277,7 +476,7 @@ const communityAvg = rated.length
         {me && myReview && !isEditingMyReview ? (
           <View style={styles.existingReviewNotice}>
             <View style={styles.existingReviewIcon}>
-              <Ionicons name="checkmark" size={18} color={colors.onAccentPrimary} />
+              <AppIcon name="checkmark" size={18} />
             </View>
             <View style={styles.existingReviewCopy}>
               <Text style={styles.existingReviewTitle}>Ya reseñaste esta película</Text>
@@ -286,7 +485,7 @@ const communityAvg = rated.length
               </Text>
             </View>
             <TouchableOpacity style={styles.editReviewButton} onPress={startEditingReview} activeOpacity={0.8}>
-              <Ionicons name="pencil-outline" size={15} color={colors.accentPrimary} />
+              <AppIcon name="pencil-outline" size={15} />
               <Text style={styles.editReviewButtonText}>Editar</Text>
             </TouchableOpacity>
           </View>
@@ -327,14 +526,14 @@ const communityAvg = rated.length
               <View style={styles.photoPreview}>
                 <Image source={{ uri: photo }} style={styles.photoPreviewImage} />
                 <TouchableOpacity style={styles.photoRemove} onPress={() => setPhoto(null)} hitSlop={8}>
-                  <Ionicons name="close" size={14} color={colors.text} />
+                  <AppIcon name="close" size={14} />
                 </TouchableOpacity>
               </View>
             )}
 
             <View style={styles.composerFooter}>
               <TouchableOpacity style={styles.photoButton} onPress={handleAddPhoto} activeOpacity={0.8}>
-                <Ionicons name={photo ? 'images-outline' : 'camera-outline'} size={16} color={colors.accentPrimarySoft} />
+                <AppIcon name={photo ? 'images-outline' : 'camera-outline'} size={16} />
                 <Text style={styles.photoButtonText}>{photo ? 'Cambiar foto' : 'Agregar foto'}</Text>
               </TouchableOpacity>
               <View style={styles.composerSubmitActions}>
@@ -353,10 +552,9 @@ const communityAvg = rated.length
                     {savingReview ? 'Guardando...' : isEditingMyReview ? 'Guardar' : 'Publicar'}
                   </Text>
                   {!savingReview && (
-                    <Ionicons
+                    <AppIcon
                       name={isEditingMyReview ? 'checkmark' : 'send'}
                       size={14}
-                      color={canPublish ? colors.onAccentPrimary : colors.textMuted}
                     />
                   )}
                 </TouchableOpacity>
@@ -375,7 +573,7 @@ const communityAvg = rated.length
             onPress={() => navigation.navigate('Login')}
             activeOpacity={0.8}
           >
-            <Ionicons name="log-in-outline" size={16} color={colors.accentPrimary} />
+            <AppIcon name="log-in-outline" size={16} />
             <Text style={styles.loginText}>Iniciá sesión para reseñar</Text>
           </TouchableOpacity>
         )}
@@ -439,7 +637,7 @@ const styles = StyleSheet.create({
   },
   hero: {
     width: '100%',
-    height: 340,
+    height: HERO_HEIGHT,
   },
   backButton: {
     position: 'absolute',
@@ -457,7 +655,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingBottom: 20,
   },
   title: {
     color: colors.text,
@@ -487,33 +685,142 @@ const styles = StyleSheet.create({
   ratingChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.rating,
+    backgroundColor: colors.surfaceHigh,
+    borderWidth: 1,
+    borderColor: colors.movieRating,
     borderRadius: 20,
     paddingVertical: 4,
     paddingHorizontal: 10,
     marginBottom: 6,
   },
   ratingChipText: {
-    color: colors.background,
+    color: colors.movieRating,
     fontSize: 12,
     fontFamily: fonts.label,
     marginLeft: 4,
   },
   content: {
-    padding: 16,
-    paddingBottom: 40,
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 48,
+  },
+  quickActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 18,
+  },
+  quickActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    minWidth: 118,
+    minHeight: 42,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: colors.surface,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  quickActionText: {
+    color: colors.text,
+    fontSize: 13,
+    fontFamily: fonts.label,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 16,
+  },
+  detailPoster: {
+    width: 104,
+    aspectRatio: 2 / 3,
+    borderRadius: 12,
+    backgroundColor: colors.surfaceAlt,
   },
   overview: {
+    flex: 1,
     color: colors.text,
     fontSize: 15,
     fontFamily: fonts.body,
-    lineHeight: 22,
+    lineHeight: 23,
+  },
+  metadataCard: {
+    marginTop: 20,
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden',
+  },
+  metadataCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  metadataCardTitle: {
+    color: colors.text,
+    fontSize: 16,
+    fontFamily: fonts.title,
+  },
+  metadataStats: {
+    flexDirection: 'row',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  metadataStat: {
+    flex: 1,
+    minHeight: 70,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+  },
+  metadataLabel: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontFamily: fonts.label,
+    textTransform: 'uppercase',
+  },
+  metadataValue: {
+    color: colors.text,
+    fontSize: 14,
+    lineHeight: 20,
+    fontFamily: fonts.bodySemiBold,
+    marginTop: 3,
+  },
+  metadataRow: {
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  metadataRowLast: {
+    borderBottomWidth: 0,
+  },
+  metadataRowLabel: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontFamily: fonts.label,
+    marginBottom: 5,
+  },
+  metadataRowValue: {
+    color: colors.text,
+    fontSize: 14,
+    lineHeight: 21,
+    fontFamily: fonts.body,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 28,
-    marginBottom: 12,
+    marginBottom: 14,
   },
   sectionHeaderRow: {
     justifyContent: 'space-between',
@@ -527,14 +834,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   ratingSummaryText: {
-    color: colors.text,
-    fontSize: 15,
+    color: colors.movieRating,
+    fontSize: 16,
     fontFamily: fonts.bodyBold,
     marginLeft: 4,
   },
   ratingSummaryCount: {
     color: colors.textMuted,
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: fonts.body,
     marginLeft: 4,
   },
@@ -542,7 +849,7 @@ const styles = StyleSheet.create({
     width: 4,
     height: 16,
     borderRadius: 2,
-    backgroundColor: colors.accentSecondary,
+    backgroundColor: colors.accentPrimary,
     marginRight: 8,
   },
   sectionTitle: {
@@ -550,15 +857,97 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: fonts.title,
   },
+  providersCard: {
+    padding: 16,
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  providersHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 18,
+  },
+  providersTitle: {
+    color: colors.text,
+    fontSize: 15,
+    fontFamily: fonts.bodyBold,
+  },
+  providersUpdated: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontFamily: fonts.body,
+    marginTop: 2,
+  },
+  providerGroup: {
+    marginBottom: 16,
+  },
+  providerGroupTitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 10,
+  },
+  providerGroupLabel: {
+    color: colors.text,
+    fontSize: 14,
+    fontFamily: fonts.label,
+  },
+  providerList: {
+    flexDirection: 'row',
+    gap: 9,
+    paddingRight: 4,
+  },
+  providerChip: {
+    width: 94,
+    minHeight: 98,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 9,
+    backgroundColor: colors.surfaceHigh,
+    borderRadius: 12,
+  },
+  providerLogo: {
+    width: 42,
+    height: 42,
+    borderRadius: 9,
+    marginBottom: 7,
+    backgroundColor: colors.text,
+  },
+  providerLogoFallback: {
+    width: 42,
+    height: 42,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 7,
+    backgroundColor: colors.surfaceAlt,
+  },
+  providerChipText: {
+    color: colors.text,
+    fontSize: 11,
+    lineHeight: 15,
+    fontFamily: fonts.body,
+    textAlign: 'center',
+  },
+  noProviders: {
+    color: colors.textMuted,
+    fontSize: 13,
+    lineHeight: 18,
+    fontFamily: fonts.body,
+  },
   recommendationBox: {
-    width: 130,
-    marginRight: 12,
+    width: 138,
+    marginRight: 14,
     backgroundColor: colors.surface,
     borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: 8,
-    shadowColor: colors.accentSecondary,
+    padding: 9,
+    shadowColor: colors.accentPrimary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
@@ -572,7 +961,8 @@ const styles = StyleSheet.create({
   },
   recommendationTitle: {
     color: colors.text,
-    fontSize: 12,
+    fontSize: 13,
+    lineHeight: 18,
     fontFamily: fonts.body,
     marginTop: 6,
   },
@@ -582,8 +972,8 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   recommendationRating: {
-    color: colors.textMuted,
-    fontSize: 11,
+    color: colors.movieRating,
+    fontSize: 12,
     fontFamily: fonts.body,
     marginLeft: 4,
   },
@@ -602,7 +992,9 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: colors.accentPrimary,
+    backgroundColor: colors.surfaceHigh,
+    borderWidth: 1,
+    borderColor: colors.accentPrimary,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -727,13 +1119,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: colors.accentPrimary,
+    backgroundColor: colors.surfaceHigh,
+    borderWidth: 1,
+    borderColor: colors.accentPrimary,
   },
   sendButtonDisabled: {
     backgroundColor: colors.surfaceHigh,
   },
   sendButtonText: {
-    color: colors.onAccentPrimary,
+    color: colors.accentPrimary,
     fontFamily: fonts.label,
     fontSize: 14,
   },

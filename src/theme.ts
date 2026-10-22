@@ -6,13 +6,15 @@ export const colors = {
   text: '#e5e2e1', // on-surface / on-background
   textMuted: '#e9bcb6', // on-surface-variant (tinte cálido a propósito, Material You)
   accentPrimary: '#e50914', // primary-container — rojo "cine", fondos sólidos (CTAs, badges)
+  icon: '#e50914', // todos los iconos usan el mismo rojo de marca mediante AppIcon
+  movieRating: '#ffc107', // amarillo reservado para ratings mostrados sobre una película
   onAccentPrimary: '#fff7f6', // on-primary-container — texto/íconos sobre accentPrimary
   accentPrimarySoft: '#ffb4aa', // primary — mismo rojo pero suave, para texto/íconos sobre fondo oscuro (wordmark, header)
   accentSecondary: '#007aff', // tertiary de la paleta oficial — azul, social/interactivo
   onAccentSecondary: '#f9f8ff', // on-tertiary-container
   accentSecondaryText: '#5aa9ff', // tono claro del azul, para texto sobre fondo oscuro
   coverTop: '#4a0a0e', // tono oscuro del rojo, para el degradado de portada del perfil
-  rating: '#ffc107', // secondary de la paleta oficial — dorado, solo para calificaciones/gamificación
+  rating: '#e50914', // calificaciones y gamificación también respetan el rojo de marca
   border: 'rgba(255,255,255,0.08)', // glass border (white/5–white/10 en el export)
   danger: '#ffb4ab', // error
 };

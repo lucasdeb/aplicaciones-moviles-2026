@@ -12,7 +12,7 @@ import {
   StyleSheet,
   Linking,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../components/AppIcon';
 import { useAuth } from '../context/AuthContext';
 import { colors, fonts } from '../theme';
 import { getNowPlaying, getUpcoming, type TmdbMovie } from '../services/tmdb';
@@ -24,6 +24,7 @@ import {
 } from '../utils/reminders';
 import BrandLogo from '../components/BrandLogo';
 import SettingsButton from '../components/SettingsButton';
+import { formatRating } from '../utils/movieMetadata';
 
 type Tab = 'upcoming' | 'now';
 
@@ -144,7 +145,7 @@ function ReleasesScreen({ navigation }) {
         </View>
       ) : status === 'error' ? (
         <View style={styles.centered}>
-          <Ionicons name="cloud-offline-outline" size={40} color={colors.textMuted} />
+          <AppIcon name="cloud-offline-outline" size={40} />
           <Text style={styles.mutedText}>No pudimos cargar los estrenos. {errorMsg}</Text>
           <TouchableOpacity
             style={styles.retryButton}
@@ -173,17 +174,17 @@ function ReleasesScreen({ navigation }) {
                   <Image source={{ uri: item.posterUrl }} style={styles.poster} />
                 ) : (
                   <View style={[styles.poster, styles.posterEmpty]}>
-                    <Ionicons name="film-outline" size={24} color={colors.textMuted} />
+                    <AppIcon name="film-outline" size={24} />
                   </View>
                 )}
 
                 <View style={styles.cardBody}>
                   <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
                   <View style={styles.metaRow}>
-                    <Ionicons name="calendar-outline" size={12} color={colors.accentSecondary} />
+                    <AppIcon name="calendar-outline" size={12} />
                     <Text style={styles.metaText}>{formatDate(item.releaseDate)}</Text>
-                    <Ionicons name="star" size={12} color={colors.rating} style={{ marginLeft: 10 }} />
-                    <Text style={styles.metaText}>{item.rating}</Text>
+                    <AppIcon name="star" size={12} tone="movieRating" style={{ marginLeft: 10 }} />
+                    <Text style={styles.movieRatingText}>{formatRating(item.rating)}</Text>
                   </View>
                   <Text style={styles.overview} numberOfLines={3}>
                     {item.overview || 'Sin sinopsis disponible.'}
@@ -195,10 +196,9 @@ function ReleasesScreen({ navigation }) {
                       onPress={() => toggleReminder(item)}
                       activeOpacity={0.8}
                     >
-                      <Ionicons
+                      <AppIcon
                         name={reminded ? 'notifications' : 'notifications-outline'}
                         size={14}
-                        color={reminded ? colors.onAccentPrimary : colors.accentPrimary}
                       />
                       <Text style={[styles.remindText, reminded && styles.remindTextActive]}>
                         {reminded ? 'Te vamos a avisar' : 'Avisame'}
@@ -258,6 +258,7 @@ const styles = StyleSheet.create({
   cardTitle: { color: colors.text, fontFamily: fonts.bodyBold, fontSize: 15 },
   metaRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
   metaText: { color: colors.textMuted, fontSize: 12, fontFamily: fonts.body, marginLeft: 4 },
+  movieRatingText: { color: colors.movieRating, fontSize: 12, fontFamily: fonts.bodySemiBold, marginLeft: 4 },
   overview: { color: colors.textMuted, fontSize: 12, fontFamily: fonts.body, marginTop: 6, lineHeight: 17 },
   remindButton: {
     flexDirection: 'row',
@@ -270,9 +271,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginTop: 8,
   },
-  remindButtonActive: { backgroundColor: colors.accentPrimary },
+  remindButtonActive: { backgroundColor: colors.surfaceHigh, borderColor: colors.accentPrimary },
   remindText: { color: colors.accentPrimary, fontFamily: fonts.bodySemiBold, fontSize: 12, marginLeft: 4 },
-  remindTextActive: { color: colors.onAccentPrimary },
+  remindTextActive: { color: colors.accentPrimary },
 });
 
 export default ReleasesScreen;

@@ -11,10 +11,32 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../components/AppIcon';
 import { useMovies } from '../context/MovieContext';
 import { pickPhoto } from '../utils/pickPhoto';
 import { colors, fonts } from '../theme';
+
+function commaSeparated(value: string) {
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function pairLines(value: string): [string, string][] | null {
+  const lines = value
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const pairs = lines.map((line) => line.split('|').map((part) => part.trim()));
+  if (!pairs.every(([first, second]) => first && second)) return null;
+  return pairs.map(([first, second]) => [first, second]);
+}
+
+function pairsToText(items: Array<{ name: string; [field: string]: string }> | undefined, secondField: string) {
+  return items?.map((item) => `${item.name} | ${item[secondField]}`).join('\n') ?? '';
+}
 
 // aspect es [ancho, alto]: lo usa el recorte del picker y el tamaño del recuadro
 function ImageSlot({ label, aspect, value, onChange, required = false }) {
@@ -59,13 +81,13 @@ function ImageSlot({ label, aspect, value, onChange, required = false }) {
           <>
             <Image source={{ uri: value }} style={styles.imagePreview} />
             <View style={styles.imageOverlay}>
-              <Ionicons name="camera" size={16} color="#fff" />
+              <AppIcon name="camera" size={16} />
               <Text style={styles.imageOverlayText}>Elegir otra de la galería</Text>
             </View>
           </>
         ) : (
           <View style={styles.imagePlaceholder}>
-            <Ionicons name="image-outline" size={28} color={colors.textMuted} />
+            <AppIcon name="image-outline" size={28} />
             <Text style={styles.imagePlaceholderText}>Tocá para elegir de la galería</Text>
           </View>
         )}
@@ -92,10 +114,20 @@ function AddMovieScreen({ navigation, route }) {
   const { movies, createMovie, updateMovie } = useMovies();
   const movieId = route.params?.movieId;
   const editingMovie = movieId ? movies.list.find((m) => m.id === movieId) : null;
+  const argentinaProviders = editingMovie?.watchProviders?.AR;
   const [title, setTitle] = useState(editingMovie?.title || '');
   const [overview, setOverview] = useState(editingMovie?.overview || '');
-  const [year, setYear] = useState(editingMovie ? String(editingMovie.year) : '');
-  const [genre, setGenre] = useState(editingMovie?.genre || '');
+  const [tmdbId, setTmdbId] = useState(editingMovie?.tmdbId ? String(editingMovie.tmdbId) : '');
+  const [releaseDate, setReleaseDate] = useState(editingMovie?.releaseDate || '');
+  const [runtime, setRuntime] = useState(editingMovie?.runtime ? String(editingMovie.runtime) : '');
+  const [genres, setGenres] = useState(editingMovie?.genres?.join(', ') || '');
+  const [actors, setActors] = useState(pairsToText(editingMovie?.actors, 'character'));
+  const [directors, setDirectors] = useState(editingMovie?.directors?.join(', ') || '');
+  const [crew, setCrew] = useState(pairsToText(editingMovie?.crew, 'job'));
+  const [trailers, setTrailers] = useState(pairsToText(editingMovie?.trailers, 'key'));
+  const [streamProviders, setStreamProviders] = useState(argentinaProviders?.stream?.join(', ') || '');
+  const [rentProviders, setRentProviders] = useState(argentinaProviders?.rent?.join(', ') || '');
+  const [buyProviders, setBuyProviders] = useState(argentinaProviders?.buy?.join(', ') || '');
   const [featured, setFeatured] = useState(editingMovie?.featured || false);
   const [posterUrl, setPosterUrl] = useState(editingMovie?.posterUrl || null);
   const [backdropUrl, setBackdropUrl] = useState(editingMovie?.backdropUrl || null);
@@ -103,13 +135,18 @@ function AddMovieScreen({ navigation, route }) {
   const [error, setError] = useState('');
 
   async function handleSave() {
-    if (!title.trim() || !overview.trim() || !genre.trim()) {
-      setError('Completá título, overview y género');
+    const parsedGenres = commaSeparated(genres);
+    if (!title.trim() || !overview.trim() || parsedGenres.length === 0) {
+      setError('Completá título, sinopsis y al menos un género');
       return;
     }
-    const yearNumber = Number(year);
-    if (!yearNumber) {
-      setError('Año inválido');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(releaseDate)) {
+      setError('La fecha de estreno debe usar el formato AAAA-MM-DD');
+      return;
+    }
+    const runtimeNumber = Number(runtime);
+    if (!Number.isInteger(runtimeNumber) || runtimeNumber <= 0) {
+      setError('La duración debe ser una cantidad válida de minutos');
       return;
     }
     if (!editingMovie && !posterUrl) {
@@ -117,15 +154,41 @@ function AddMovieScreen({ navigation, route }) {
       return;
     }
 
+    const actorPairs = pairLines(actors);
+    const crewPairs = pairLines(crew);
+    const trailerPairs = pairLines(trailers);
+    if (!actorPairs || !crewPairs || !trailerPairs) {
+      setError('Revisá los campos por línea: cada línea debe contener dos valores separados por |');
+      return;
+    }
+
+    const parsedTmdbId = tmdbId.trim() ? Number(tmdbId) : null;
+    if (parsedTmdbId !== null && (!Number.isInteger(parsedTmdbId) || parsedTmdbId <= 0)) {
+      setError('El ID de TMDB debe ser un número válido');
+      return;
+    }
+
     setSaving(true);
     setError('');
 
     const payload = {
+      tmdbId: parsedTmdbId,
       title: title.trim(),
       overview: overview.trim(),
-      year: yearNumber,
-      genre: genre.trim(),
-      rating: 0,
+      releaseDate,
+      runtime: runtimeNumber,
+      genres: parsedGenres,
+      actors: actorPairs.map(([name, character]) => ({ name, character })),
+      directors: commaSeparated(directors),
+      crew: crewPairs.map(([name, job]) => ({ name, job })),
+      trailers: trailerPairs.map(([name, key]) => ({ name, key, site: 'YouTube' })),
+      watchProviders: {
+        AR: {
+          stream: commaSeparated(streamProviders),
+          rent: commaSeparated(rentProviders),
+          buy: commaSeparated(buyProviders),
+        },
+      },
       featured,
       ...(posterUrl && { posterUrl }),
       ...(backdropUrl && { backdropUrl }),
@@ -183,27 +246,130 @@ function AddMovieScreen({ navigation, route }) {
         multiline
       />
 
+      <Text style={styles.sectionTitle}>Metadatos</Text>
+      <Text style={styles.sectionHint}>
+        Estos datos se guardan en el catálogo mock de WhatNext. TMDB solo fue la fuente inicial.
+      </Text>
+
       <View style={styles.inputRow}>
         <View style={styles.inputHalf}>
-          <Text style={styles.label}>Año</Text>
+          <Text style={styles.label}>Fecha de estreno</Text>
           <TextInput
             style={styles.input}
-            placeholder="2024"
+            placeholder="2024-03-14"
+            placeholderTextColor={colors.textMuted}
+            value={releaseDate}
+            onChangeText={setReleaseDate}
+          />
+        </View>
+        <View style={styles.inputHalfLast}>
+          <Text style={styles.label}>Duración en minutos</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="120"
             placeholderTextColor={colors.textMuted}
             keyboardType="numeric"
-            value={year}
-            onChangeText={setYear}
+            value={runtime}
+            onChangeText={setRuntime}
           />
         </View>
       </View>
 
-      <Text style={styles.label}>Género</Text>
+      <Text style={styles.label}>Géneros</Text>
       <TextInput
         style={styles.input}
-        placeholder="Drama, Acción, Comedia..."
+        placeholder="Drama, Acción, Ciencia ficción"
         placeholderTextColor={colors.textMuted}
-        value={genre}
-        onChangeText={setGenre}
+        value={genres}
+        onChangeText={setGenres}
+      />
+      <Text style={styles.fieldHint}>Separalos con comas. El primero se usa como género principal.</Text>
+
+      <Text style={styles.label}>ID de TMDB (opcional)</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="872585"
+        placeholderTextColor={colors.textMuted}
+        keyboardType="numeric"
+        value={tmdbId}
+        onChangeText={setTmdbId}
+      />
+
+      <Text style={styles.sectionTitle}>Reparto y equipo</Text>
+
+      <Text style={styles.label}>Actores y personajes</Text>
+      <TextInput
+        style={[styles.input, styles.metadataArea]}
+        placeholder={'Cillian Murphy | J. Robert Oppenheimer\nEmily Blunt | Kitty Oppenheimer'}
+        placeholderTextColor={colors.textMuted}
+        value={actors}
+        onChangeText={setActors}
+        multiline
+        textAlignVertical="top"
+      />
+      <Text style={styles.fieldHint}>Una persona por línea: Actor | Personaje</Text>
+
+      <Text style={styles.label}>Directores</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Christopher Nolan"
+        placeholderTextColor={colors.textMuted}
+        value={directors}
+        onChangeText={setDirectors}
+      />
+      <Text style={styles.fieldHint}>Separalos con comas.</Text>
+
+      <Text style={styles.label}>Equipo</Text>
+      <TextInput
+        style={[styles.input, styles.metadataArea]}
+        placeholder={'Hoyte van Hoytema | Director of Photography\nJennifer Lame | Editor'}
+        placeholderTextColor={colors.textMuted}
+        value={crew}
+        onChangeText={setCrew}
+        multiline
+        textAlignVertical="top"
+      />
+      <Text style={styles.fieldHint}>Una persona por línea: Nombre | Rol</Text>
+
+      <Text style={styles.label}>Tráilers de YouTube</Text>
+      <TextInput
+        style={[styles.input, styles.metadataArea]}
+        placeholder="Tráiler oficial | bK6ldnjE3Y0"
+        placeholderTextColor={colors.textMuted}
+        value={trailers}
+        onChangeText={setTrailers}
+        multiline
+        textAlignVertical="top"
+      />
+      <Text style={styles.fieldHint}>Uno por línea: Nombre | ID del video de YouTube</Text>
+
+      <Text style={styles.sectionTitle}>Disponibilidad en Argentina</Text>
+
+      <Text style={styles.label}>Con suscripción</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Netflix, HBO Max, Amazon Prime Video"
+        placeholderTextColor={colors.textMuted}
+        value={streamProviders}
+        onChangeText={setStreamProviders}
+      />
+
+      <Text style={styles.label}>Alquiler</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Apple TV Store, Amazon Video"
+        placeholderTextColor={colors.textMuted}
+        value={rentProviders}
+        onChangeText={setRentProviders}
+      />
+
+      <Text style={styles.label}>Compra</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Apple TV Store, Amazon Video"
+        placeholderTextColor={colors.textMuted}
+        value={buyProviders}
+        onChangeText={setBuyProviders}
       />
 
       <View style={styles.switchRow}>
@@ -245,6 +411,20 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: fonts.title,
     marginBottom: 20,
+  },
+  sectionTitle: {
+    color: colors.text,
+    fontSize: 17,
+    fontFamily: fonts.title,
+    marginTop: 18,
+    marginBottom: 6,
+  },
+  sectionHint: {
+    color: colors.textMuted,
+    fontSize: 12,
+    lineHeight: 17,
+    fontFamily: fonts.body,
+    marginBottom: 14,
   },
   slotContainer: {
     marginBottom: 18,
@@ -342,12 +522,27 @@ const styles = StyleSheet.create({
     minHeight: 90,
     textAlignVertical: 'top',
   },
+  metadataArea: {
+    minHeight: 108,
+  },
   inputRow: {
     flexDirection: 'row',
   },
   inputHalf: {
     flex: 1,
     marginRight: 8,
+  },
+  inputHalfLast: {
+    flex: 1,
+    marginLeft: 8,
+  },
+  fieldHint: {
+    color: colors.textMuted,
+    fontSize: 11,
+    lineHeight: 15,
+    fontFamily: fonts.body,
+    marginTop: -8,
+    marginBottom: 12,
   },
   switchRow: {
     flexDirection: 'row',

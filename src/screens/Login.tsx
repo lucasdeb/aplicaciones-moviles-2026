@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../components/AppIcon';
 import { useAuth } from '../context/AuthContext';
 import { colors, fonts } from '../theme';
 import { isValidEmail } from '../utils/validators';
@@ -70,10 +70,9 @@ function LoginScreen({ navigation }) {
           style={styles.eyeButton}
           onPress={() => setShowPassword((prev) => !prev)}
         >
-          <Ionicons
+          <AppIcon
             name={showPassword ? 'eye-off-outline' : 'eye-outline'}
             size={20}
-            color={colors.textMuted}
           />
         </TouchableOpacity>
       </View>

@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../components/AppIcon';
 import { useAuth } from '../context/AuthContext';
 import { useGamification } from '../context/GamificationContext';
 import { useOnFocus } from '../hooks/useOnFocus';
@@ -41,7 +41,7 @@ function Badge({ achievement }: BadgeProps) {
     return (
       <View style={[styles.badge, styles.badgeLocked]}>
         <View style={[styles.badgeIcon, styles.badgeIconLocked]}>
-          <Ionicons name="lock-closed" size={18} color={colors.textMuted} />
+          <AppIcon name="lock-closed" size={18} />
         </View>
         <Text style={[styles.badgeTitle, styles.mutedText]} numberOfLines={2}>{achievement.title}</Text>
         <Text style={styles.badgeMeta}>{achievement.current}/{achievement.goal}</Text>
@@ -52,7 +52,7 @@ function Badge({ achievement }: BadgeProps) {
   return (
     <View style={styles.badge}>
       <View style={styles.badgeIcon}>
-        <Ionicons name={achievement.icon as any} size={20} color={colors.rating} />
+        <AppIcon name={achievement.icon as any} size={20} />
       </View>
       <Text style={styles.badgeTitle} numberOfLines={2}>{achievement.title}</Text>
       <Text style={styles.badgeMeta}>+{achievement.points} pts</Text>
@@ -112,7 +112,7 @@ function AchievementsScreen({ navigation }) {
             <SettingsButton />
           </View>
           <View style={styles.pointsPill}>
-            <Ionicons name="diamond-outline" size={14} color={colors.rating} />
+            <AppIcon name="diamond-outline" size={14} />
             <Text style={styles.pointsText}>{available} pts</Text>
           </View>
         </View>
@@ -140,7 +140,7 @@ function AchievementsScreen({ navigation }) {
               </View>
             ) : (
               <View style={styles.challenge}>
-                <Ionicons name="trophy" size={28} color={colors.rating} />
+                <AppIcon name="trophy" size={28} />
                 <Text style={styles.challengeTitle}>¡Desbloqueaste todos los logros!</Text>
               </View>
             )}
@@ -170,7 +170,7 @@ function AchievementsScreen({ navigation }) {
                 return (
                   <View style={styles.rewardCard}>
                     <View style={styles.rewardIcon}>
-                      <Ionicons name={item.icon as any} size={28} color={colors.rating} />
+                      <AppIcon name={item.icon as any} size={28} />
                     </View>
                     <View style={styles.rewardBody}>
                       <Text style={styles.rewardTitle} numberOfLines={1}>{item.title}</Text>
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,193,7,0.15)',
+    backgroundColor: 'rgba(229,9,20,0.15)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 6,

@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { View, Text, Image, FlatList, TouchableOpacity, Alert, ActivityIndicator, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../components/AppIcon';
 import { useMovies } from '../context/MovieContext';
 import { colors, fonts } from '../theme';
+import { formatRating, getMovieYear, getPrimaryGenre } from '../utils/movieMetadata';
 
 function ManageMoviesScreen({ navigation }) {
   const { movies, fetchMovies, deleteMovie } = useMovies();
@@ -29,7 +30,7 @@ function ManageMoviesScreen({ navigation }) {
           style={styles.addButton}
           onPress={() => navigation.navigate('AddMovie')}
         >
-          <Ionicons name="add" size={20} color={colors.onAccentPrimary} />
+          <AppIcon name="add" size={20} />
         </TouchableOpacity>
       </View>
 
@@ -55,7 +56,8 @@ function ManageMoviesScreen({ navigation }) {
                   {item.title}
                 </Text>
                 <Text style={styles.rowMeta}>
-                  {item.year} · {item.genre} · ⭐ {item.rating}
+                  {getMovieYear(item)} · {getPrimaryGenre(item)} ·{' '}
+                  <Text style={styles.ratingSymbol}>★ {formatRating(item.communityRating)}</Text>
                   {item.featured ? ' · destacada' : ''}
                 </Text>
               </View>
@@ -64,10 +66,10 @@ function ManageMoviesScreen({ navigation }) {
                 hitSlop={8}
                 style={styles.rowIcon}
               >
-                <Ionicons name="create-outline" size={20} color={colors.accentSecondary} />
+                <AppIcon name="create-outline" size={20} />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => confirmDelete(item)} hitSlop={8} style={styles.rowIcon}>
-                <Ionicons name="trash-outline" size={20} color={colors.danger} />
+                <AppIcon name="trash-outline" size={20} />
               </TouchableOpacity>
             </View>
           )}
@@ -99,9 +101,14 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: colors.accentPrimary,
+    backgroundColor: colors.surfaceHigh,
+    borderWidth: 1,
+    borderColor: colors.accentPrimary,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  ratingSymbol: {
+    color: colors.movieRating,
   },
   list: {
     paddingHorizontal: 16,

@@ -5,7 +5,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { colors, fonts } from '../theme';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../components/AppIcon';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
 import { useGamification } from '../context/GamificationContext';
@@ -15,6 +15,7 @@ import BrandLogo from '../components/BrandLogo';
 import GuestPrompt from '../components/GuestPrompt';
 import SettingsButton from '../components/SettingsButton';
 import ReviewCard from '../components/ReviewCard';            
+import NotificationList, { type AppNotification } from '../components/NotificationList';
 import { RANKS, calculateRank } from '../utils/ranks';
 import {
   mockGetPublicProfile,
@@ -25,6 +26,9 @@ import {
   mockRemoveFriendship,
   mockGetPendingRequests,
   mockGetFriends,
+  mockGetNotifications,
+  mockMarkNotificationRead,
+  mockMarkAllNotificationsRead,
 } from '../mockData';
 
 const TABS = [
@@ -58,7 +62,7 @@ const ROLE_COLORS = {
 
 
 type StatCardProps = {
-  icon: React.ComponentProps<typeof Ionicons>['name'];
+  icon: React.ComponentProps<typeof AppIcon>['name'];
   color: string;
   value: string;
   label: string;
@@ -69,8 +73,8 @@ function StatCard({ icon, color, value, label, onPress }: StatCardProps) {
   return (
     <TouchableOpacity style={styles.statCard} onPress={onPress} activeOpacity={0.8}>
       <View style={styles.statTop}>
-        <Ionicons name={icon} size={18} color={color} />
-        <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+        <AppIcon name={icon} size={18} />
+        <AppIcon name="chevron-forward" size={14} />
       </View>
       <Text style={[styles.statValue, { color }]}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
@@ -100,10 +104,9 @@ function RanksModal({ visible, currentRankIndex, reviews, onClose }: RanksModalP
             return (
               <View key={rank.name} style={[styles.levelRow, isCurrent && styles.levelRowCurrent]}>
                 <View style={[styles.levelIcon, reached && styles.levelIconReached]}>
-                  <Ionicons
+                  <AppIcon
                     name={reached ? rank.icon : 'lock-closed'}
                     size={18}
-                    color={reached ? colors.background : colors.textMuted}
                   />
                 </View>
                 <View style={styles.levelBody}>
@@ -127,7 +130,7 @@ function RanksModal({ visible, currentRankIndex, reviews, onClose }: RanksModalP
 }
 
 type MenuRowProps = {
-  icon: React.ComponentProps<typeof Ionicons>['name'];
+  icon: React.ComponentProps<typeof AppIcon>['name'];
   title: string;
   onPress: () => void;
 };
@@ -136,10 +139,10 @@ function MenuRow({ icon, title, onPress }: MenuRowProps) {
   return (
     <TouchableOpacity style={styles.menuRow} onPress={onPress} activeOpacity={0.8}>
       <View style={styles.menuIcon}>
-        <Ionicons name={icon} size={18} color={colors.accentPrimarySoft} />
+        <AppIcon name={icon} size={18} />
       </View>
       <Text style={styles.menuText}>{title}</Text>
-      <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+      <AppIcon name="chevron-forward" size={18} />
     </TouchableOpacity>
   );
 }
@@ -160,6 +163,8 @@ function ProfileScreen({ navigation, route }) {
   const [friendship, setFriendship] = useState<{ status: FriendStatus; requestId?: number }>({ status: 'none' });
   const [requests, setRequests] = useState([]);                 // solo en mi perfil
   const [friends, setFriends] = useState([]);                   // solo en mi perfil
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [notificationsVisible, setNotificationsVisible] = useState(false);
   const [tab, setTab] = useState<ActivityTab>('comments');
   const [ranksVisible, setRanksVisible] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -176,16 +181,18 @@ function ProfileScreen({ navigation, route }) {
     }
     setError('');
     try {
-      const [data, relation, pending, friendList] = await Promise.all([
+      const [data, relation, pending, friendList, notificationList] = await Promise.all([
         mockGetPublicProfile(targetId),
         me && !isOwn ? mockGetFriendshipStatus(me.id, targetId) : Promise.resolve({ status: 'none' as FriendStatus }),
         isOwn ? mockGetPendingRequests(me.id) : Promise.resolve([]),
         isOwn ? mockGetFriends(me.id) : Promise.resolve([]),
+        isOwn ? mockGetNotifications(me.id) : Promise.resolve([]),
       ]);
       setProfile(data);
       setFriendship(relation as { status: FriendStatus; requestId?: number });
       setRequests(pending);
       setFriends(friendList);
+      setNotifications(notificationList);
       if (isOwn) fetchAchievements();    // ← mis logros (para la tarjeta de logros)
     } catch (e) {
       setError(e.message);
@@ -280,6 +287,40 @@ function ProfileScreen({ navigation, route }) {
     }
   }
 
+  async function openNotification(notification: AppNotification) {
+    try {
+      if (!notification.read) {
+        await mockMarkNotificationRead(notification.id, me.id);
+        setNotifications((current) =>
+          current.map((item) =>
+            item.id === notification.id ? { ...item, read: true } : item
+          )
+        );
+      }
+
+      if (notification.type === 'friend_request') {
+        setNotificationsVisible(false);
+        openUser(notification.actor.id);
+      } else if (notification.movie) {
+        setNotificationsVisible(false);
+        openMovie(notification.movie.id);
+      }
+    } catch (e) {
+      Alert.alert('Error', e.message);
+    }
+  }
+
+  async function markAllNotificationsRead() {
+    try {
+      await mockMarkAllNotificationsRead(me.id);
+      setNotifications((current) =>
+        current.map((notification) => ({ ...notification, read: true }))
+      );
+    } catch (e) {
+      Alert.alert('Error', e.message);
+    }
+  }
+
   async function removeRepost(commentId: number) {
     try {
       const result = await mockRepostComment(commentId, me.id);   // es un interruptor: lo saca
@@ -340,6 +381,7 @@ function ProfileScreen({ navigation, route }) {
       ? [...profile.comments].sort((a, b) => b.likes - a.likes)
       : profile.comments;
   const button = FRIEND_BUTTON[friendship.status];
+  const unreadNotifications = notifications.filter((notification) => !notification.read).length;
 
   return (
     <ScrollView
@@ -352,7 +394,24 @@ function ProfileScreen({ navigation, route }) {
         <View style={styles.topRow}>
           <BrandLogo size={36} />
           <Text style={styles.topTitle}>Perfil</Text>
-          <SettingsButton />
+          <View style={styles.topActions}>
+            <TouchableOpacity
+              style={styles.notificationButton}
+              onPress={() => setNotificationsVisible(true)}
+              hitSlop={8}
+              accessibilityLabel={`Notificaciones${unreadNotifications ? `, ${unreadNotifications} sin leer` : ''}`}
+            >
+              <AppIcon name={unreadNotifications ? 'notifications' : 'notifications-outline'} size={20} />
+              {unreadNotifications > 0 && (
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationBadgeText}>
+                    {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+            <SettingsButton style={styles.settingsInline} />
+          </View>
         </View>
       )}
 
@@ -378,7 +437,7 @@ function ProfileScreen({ navigation, route }) {
               activeOpacity={0.8}
               accessibilityLabel={`Rango ${rank.current.name}`}
             >
-              <Ionicons name={rank.current.icon} size={14} color={colors.background} />
+              <AppIcon name={rank.current.icon} size={14} />
               <Text style={styles.rankBadgeText}>{rank.current.name}</Text>
             </TouchableOpacity>
           )}
@@ -417,7 +476,7 @@ function ProfileScreen({ navigation, route }) {
                   <ActivityIndicator size="small" color={colors.onAccentPrimary} />
                 ) : (
                   <>
-                    <Ionicons name={button.icon} size={16} color={button.primary ? colors.onAccentPrimary : colors.text} />
+                    <AppIcon name={button.icon} size={16} />
                     <Text style={[styles.friendText, !button.primary && { color: colors.text }]}>{button.label}</Text>
                   </>
                 )}
@@ -473,13 +532,13 @@ function ProfileScreen({ navigation, route }) {
         <>
           <TouchableOpacity style={styles.achievementsCard} onPress={() => navigation.navigate('Logros')} activeOpacity={0.85}>
             <View style={styles.trophy}>
-              <Ionicons name="trophy" size={22} color={colors.rating} />
+              <AppIcon name="trophy" size={22} />
             </View>
             <View style={styles.achievementsBody}>
               <Text style={styles.achievementsTitle}>{unlockedCount} logros desbloqueados</Text>
               <Text style={styles.achievementsText}>de {achievements.list.length} · Ver logros y premios</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+            <AppIcon name="chevron-forward" size={20} />
           </TouchableOpacity>
 
           {requests.length > 0 && (
@@ -492,10 +551,10 @@ function ProfileScreen({ navigation, route }) {
                     <Text style={styles.hint}>quiere ser tu amigo</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.acceptButton} onPress={() => respondRequest(r.id, true)}>
-                    <Ionicons name="checkmark" size={18} color={colors.onAccentPrimary} />
+                    <AppIcon name="checkmark" size={18} />
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.rejectButton} onPress={() => respondRequest(r.id, false)}>
-                    <Ionicons name="close" size={18} color={colors.text} />
+                    <AppIcon name="close" size={18} />
                   </TouchableOpacity>
                 </View>
               ))}
@@ -509,7 +568,7 @@ function ProfileScreen({ navigation, route }) {
             friends.map((f) => (
               <TouchableOpacity key={f.id} style={styles.requestRow} onPress={() => openUser(f.id)}>
                 <Text style={[styles.requestName, { flex: 1 }]}>{f.name}</Text>
-                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                <AppIcon name="chevron-forward" size={18} />
               </TouchableOpacity>
             ))
           )}
@@ -563,7 +622,7 @@ function ProfileScreen({ navigation, route }) {
           <View key={comment.id} style={styles.repostItem}>
             {tab === 'reposts' && (
               <View style={styles.repostHeader}>
-                <Ionicons name="repeat" size={14} color={colors.accentSecondaryText} />
+                <AppIcon name="repeat" size={14} />
                 <TouchableOpacity style={{ flex: 1 }} onPress={() => openUser(comment.author?.id)}>
                   <Text style={styles.repostLabel}>Reseña de {comment.author?.name ?? 'Usuario'}</Text>
                 </TouchableOpacity>
@@ -586,6 +645,27 @@ function ProfileScreen({ navigation, route }) {
         reviews={reviewCount}
         onClose={() => setRanksVisible(false)}
       />
+
+      <Modal
+        visible={notificationsVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setNotificationsVisible(false)}
+      >
+        <Pressable style={styles.overlay} onPress={() => setNotificationsVisible(false)}>
+          <Pressable style={[styles.sheet, styles.notificationsSheet]} onPress={(event) => event.stopPropagation()}>
+            <View style={styles.handle} />
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <NotificationList
+                notifications={notifications}
+                onPress={openNotification}
+                onMarkAllRead={markAllNotificationsRead}
+                onClose={() => setNotificationsVisible(false)}
+              />
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </ScrollView>
   );
 }
@@ -610,11 +690,44 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  topActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 'auto',
+  },
   topTitle: {
     color: colors.text,
     fontSize: 22,
     fontFamily: fonts.title,
     marginLeft: 10,
+  },
+  notificationButton: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    minWidth: 16,
+    height: 16,
+    paddingHorizontal: 3,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.accentPrimary,
+    borderWidth: 1,
+    borderColor: colors.background,
+  },
+  notificationBadgeText: {
+    color: colors.onAccentPrimary,
+    fontSize: 9,
+    fontFamily: fonts.bodyBold,
+  },
+  settingsInline: {
+    marginLeft: 4,
   },
   card: {
     alignItems: 'center',
@@ -661,14 +774,16 @@ const styles = StyleSheet.create({
   rankBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.rating,
+    backgroundColor: colors.surfaceHigh,
+    borderWidth: 1,
+    borderColor: colors.rating,
     borderRadius: 20,
     paddingHorizontal: 9,
     paddingVertical: 4,
     marginLeft: 8,
   },
   rankBadgeText: {
-    color: colors.background,
+    color: colors.rating,
     fontSize: 11,
     fontFamily: fonts.label,
     marginLeft: 4,
@@ -725,6 +840,9 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 28,
   },
+  notificationsSheet: {
+    maxHeight: '80%',
+  },
   handle: {
     width: 44,
     height: 5,
@@ -756,7 +874,7 @@ const styles = StyleSheet.create({
   },
   levelRowCurrent: {
     borderColor: colors.rating,
-    backgroundColor: 'rgba(255,193,7,0.08)',
+    backgroundColor: 'rgba(229,9,20,0.08)',
   },
   levelIcon: {
     width: 38,
@@ -864,7 +982,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255,193,7,0.15)',
+    backgroundColor: 'rgba(229,9,20,0.15)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -942,16 +1060,16 @@ friendButton: {
   flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
   borderRadius: 24, paddingVertical: 10, paddingHorizontal: 18, minWidth: 140,
 },
-friendPrimary: { backgroundColor: colors.accentPrimary },
+friendPrimary: { backgroundColor: colors.surfaceHigh, borderWidth: 1, borderColor: colors.accentPrimary },
 friendSecondary: { backgroundColor: colors.surfaceHigh, borderWidth: 1, borderColor: colors.border },
-friendText: { color: colors.onAccentPrimary, fontFamily: fonts.label, fontSize: 14 },
+friendText: { color: colors.accentPrimary, fontFamily: fonts.label, fontSize: 14 },
 
 requestRow: {
   flexDirection: 'row', alignItems: 'center', gap: 10,
   backgroundColor: colors.surface, borderRadius: 14, padding: 12, marginBottom: 8,
 },
 requestName: { color: colors.text, fontFamily: fonts.label, fontSize: 15 },
-acceptButton: { backgroundColor: colors.accentPrimary, borderRadius: 18, padding: 8 },
+acceptButton: { backgroundColor: colors.surfaceHigh, borderWidth: 1, borderColor: colors.accentPrimary, borderRadius: 18, padding: 8 },
 rejectButton: { backgroundColor: colors.surfaceHigh, borderRadius: 18, padding: 8 },
 
 segment: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: 12, padding: 4, marginTop: 24, marginBottom: 14 },
