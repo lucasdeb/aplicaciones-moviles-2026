@@ -17,3 +17,8 @@ uploads/
 prisma/backups/
 
 prisma/worker-heartbeat
+
+credentials/
+*.p12
+*.p8
+*.pem

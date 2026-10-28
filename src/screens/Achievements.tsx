@@ -18,6 +18,7 @@ import { colors, fonts } from '../theme';
 import BrandLogo from '../components/BrandLogo';
 import SettingsButton from '../components/SettingsButton';
 import ConfirmModal from '../components/ConfirmModal';
+import VoucherWalletActions from '../components/VoucherWalletActions';
 import GuestPrompt from '../components/GuestPrompt';
 
 type Achievement = {
@@ -63,7 +64,12 @@ function Badge({ achievement }: BadgeProps) {
 
 function AchievementsScreen({ navigation }) {
   const { user } = useAuth();
-  const { achievements, rewards, fetchAchievements, redeemReward } = useGamification();
+  const { achievements, rewards, points, fetchMorePoints, fetchAchievements, redeemReward, cancelRedemption } = useGamification();
+  const [cancelTarget, setCancelTarget] = useState<{ id: number; title: string; cost: number } | null>(null);
+  const [canceling, setCanceling] = useState(false);
+  const [cancelError, setCancelError] = useState('');
+  const [historyError, setHistoryError] = useState('');
+  const [historyBusy, setHistoryBusy] = useState(false);
   const [redeeming, setRedeeming] = useState(false);
   const [rewardToRedeem, setRewardToRedeem] = useState<Reward | null>(null);
 
@@ -81,7 +87,7 @@ function AchievementsScreen({ navigation }) {
   }
 
   const list: Achievement[] = achievements.list;
-  const available = achievements.totalPoints - rewards.spentPoints;
+  const available = rewards.availablePoints;
   const unlockedCount = list.filter((a) => a.unlocked).length;
   const nextGoal = list
     .filter((a) => !a.unlocked)
@@ -200,15 +206,48 @@ function AchievementsScreen({ navigation }) {
               <View style={styles.redeemed}>
                 <Text style={styles.sectionTitle}>Mis canjes</Text>
                 {rewards.redeemed.map((r) => (
-                  <Text key={r.code} style={styles.redeemedItem}>
-                    {r.title} · código {r.code} · {({ active: 'Disponible', used: 'Usado', expired: 'Vencido', refunded: 'Reintegrado' })[r.status] ?? r.status}
-                  </Text>
+                  <View key={r.code} style={{ marginTop: 12 }}>
+                    <Text style={styles.redeemedItem}>
+                      {r.title} · código {r.code} · {({ active: 'Disponible', used: 'Usado', expired: 'Vencido', refunded: 'Reintegrado' })[r.status] ?? r.status}
+                    </Text>
+                    {r.status === 'active' ? <VoucherWalletActions redemptionId={r.id} /> : null}
+                    {['active', 'expired'].includes(r.status) ? <TouchableOpacity accessibilityRole="button" disabled={canceling} style={styles.cancelVoucher} onPress={() => { setCancelError(''); setCancelTarget({ id: r.id, title: r.title, cost: r.cost }); }}>
+                      <Text style={styles.cancelVoucherText}>Anular canje y recuperar puntos</Text>
+                    </TouchableOpacity> : null}
+                  </View>
                 ))}
               </View>
             )}
+            <View style={styles.redeemed}>
+              <Text style={styles.sectionTitle}>Historial de puntos</Text>
+              <Text style={styles.sectionMeta}>Los puntos de un logro se acreditan una sola vez y se conservan.</Text>
+              {points.entries.length ? points.entries.map(entry => <View key={entry.id} style={{ marginTop: 12 }}>
+                <Text style={styles.redeemedItem}>{entry.amount > 0 ? '+' : ''}{entry.amount} pts · {entry.description}</Text>
+                <Text style={styles.sectionMeta}>{new Date(entry.createdAt).toLocaleDateString()}</Text>
+              </View>) : <Text style={styles.redeemedItem}>Todavía no tenés movimientos.</Text>}
+              {historyError ? <Text style={{ color: colors.danger }}>{historyError}</Text> : null}
+              {points.nextCursor ? <TouchableOpacity disabled={historyBusy} onPress={async () => { setHistoryBusy(true); setHistoryError(''); try { await fetchMorePoints(); } catch (e) { setHistoryError(e.message); } finally { setHistoryBusy(false); } }}><Text style={styles.redeemedItem}>{historyBusy ? 'Cargando…' : 'Ver más movimientos'}</Text></TouchableOpacity> : null}
+            </View>
+
           </>
         )}
       </ScrollView>
+      <ConfirmModal
+        visible={cancelTarget !== null}
+        title="Anular canje"
+        message={cancelError || `¿Anular "${cancelTarget?.title}"? El código dejará de ser válido y se devolverán ${cancelTarget?.cost} puntos si el premio no fue utilizado.`}
+        confirmLabel="Anular y recuperar puntos"
+        loading={canceling}
+        onConfirm={async () => {
+          if (!cancelTarget || canceling) return;
+          setCanceling(true); setCancelError('');
+          const result = await cancelRedemption(cancelTarget.id);
+          setCanceling(false);
+          if (result.success) setCancelTarget(null);
+          else { setCancelError(result.error || 'No se pudo anular el canje'); void fetchAchievements(); }
+        }}
+        onCancel={() => { if (!canceling) { setCancelTarget(null); setCancelError(''); } }}
+      />
       <ConfirmModal
         visible={rewardToRedeem !== null}
         title="Canjear premio"
@@ -223,6 +262,8 @@ function AchievementsScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  cancelVoucher: { marginTop: 10, paddingVertical: 12, paddingHorizontal: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.border },
+  cancelVoucherText: { color: colors.text, fontFamily: fonts.label, textAlign: 'center' },
   container: {
     flex: 1,
     backgroundColor: colors.background,

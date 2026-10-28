@@ -25,6 +25,7 @@ export const getUserReposts = (id: number) => request(`/users/${id}/reposts`);
 export const getPublicProfile = (id: number) => request(`/users/${id}`);
 export const getAchievements = (_id?: number) => request('/achievements');
 export const getRewards = () => request('/rewards');
+export const cancelRedemption = (id: number) => request(`/rewards/redemptions/${id}`, 'DELETE');
 export const redeemReward = (rewardId: string) => request('/rewards/redeem', 'POST', { rewardId });
 export const getFriendshipStatus = (_me: number, id: number) => request(`/friendships/status/${id}`);
 export const sendFriendRequest = (_me: number, toId: number) => request('/friendships', 'POST', { toId });

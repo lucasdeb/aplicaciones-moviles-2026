@@ -7,6 +7,7 @@ COPY prisma ./prisma
 COPY prisma.config.ts tsconfig*.json ./
 COPY src ./src
 COPY scripts ./scripts
+COPY assets ./assets
 RUN npm ci && npm run build && mkdir -p /data/uploads && chown -R node:node /app /data
 ENV NODE_ENV=production PORT=3000 UPLOAD_DIR=/data/uploads BACKUP_DIR=/data/backups
 USER node

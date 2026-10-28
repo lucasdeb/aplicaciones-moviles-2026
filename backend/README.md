@@ -85,3 +85,23 @@ Staff endpoints: `POST /api/admin/redemptions/validate` and `/use` accept `{ cod
 Tests use temporary databases and local TMDB/Overpass/Expo fixtures. They cover queue timing, retries, receipt processing, revoked sessions, device ownership, concurrent reward use, refunds, image validation/ownership and consistent database backups. They do not prove delivery on a physical phone or availability of public providers.
 
 See the root README and `../deploy/README.md` for configuration, operational setup and remaining device checks.
+
+## Permanent points history and Wallet
+
+`AchievementAward` freezes each earned achievement and point amount. `PointEntry` records immutable achievement credits, redemption debits and refund credits. All award/spending/refund changes use a serialized transaction per account, with unique keys preventing repeated awards or duplicate refunds. Editing/deleting a review or removing likes does not undo an already earned award. Rank remains based on current review count.
+
+`GET /api/points?before=<entry-id>` returns the signed-in user's server-computed balance, earned/spent totals, up to 50 entries and `nextCursor`. The rewards response also includes `availablePoints`; the app displays that value directly. Reviews and reactions reconcile awards inside their transactions, rather than waiting for a user to open Logros.
+
+Run `npm run points:migrate` once after applying migrations to capture current achievements and import existing spending/refunds. It is idempotent; account activity also initializes lazily. Deleted activity predating this migration cannot be reconstructed, because there was no historical award record. Awards backfilled now are dated at initialization; existing redemption/refund dates are retained. Back up the database first.
+
+`src/services/wallet.ts` signs Apple coupon passes and Google GenericObject save links for existing reward codes. See [Wallet setup](../deploy/WALLET.md) for required issuer accounts, credentials and the limitation on automatic updates of saved passes.
+
+`GET /api/push/status` reports the current session's devices and the account's recent release delivery states without tokens or secrets. `POST /api/push/test` sends a rate-limited test to registered devices in the current session. Settings → Probar notificaciones registers the device and invokes this endpoint. Acceptance is not proof of display; release receipts remain tracked separately. Physical-device delivery remains unverified until real Expo credentials are configured.
+
+## Canceling a redemption safely
+
+`DELETE /api/rewards/redemptions/:id` requires the owner's active session. The app offers Anular canje y recuperar puntos under Mis canjes, with a confirmation dialog. Unused active or expired vouchers can be canceled; used vouchers and previous administrator refunds cannot be canceled for a second credit.
+
+The backend serializes cancellation with account spending/refunds, verifies the original negative ledger entry against the saved redemption cost, changes the voucher to `canceled`, and inserts exactly one matching `refund:<id>` credit in the same database transaction. A database failure rolls back both changes. A staff use/cancellation race can only commit one outcome. Request bodies cannot choose the refund amount or recipient. Repeating a completed owner cancellation returns its existing result without another credit.
+
+Canceled vouchers are excluded from the user's current canjes and cannot be used or exported to Wallet. The inactive redemption and its debit/credit remain as audit records; physical deletion would remove the evidence needed to prevent replay and repeated refunds. Previously saved Wallet passes may still be visible, but their codes fail the server's validation/use checks.

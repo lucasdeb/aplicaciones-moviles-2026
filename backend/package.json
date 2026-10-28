@@ -19,7 +19,8 @@
     "db:setup": "prisma generate && tsx scripts/setup-db.ts",
     "db:backup": "tsx scripts/backup-db.ts",
     "media:migrate": "tsx scripts/migrate-images.ts",
-    "admin:create": "tsx scripts/bootstrap-admin.ts"
+    "admin:create": "tsx scripts/bootstrap-admin.ts",
+    "points:migrate": "tsx scripts/migrate-points.ts"
   },
   "keywords": [],
   "author": "",
@@ -35,6 +36,7 @@
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "node-cron": "^4.6.0",
+    "passkit-generator": "^3.7.0",
     "sharp": "^0.35.5",
     "zod": "^4.6.7"
   },
@@ -44,6 +46,7 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.6.5",
+    "fflate": "^0.8.3",
     "prisma": "^6.19.3",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3"

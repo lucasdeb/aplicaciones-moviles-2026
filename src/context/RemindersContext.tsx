@@ -4,7 +4,7 @@ import { useAuth } from './AuthContext';
 import { getToken } from '../services/session';
 import * as api from '../services/reminders';
 import { clearForeignReleaseReminders } from '../utils/reminders';
-import { registerDevicePush } from '../services/push';
+import { registerDevicePush, pushUnavailableReason } from '../services/push';
 type RemindersContextValue = {
   reminders: api.ReleaseReminder[]; busy: number[]; error: string; deviceError: string;
   refresh: () => Promise<boolean>;
@@ -27,7 +27,7 @@ export function RemindersProvider({ children }: { children: ReactNode }) {
       const rows = await api.getReleaseReminders();
       if (viewer.current !== userId || current !== version.current) return false;
       setReminders(rows); setError('');
-      try { const enabled = await registerDevicePush(false); if (viewer.current === userId) setDeviceError(!enabled && rows.length && Platform.OS !== 'web' ? 'Tus avisos están guardados. Las notificaciones no están activas en este dispositivo.' : ''); return enabled; }
+      try { const enabled = await registerDevicePush(false); if (viewer.current === userId) setDeviceError(!enabled && rows.length && Platform.OS !== 'web' ? pushUnavailableReason() || 'Tus avisos están guardados. Activá las notificaciones en los ajustes del teléfono.' : ''); return enabled; }
       catch { if (viewer.current === userId) setDeviceError('Tus avisos están guardados. No pudimos registrar las notificaciones push de este dispositivo.'); }
     } catch (e) { if (viewer.current === userId && current === version.current) setError(e.message); }
     return false;
@@ -61,8 +61,8 @@ export function RemindersProvider({ children }: { children: ReactNode }) {
         if (subscribed) enabled = await registerDevicePush(true);
         else await clearForeignReleaseReminders(undefined);
       }
-      catch { localError = subscribed
-        ? 'El aviso está guardado, pero no pudimos activar la notificación en este dispositivo.'
+      catch (e) { localError = subscribed
+        ? e.message || 'El aviso está guardado, pero no pudimos activar la notificación en este dispositivo.'
         : 'La suscripción se eliminó, pero no pudimos quitar la notificación de este dispositivo. Volvé a abrir la app para reintentar.'; }
       const synced = await refresh();
       if (synced) localError = '';

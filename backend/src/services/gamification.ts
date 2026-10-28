@@ -1,6 +1,7 @@
-import type { Prisma, PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient, Redemption } from '@prisma/client';
 import { prisma } from '../prisma';
 import { calculateRank } from './ranks';
+import { initializePoints, recordPoints, pointsSummary, withUserPoints } from './points';
 export { calculateRank };
 type AchievementStat = 'totalReviews' | 'maxLikesOnReview' | 'distinctGenres' | 'totalRatings' | 'totalPhotos';
 
@@ -80,7 +81,13 @@ export const REWARDS = [
 ];
 
 
-export async function getAchievements(userId: number, db: Prisma.TransactionClient | PrismaClient = prisma) {
+type AchievementsResult = {
+  list: (AchievementDef & { current: number; unlocked: boolean; awardedAt: Date | null })[];
+  totalPoints: number; availablePoints: number; profile: { reviews: number; likes: number };
+};
+export async function getAchievements(userId: number, db: Prisma.TransactionClient | PrismaClient = prisma): Promise<AchievementsResult> {
+  if ('$transaction' in db) return withUserPoints(userId, tx => getAchievements(userId, tx));
+  await initializePoints(db, userId);
   const reviews = await db.review.findMany({ where: { authorId: userId }, include: { movie: { include: { genres: true } }, _count: { select: { likes: true } } } });
   const stats: Record<AchievementStat, number> = {
     totalReviews: reviews.length,
@@ -89,15 +96,35 @@ export async function getAchievements(userId: number, db: Prisma.TransactionClie
     totalRatings: reviews.filter(r => r.rating !== null).length,
     totalPhotos: reviews.filter(r => r.photo).length,
   };
-  const list = ACHIEVEMENTS.map(a => ({ ...a, current: Math.min(stats[a.stat], a.goal), unlocked: stats[a.stat] >= a.goal }));
-  const totalPoints = list.filter(a => a.unlocked).reduce((sum, a) => sum + a.points, 0);
-  return { list, totalPoints, profile: { reviews: reviews.length, likes: reviews.reduce((sum, r) => sum + r._count.likes, 0) } };
+  for (const achievement of ACHIEVEMENTS) {
+    if (stats[achievement.stat] < achievement.goal) continue;
+    const award = await db.achievementAward.upsert({
+      where: { userId_achievementId: { userId, achievementId: achievement.id } },
+      create: { userId, achievementId: achievement.id, points: achievement.points }, update: {},
+    });
+    await recordPoints(db, userId, `achievement:${achievement.id}`, 'achievement', award.points, achievement.title, award.awardedAt);
+  }
+  const awards = await db.achievementAward.findMany({ where: { userId } });
+  const list = ACHIEVEMENTS.map(a => {
+    const award = awards.find(row => row.achievementId === a.id);
+    return { ...a, points: award?.points ?? a.points, current: award ? a.goal : Math.min(stats[a.stat], a.goal), unlocked: !!award, awardedAt: award?.awardedAt ?? null };
+  });
+  const summary = await pointsSummary(db, userId);
+  return { list, totalPoints: summary.earned, availablePoints: summary.balance, profile: { reviews: reviews.length, likes: reviews.reduce((sum, r) => sum + r._count.likes, 0) } };
 }
-export async function getRewards(userId: number, db: Prisma.TransactionClient | PrismaClient = prisma) {
+
+export async function getRewards(userId: number, db: Prisma.TransactionClient | PrismaClient = prisma): Promise<{
+  catalog: typeof REWARDS; spentPoints: number; availablePoints: number;
+  redeemed: (Redemption & { title?: string; description?: string; icon?: string; date: Date })[];
+}> {
+  if ('$transaction' in db) return withUserPoints(userId, tx => getRewards(userId, tx));
+  await getAchievements(userId, db);
+  const summary = await pointsSummary(db, userId);
   const rows = await db.redemption.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } });
   return {
     catalog: REWARDS,
-    spentPoints: rows.filter(r => !r.refundedAt).reduce((sum, r) => sum + r.cost, 0),
-    redeemed: rows.map(r => ({ ...REWARDS.find(x => x.id === r.rewardId), ...r, status: r.status === 'active' && r.expiresAt <= new Date() ? 'expired' : r.status, date: r.createdAt })),
+    spentPoints: summary.spent,
+    availablePoints: summary.balance,
+    redeemed: rows.filter(r => r.status !== 'canceled').map(r => ({ ...REWARDS.find(x => x.id === r.rewardId), ...r, status: r.status === 'active' && r.expiresAt <= new Date() ? 'expired' : r.status, date: r.createdAt })),
   };
 }

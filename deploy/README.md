@@ -59,3 +59,7 @@ Tickets and receipts are persisted in `PushDelivery`. Receipt success means hand
 - Supply EAS identifiers and credentials, then test Android/iOS delivery on physical devices.
 - Verify a working Overpass provider for the intended traffic. Public endpoints failed live checks in development; deterministic caching/fallback tests passed. Configure `OVERPASS_URL` for a dedicated provider if needed.
 - Run the application flows against the deployed API, including login/session restoration, reviews, images, reward fulfillment, scheduled TMDB imports and push receipts.
+
+## Points migration and reward Wallets
+
+After deploying the points-ledger migration, run `docker compose exec api npm run points:migrate` to initialize existing accounts. It preserves currently earned achievements and imports prior redemption/refund entries without duplicating them. Configure and test Apple Wallet and Google Wallet separately using [WALLET.md](WALLET.md). Both providers require real issuer credentials; no issuer account or certificate is provisioned by deployment.

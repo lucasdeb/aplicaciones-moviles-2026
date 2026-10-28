@@ -38,6 +38,13 @@ test('Push registration, due-time dispatch, deduplication, receipts, retries and
     assert.equal((await call('/push/devices', 'PUT', { ...device, token: 'bad' }, user.token)).status, 400);
     assert.equal((await call('/push/devices', 'PUT', device, user.token)).status, 200);
     assert.equal((await call('/push/devices', 'PUT', { ...device, secret: 'b'.repeat(64) }, user.token)).status, 403);
+    const diagnostic = await call('/push/status', 'GET', undefined, user.token);
+    assert.equal(diagnostic.status, 200); assert.equal(diagnostic.data.devices.length, 1);
+    assert.ok(!JSON.stringify(diagnostic.data).includes(device.token));
+    assert.equal((await call('/push/test', 'POST', {}, user.token)).data.accepted, 1);
+    assert.equal(sends, 1);
+    assert.equal((await call('/push/test', 'POST', {}, user.token)).status, 429);
+    sends = 0;
     const movie = await prisma.movie.create({ data: { title: 'Push release', overview: '', releaseDate: '2030-01-10' } });
     assert.equal((await call(`/reminders/${movie.id}`, 'PUT', {}, user.token)).status, 200);
     await runPushDelivery(new Date('2030-01-10T12:59:00Z')); assert.equal(sends, 0);

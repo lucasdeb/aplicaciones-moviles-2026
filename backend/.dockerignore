@@ -7,3 +7,8 @@ uploads
 dist
 tests
 .dev-mail
+
+credentials
+*.p12
+*.p8
+*.pem

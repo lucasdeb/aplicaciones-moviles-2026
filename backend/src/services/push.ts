@@ -104,3 +104,22 @@ async function checkReceipts(now: Date) {
     }
   }
 }
+
+export async function pushDeviceStatus(userId: number, sessionId: string) {
+  const devices = await prisma.pushDevice.findMany({ where: { userId, sessionId }, select: { platform: true, enabled: true, updatedAt: true } });
+  const deliveries = await prisma.pushDelivery.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 5,
+    select: { status: true, createdAt: true, receiptCheckedAt: true, error: true } });
+  return { devices, deliveries };
+}
+export async function sendPushTest(userId: number, sessionId: string) {
+  const devices = await prisma.pushDevice.findMany({ where: { userId, sessionId, enabled: true, session: { expiresAt: { gt: new Date() } } } });
+  if (!devices.length) fail(409, 'Este dispositivo no está registrado para push. Usá una compilación de desarrollo y activá las notificaciones.');
+  let data: any;
+  try { data = await expo('send', devices.map(device => ({ to: device.token, sound: 'default', channelId: 'estrenos',
+    title: 'WhatNext · Prueba de notificaciones', body: 'La conexión push de este dispositivo está configurada.', ttl: 300, data: { kind: 'push-test' } }))); }
+  catch { fail(502, 'No se pudo contactar al servicio de notificaciones. Intentá nuevamente.'); }
+  const accepted = devices.filter((_, index) => data?.[index]?.status === 'ok').length;
+  for (let i = 0; i < devices.length; i++) if (data?.[i]?.details?.error === 'DeviceNotRegistered') await prisma.pushDevice.updateMany({ where: { id: devices[i].id }, data: { enabled: false } });
+  if (!accepted) fail(502, 'El servicio rechazó la prueba. Revisá las credenciales push y el registro del dispositivo.');
+  return { accepted, message: 'La prueba fue aceptada para envío. Esto no confirma que el teléfono la haya mostrado.' };
+}

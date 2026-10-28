@@ -8,20 +8,22 @@ import { getToken } from './session';
 import { clearForeignReleaseReminders, configureChannel, ensureNotificationPermission } from '../utils/reminders';
 import { getPermissionsAsync } from 'expo-notifications/build/NotificationPermissions';
 let registration: Promise<boolean> | null = null;
+export function pushUnavailableReason() {
+  if (Platform.OS === 'web') return 'Las notificaciones push se activan desde la app instalada en tu teléfono.';
+  if (Constants.appOwnership === 'expo') return 'Expo Go permite guardar avisos, pero no recibir notificaciones push. Para recibirlas, instalá la versión de desarrollo de WhatNext.';
+  if (!Device.isDevice) return 'Probá las notificaciones en un teléfono físico con la versión de desarrollo de WhatNext.';
+  const projectId = process.env.EXPO_PUBLIC_EAS_PROJECT_ID || Constants.expoConfig?.extra?.eas?.projectId || Constants.easConfig?.projectId;
+  if (!projectId) return 'Las notificaciones todavía no están habilitadas para esta versión de WhatNext.';
+  return '';
+}
 export async function registerDevicePush(askPermission = false): Promise<boolean> {
   if (Platform.OS === 'web') return false;
   // Remove the old locally scheduled reminders, since the server is now responsible for delivery.
   await clearForeignReleaseReminders(undefined);
   if (!getToken()) return false;
-  if (!Device.isDevice || Constants.appOwnership === 'expo') {
-    if (askPermission) throw new Error('Las notificaciones push necesitan una instalación de desarrollo en un teléfono físico.');
-    return false;
-  }
+  const unavailable = pushUnavailableReason();
+  if (unavailable) { if (askPermission) throw new Error(unavailable); return false; }
   const projectId = process.env.EXPO_PUBLIC_EAS_PROJECT_ID || Constants.expoConfig?.extra?.eas?.projectId || Constants.easConfig?.projectId;
-  if (!projectId) {
-    if (askPermission) throw new Error('El aviso está guardado. Falta configurar el proyecto de Expo para activar push.');
-    return false;
-  }
   await configureChannel();
   const permission = askPermission ? await ensureNotificationPermission() : await getPermissionsAsync();
   const stored = await SecureStore.getItemAsync('whatnext.push.installation');

@@ -25,7 +25,7 @@ export default function ManageRedemptionsScreen() {
     {error ? <Text style={styles.error}>{error}</Text> : null}
     {result ? <>
       <Text style={styles.text}>{result.reward?.title} · {result.user.name}</Text>
-      <Text style={styles.text}>Estado: {({ active: 'Disponible', used: 'Usado', expired: 'Vencido', refunded: 'Reintegrado' })[result.status]}</Text>
+      <Text style={styles.text}>Estado: {({ active: 'Disponible', used: 'Usado', expired: 'Vencido', refunded: 'Reintegrado', canceled: 'Anulado' })[result.status]}</Text>
       <Text style={styles.text}>Vence: {new Date(result.expiresAt).toLocaleDateString()}</Text>
       {result.status === 'active' ? <TouchableOpacity style={styles.button} disabled={busy} onPress={() => setAction('use')}><Text style={styles.buttonText}>Confirmar entrega del premio</Text></TouchableOpacity> : null}
       {['active', 'expired'].includes(result.status) && user.user?.role === 'superadmin' ? <TouchableOpacity style={styles.button} disabled={busy} onPress={() => setAction('refund')}><Text style={styles.buttonText}>Anular y reintegrar puntos</Text></TouchableOpacity> : null}

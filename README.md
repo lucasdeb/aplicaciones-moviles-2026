@@ -134,3 +134,13 @@ Staff can validate and use reward codes from Settings → Validar canjes. Supera
 `POST /api/uploads` accepts authenticated JPEG/PNG images, validates decoded pixels, removes metadata and stores resized WebP files. Reviews save image URLs; uploaded review images require ownership. `/media/:filename` serves these public images. Keep the upload directory on persistent storage. `npm run media:migrate` in the backend backs up the database and converts legacy embedded images. `npm run db:backup` snapshots SQLite and copies uploads into the same backup folder.
 
 [deploy/README.md](deploy/README.md) describes the single-host Docker setup, HTTPS, initial administrator, backups and mobile push setup. CI checks app types and backend types, tests and build. Production rejects demo seeding and placeholder JWT secrets. Container startup, public hosting and physical-device notification delivery still require validation in the target environment.
+
+## Points history and Wallet vouchers
+
+Earned achievement points are now permanent, with a saved transaction history for earning, spending and refunds. The Logros screen displays the server's available balance and paginated history. Run `npm run points:migrate` inside the backend after applying migrations to backfill existing accounts once; it is safe to repeat. Current eligible achievements can be recovered, but previously deleted activity cannot.
+
+Mis canjes offers Apple Wallet on iOS, Google Wallet on Android, and both on web. Each pass represents an existing reward voucher with its single-use code. Real issuer accounts and signing credentials must be configured first; see [Wallet setup](deploy/WALLET.md). Saving a pass does not book a cinema showing or seat. Saved passes do not yet update automatically after use/refund; staff must validate the code online.
+
+Settings includes Probar notificaciones. Expo Go displays an explanation instead of attempting remote push registration; a physical-device development build and Expo credentials are still required for push testing.
+
+Users can cancel their own unused canjes from Logros → Mis canjes → Anular canje y recuperar puntos. The backend invalidates the voucher and restores its original points atomically. Canceled vouchers leave the current list, while an inactive audit record and point history remain to prevent repeated refunds. Used vouchers cannot be canceled. Repeated requests never grant extra points.

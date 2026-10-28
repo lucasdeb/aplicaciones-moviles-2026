@@ -13,12 +13,16 @@ import AppIcon from '../components/AppIcon';
 import { useAuth } from '../context/AuthContext';
 import { isValidEmail } from '../utils/validators';
 import { colors, fonts } from '../theme';
+import { registerDevicePush, pushUnavailableReason } from '../services/push';
+import { request } from '../services/http';
 import ConfirmModal from '../components/ConfirmModal';
 
 function SettingsScreen({ navigation }) {
   const { user, updateUser, logOut } = useAuth();
   const [name, setName] = useState(user.user?.name ?? '');
   const [email, setEmail] = useState(user.user?.email ?? '');
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushMessage, setPushMessage] = useState('');
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
   const [logoutVisible, setLogoutVisible] = useState(false);
@@ -84,6 +88,20 @@ function SettingsScreen({ navigation }) {
               <Text style={styles.buttonText}>Guardar cambios</Text>
             )}
           </TouchableOpacity>
+        </View>
+        <Text style={styles.sectionTitle}>Notificaciones</Text>
+        <View style={styles.card}>
+          <Text style={styles.label}>{pushUnavailableReason() || 'Activá y probá las notificaciones de este teléfono.'}</Text>
+          <TouchableOpacity style={[styles.button, pushBusy && styles.buttonDisabled]} disabled={pushBusy} onPress={async () => {
+            setPushBusy(true); setPushMessage('');
+            try {
+              const reason = pushUnavailableReason();
+              if (reason) { setPushMessage(reason); return; }
+              if (!await registerDevicePush(true)) { setPushMessage('Activá las notificaciones en los ajustes del teléfono.'); return; }
+              const result = await request('/push/test', 'POST'); setPushMessage(result.message);
+            } catch (e) { setPushMessage(e.message); } finally { setPushBusy(false); }
+          }}><Text style={styles.buttonText}>{pushBusy ? 'Enviando prueba…' : 'Probar notificaciones'}</Text></TouchableOpacity>
+          {pushMessage ? <Text style={[styles.label, { marginTop: 12 }]}>{pushMessage}</Text> : null}
         </View>
         {['moderator', 'superadmin'].includes(user.user?.role ?? '') ? <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('ManageRedemptions')}><Text style={styles.buttonText}>Validar canjes</Text></TouchableOpacity> : null}
         <TouchableOpacity style={styles.logout} onPress={onLogOut}>
