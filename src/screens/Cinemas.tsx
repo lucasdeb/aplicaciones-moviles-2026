@@ -30,6 +30,7 @@ function CinemasScreen() {
   const [stale, setStale] = useState(false);
   const [lookupError, setLookupError] = useState('');
   const requestVersion = useRef(0);
+  const lastArea = useRef('');
   const [status, setStatus] = useState<Status>('loading');
   const [refreshing, setRefreshing] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -47,8 +48,15 @@ function CinemasScreen() {
           return;
         }
 
+        try {
+          const last = await Location.getLastKnownPositionAsync({ maxAge: 10 * 60 * 1000, requiredAccuracy: 2000 });
+          if (last && !cancelled) setPos(last);
+        } catch {
+          // not available on some devices or on web
+        }
+
         const p = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.High,
+          accuracy: Location.Accuracy.Balanced,
         });
         if (cancelled) return;
         setPos(p);
@@ -97,7 +105,12 @@ function CinemasScreen() {
   }
 
   useEffect(() => {
-    if (c) loadCinemas(c.latitude, c.longitude);
+    if (!c) return;
+    // Same ~1 km area the backend caches by: the list is already loaded.
+    const area = `${c.latitude.toFixed(2)}:${c.longitude.toFixed(2)}`;
+    if (area === lastArea.current) return;
+    lastArea.current = area;
+    loadCinemas(c.latitude, c.longitude);
   }, [c?.latitude, c?.longitude]);
 
   async function handleRefresh() {
@@ -121,7 +134,7 @@ function CinemasScreen() {
     return (
       <View style={styles.centered}>
         <ActivityIndicator color={colors.accentPrimary} />
-        <Text style={styles.mutedText}>Buscando cines cerca tuyo...</Text>
+        <Text style={styles.mutedText}>{c ? 'Buscando cines cerca tuyo...' : 'Obteniendo tu ubicación...'}</Text>
       </View>
     );
   }

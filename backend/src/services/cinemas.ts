@@ -14,40 +14,42 @@ export function distanceKm(lat1: number, lng1: number, lat2: number, lng2: numbe
   const a = Math.sin(radians(lat2 - lat1) / 2) ** 2 + Math.cos(radians(lat1)) * Math.cos(radians(lat2)) * Math.sin(radians(lng2 - lng1) / 2) ** 2;
   return 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(a)));
 }
+async function fetchOverpass(endpoint: string, query: string, signal: AbortSignal): Promise<SavedCinema[]> {
+  const response = await fetch(endpoint, {
+    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'WhatNext/1.0' },
+    body: `data=${encodeURIComponent(query)}`, signal,
+  });
+  if (!response.ok) throw new Error('Overpass no respondió');
+  const body = await response.json() as { elements?: unknown[]; remark?: string };
+  // Overpass can return HTTP 200 with a runtime/timeout error and incomplete results.
+  if (!Array.isArray(body.elements) || body.remark) throw new Error('Respuesta de cines incompleta');
+  const rows: SavedCinema[] = [];
+  for (const value of body.elements) {
+    const el = value as any;
+    if (!['node', 'way', 'relation'].includes(el?.type) || !Number.isInteger(el.id)) continue;
+    const tags = el.tags ?? {};
+    const address = [tags['addr:street'], tags['addr:housenumber']].filter(x => typeof x === 'string').join(' ');
+    const parsed = cinema.safeParse({ id: `${el.type}/${el.id}`, name: tags.name ?? 'Cine sin nombre', address: address || null, lat: el.lat ?? el.center?.lat, lng: el.lon ?? el.center?.lon });
+    if (parsed.success) rows.push(parsed.data);
+  }
+  return [...new Map(rows.map(c => [c.id, c])).values()];
+}
 async function queryOverpass(lat: number, lng: number, radiusM: number): Promise<SavedCinema[]> {
   const query = `[out:json][timeout:6];nwr["amenity"="cinema"](around:${radiusM},${lat},${lng});out center tags;`;
   const endpoints = process.env.OVERPASS_URL
-    ? [process.env.OVERPASS_URL, process.env.OVERPASS_URL]
+    ? [process.env.OVERPASS_URL]
     : ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter'];
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      const endpoint = new URL(endpoints[attempt]);
-      const useGet = attempt > 0;
-      if (useGet) endpoint.searchParams.set('data', query);
-      const response = await fetch(endpoint, {
-        method: useGet ? 'GET' : 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'WhatNext/1.0' },
-        body: useGet ? undefined : `data=${encodeURIComponent(query)}`, signal: AbortSignal.timeout(7000),
-      });
-      if (!response.ok) throw new Error('Overpass no respondió');
-      const body = await response.json() as { elements?: unknown[]; remark?: string };
-      // Overpass can return HTTP 200 with a runtime/timeout error and incomplete results.
-      if (!Array.isArray(body.elements) || body.remark) throw new Error('Respuesta de cines incompleta');
-      const rows: SavedCinema[] = [];
-      for (const value of body.elements) {
-        const el = value as any;
-        if (!['node', 'way', 'relation'].includes(el?.type) || !Number.isInteger(el.id)) continue;
-        const tags = el.tags ?? {};
-        const address = [tags['addr:street'], tags['addr:housenumber']].filter(x => typeof x === 'string').join(' ');
-        const parsed = cinema.safeParse({ id: `${el.type}/${el.id}`, name: tags.name ?? 'Cine sin nombre', address: address || null, lat: el.lat ?? el.center?.lat, lng: el.lon ?? el.center?.lon });
-        if (parsed.success) rows.push(parsed.data);
-      }
-      return [...new Map(rows.map(c => [c.id, c])).values()];
-    } catch {
-      if (attempt === 1) fail(503, 'No pudimos consultar los cines. Intentá de nuevo en unos minutos');
-      await new Promise(resolve => setTimeout(resolve, 300));
-    }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 7000);
+  try {
+    // Query every endpoint at once and keep the first complete answer.
+    return await Promise.any(endpoints.map(endpoint => fetchOverpass(endpoint, query, controller.signal)));
+  } catch {
+    fail(503, 'No pudimos consultar los cines. Intentá de nuevo en unos minutos');
+  } finally {
+    clearTimeout(timer);
+    controller.abort();
   }
-  return [];
 }
 async function fetchAndCache(key: string, lat: number, lng: number, radiusM: number) {
   const data = await queryOverpass(lat, lng, radiusM + 1000);
