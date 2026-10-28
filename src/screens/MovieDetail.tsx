@@ -588,6 +588,7 @@ function MovieDetailScreen({ navigation, route }) {
               initialLiked={comment.liked ?? false}
               onRepost={requireLogin(() => repostComment(comment.id, me?.id))}
               canDelete={canModerate || comment.author.id === me?.id}
+              reactionsDisabled={comment.author.id === me?.id}
               onDelete={() => deleteComment(comment.id)}
               initialReposted={comment.reposted ?? false}
             />

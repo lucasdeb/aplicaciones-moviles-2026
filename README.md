@@ -1,3 +1,6 @@
+> Desarrollo mobile con repos separados: ejecutar `npm run dev` en esta carpeta para Expo. Ejecutar `npm run dev` y `npm run worker` en `../aplicaciones-moviles-2026-back` en terminales separadas. `npm run backend` es un acceso al servidor externo.
+>
+> `EXPO_PUBLIC_API_URL` vacío usa el host de Expo y el puerto 3000; teléfono y servidor deben estar en la misma red. Para otro servidor, configurar su URL accesible desde el teléfono. La copia `backend/` se conserva temporalmente como referencia y ya no se inicia con estos scripts. Las instrucciones históricas de arranque combinado que siguen están reemplazadas por estas.
 # WhatNext
 
 Expo app with an Express/Prisma API and a separate daily TMDB worker. User data, reviews, social activity, achievements, points and redemptions live in the backend. The app does not contact TMDB directly.

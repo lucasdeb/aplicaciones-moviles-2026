@@ -11,7 +11,7 @@ import ConfirmModal from './ConfirmModal';
 const SWIPE_THRESHOLD = -80;
 const MAX_SWIPE = -110;
 
-export default function CommentCard({ comment, onLike, onRepost, canDelete,onPressAuthor, onDelete, initialReposted = false ,initialLiked = false, }) {
+export default function CommentCard({ comment, onLike, onRepost, canDelete,onPressAuthor, onDelete, initialReposted = false ,initialLiked = false, reactionsDisabled = false, }) {
   const [liked, setLiked] = useState(initialLiked);
   const [reposted, setReposted] = useState(initialReposted);
   useEffect(() => { setLiked(initialLiked); setReposted(initialReposted); }, [initialLiked, initialReposted]);
@@ -135,8 +135,9 @@ export default function CommentCard({ comment, onLike, onRepost, canDelete,onPre
           {comment.photo && <Image source={{ uri: comment.photo }} style={styles.photo} />}
           <View style={styles.actions}>
             <TouchableOpacity
-              style={[styles.actionButton, liked && styles.actionButtonActive]}
+              style={[styles.actionButton, liked && styles.actionButtonActive, reactionsDisabled && { opacity: 0.4 }]}
               onPress={handleLike}
+              disabled={reactionsDisabled}
               activeOpacity={0.7}
             >
               <AppIcon
@@ -149,8 +150,9 @@ export default function CommentCard({ comment, onLike, onRepost, canDelete,onPre
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.actionButton, reposted && styles.actionButtonActive]}
+              style={[styles.actionButton, reposted && styles.actionButtonActive, reactionsDisabled && { opacity: 0.4 }]}
               onPress={handleRepost}
+              disabled={reactionsDisabled}
               activeOpacity={0.7}
             >
               <AppIcon

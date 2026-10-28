@@ -23,6 +23,8 @@ import BrandLogo from '../components/BrandLogo';
 import { colors, fonts } from '../theme';
 import SettingsButton from '../components/SettingsButton';
 import { useOnFocus } from '../hooks/useOnFocus';
+import { getJSON, setJSON } from '../services/localStorage';
+import { addRecentSearch } from '../services/jsonStorage';
 
 function SectionHeader({ title }) {
   return (
@@ -41,6 +43,15 @@ function HomeScreen({ navigation }) {
   const [friendReviews, setFriendReviews] = useState([]);
   const [showSearch, setShowSearch] = useState(false);
   const [search, setSearch] = useState('');
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  useEffect(() => {
+    let active = true;
+    setRecentSearches([]);
+    void getJSON<string[]>(`whatnext.searches.${currentUser?.id ?? 'guest'}`).then(saved => {
+      if (active && Array.isArray(saved) && saved.every(item => typeof item === 'string')) setRecentSearches(saved);
+    });
+    return () => { active = false; };
+  }, [currentUser?.id]);
 
   const [results, setResults] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -53,7 +64,18 @@ function HomeScreen({ navigation }) {
     if (!query) { setSearching(false); return; }
     setSearching(true);
     const timer = setTimeout(async () => {
-      try { const data = await searchMovies(query); if (active) setResults(data); }
+      try {
+        const data = await searchMovies(query);
+        if (active) {
+          setResults(data);
+          const key = `whatnext.searches.${currentUser?.id ?? 'guest'}`;
+          const saved = await getJSON<string[]>(key);
+          if (!active) return;
+          const recent = addRecentSearch(Array.isArray(saved) && saved.every(item => typeof item === 'string') ? saved : [], query);
+          setRecentSearches(recent);
+          await setJSON(key, recent);
+        }
+      }
       catch (e) { if (active) setSearchError(e.message); }
       finally { if (active) setSearching(false); }
     }, 250);
@@ -134,6 +156,12 @@ function HomeScreen({ navigation }) {
           autoFocus
         />
       )}
+      {showSearch && !search.trim() && recentSearches.map(query => (
+        <TouchableOpacity key={query} onPress={() => setSearch(query)}>
+          <Text style={styles.greetingText}>Reciente: {query}</Text>
+        </TouchableOpacity>
+      ))}
+      {movies.offline && <Text style={styles.greetingText}>Sin conexión: mostrando la última lista guardada.</Text>}
 
       {search.trim() !== '' ? (
         <View>
