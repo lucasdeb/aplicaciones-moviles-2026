@@ -1,9 +1,12 @@
+import { useEffect, useRef } from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import AppIcon from './components/AppIcon';
 import { useAuth } from './context/AuthContext';
+import { listenToPushTaps } from './services/push';
+import ManageRedemptionsScreen from './screens/ManageRedemptions';
 import LoginScreen from './screens/Login';
 import RegisterScreen from './screens/Register';
 import HomeScreen from './screens/Home';
@@ -54,9 +57,20 @@ const headerOptions = {
 };
 
 function RootNavigator() {
+  const navigationRef = useNavigationContainerRef<any>();
+  const pendingMovie = useRef<number | null>(null);
+  const openMovie = (id: number) => {
+    if (navigationRef.isReady()) navigationRef.navigate('MovieDetail', { movieId: id });
+    else pendingMovie.current = id;
+  };
+  useEffect(() => {
+    let stopped = false, unsubscribe: (() => void) | undefined;
+    void listenToPushTaps(openMovie).then(cleanup => { if (stopped) cleanup(); else unsubscribe = cleanup; }).catch(() => {});
+    return () => { stopped = true; unsubscribe?.(); };
+  }, []);
   const { user } = useAuth();
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef} onReady={() => { if (pendingMovie.current) { openMovie(pendingMovie.current); pendingMovie.current = null; } }}>
       <Stack.Navigator id="root-stack" screenOptions={{ headerShown: false }}>
       {/* Visibles para todos */}
       <Stack.Screen name="Main" component={MainTabs} />
@@ -76,6 +90,7 @@ function RootNavigator() {
               <Stack.Screen name="ManageUsers" component={ManageUsersScreen} options={headerOptions} />
             </>
           )}
+          {['moderator', 'superadmin'].includes(user.user?.role ?? '') && <Stack.Screen name="ManageRedemptions" component={ManageRedemptionsScreen} options={headerOptions} />}
           <Stack.Screen name="Settings" component={SettingsScreen} options={{ ...headerOptions, headerTitle: 'Configuración' }} />
         </>
       ) : (

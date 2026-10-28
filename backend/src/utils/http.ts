@@ -1,7 +1,7 @@
 import type {Response} from 'express';
 
 export function fail(status: number, message: string): never{
-    throw Object.assign(new Error(message), {status});
+    throw Object.assign(new Error(message), {status, expose: true});
 }
 
 export function handleError(res: Response, err: any) {

@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Animated, PanResponder, StyleSheet } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { View, Text, TouchableOpacity, Alert, Animated, PanResponder, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import AppIcon from './AppIcon';
 import { colors, fonts } from '../theme';
@@ -14,6 +14,8 @@ const MAX_SWIPE = -110;
 export default function CommentCard({ comment, onLike, onRepost, canDelete,onPressAuthor, onDelete, initialReposted = false ,initialLiked = false, }) {
   const [liked, setLiked] = useState(initialLiked);
   const [reposted, setReposted] = useState(initialReposted);
+  useEffect(() => { setLiked(initialLiked); setReposted(initialReposted); }, [initialLiked, initialReposted]);
+  const [reacting, setReacting] = useState(false);
   const translateX = useRef(new Animated.Value(0)).current;
   const authorName = comment.author?.name ?? 'Usuario';
   const [deleteVisible, setDeleteVisible] = useState(false);
@@ -68,13 +70,19 @@ export default function CommentCard({ comment, onLike, onRepost, canDelete,onPre
   ).current;
 
   async function handleLike() {
-    const isNowLiked = await onLike();
-    if (typeof isNowLiked === 'boolean') setLiked(isNowLiked);
+    if (reacting) return;
+    setReacting(true);
+    try { const isNowLiked = await onLike(); if (typeof isNowLiked === 'boolean') setLiked(isNowLiked); }
+    catch (e) { Alert.alert('No se pudo guardar el like', e.message); }
+    finally { setReacting(false); }
   }
 
   async function handleRepost() {
-    const isNowReposted = await onRepost();
-    setReposted(isNowReposted);
+    if (reacting) return;
+    setReacting(true);
+    try { const isNowReposted = await onRepost(); if (typeof isNowReposted === 'boolean') setReposted(isNowReposted); }
+    catch (e) { Alert.alert('No se pudo guardar el repost', e.message); }
+    finally { setReacting(false); }
   }
 
   return (

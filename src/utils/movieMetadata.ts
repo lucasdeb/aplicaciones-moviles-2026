@@ -7,6 +7,7 @@ export function getPrimaryGenre(movie: { genres?: string[] }) {
 }
 
 export function formatRating(value: unknown, fallback = '—') {
+  if (value === null || value === undefined || value === '') return fallback;
   const numericValue = typeof value === 'number' ? value : Number(value);
   return Number.isFinite(numericValue) ? numericValue.toFixed(1) : fallback;
 }

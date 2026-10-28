@@ -1,75 +1,35 @@
-// Avisos locales de estreno con expo-notifications (funcionan en Expo Go)
 import { Platform } from 'react-native';
-// Importamos solo las partes locales: el index de expo-notifications carga el registro de push,
-// que en Expo Go para Android tira error apenas se importa (desde SDK 53).
+// Import local APIs only: the package index also initializes remote push registration.
 import { setNotificationChannelAsync } from 'expo-notifications/build/setNotificationChannelAsync';
 import { AndroidImportance } from 'expo-notifications/build/NotificationChannelManager.types';
 import { getPermissionsAsync, requestPermissionsAsync } from 'expo-notifications/build/NotificationPermissions';
 import { getAllScheduledNotificationsAsync } from 'expo-notifications/build/getAllScheduledNotificationsAsync';
-import { scheduleNotificationAsync } from 'expo-notifications/build/scheduleNotificationAsync';
 import { cancelScheduledNotificationAsync } from 'expo-notifications/build/cancelScheduledNotificationAsync';
-import { SchedulableTriggerInputTypes } from 'expo-notifications/build/Notifications.types';
-import type { TmdbMovie } from '../services/tmdb';
 import { setNotificationHandler } from 'expo-notifications/build/NotificationsHandler';
+import { foreignReleaseReminders } from './releaseReminderPlan';
 
-// Para probar en clase: poné 10 y el aviso llega a los 10 segundos en vez del día del estreno
-const TEST_SECONDS = 10;
-
+export async function configureChannel() {
+  if (Platform.OS === 'android') await setNotificationChannelAsync('estrenos', { name: 'Estrenos', importance: AndroidImportance.HIGH });
+}
 export async function ensureNotificationPermission() {
-  if (Platform.OS === 'android') {
-    await setNotificationChannelAsync('estrenos', {
-      name: 'Estrenos',
-      importance: AndroidImportance.HIGH,
-    });
-  }
+  if (Platform.OS === 'web') return { granted: false, canAskAgain: false };
+  await configureChannel();
   const current = await getPermissionsAsync();
-  if (current.granted) return  { granted: true, canAskAgain: true };
-  if (!current.canAskAgain) return { granted: false, canAskAgain: false };
-  const request = await requestPermissionsAsync();
-  return { granted: request.granted, canAskAgain: request.canAskAgain };
+  if (current.granted || !current.canAskAgain) return current;
+  return requestPermissionsAsync();
 }
-
-// Los avisos programados los guarda el sistema, así que sobreviven a cerrar la app
-export async function getScheduledReminders(): Promise<Record<number, string>> {
-  const all = await getAllScheduledNotificationsAsync();
-  const map: Record<number, string> = {};
-  all.forEach((n) => {
-    const movieId = n.content.data?.movieId;
-    if (movieId) map[Number(movieId)] = n.identifier;
+let queue: Promise<unknown> = Promise.resolve();
+export function clearForeignReleaseReminders(userId?: number) {
+  const work = queue.catch(() => {}).then(async () => {
+    if (Platform.OS === 'web') return;
+    const scheduled = await getAllScheduledNotificationsAsync();
+    const ids = foreignReleaseReminders(scheduled.map(n => ({ id: n.identifier, body: n.content.body, data: n.content.data })), userId);
+    for (const id of ids) await cancelScheduledNotificationAsync(id);
   });
-  return map;
-}
-
-export function scheduleReleaseReminder(movie: TmdbMovie) {
-  let date = new Date(`${movie.releaseDate}T10:00:00`); // 10 AM del día del estreno
-  if (TEST_SECONDS > 0 || date.getTime() <= Date.now()) {
-    date = new Date(Date.now() + Math.max(TEST_SECONDS, 5) * 1000);
-  }
-
-  return scheduleNotificationAsync({
-    content: {
-      title: '🎬 ¡Hoy se estrena!',
-      body: `${movie.title} ya está en cines. ¿Vas a verla?`,
-      data: { movieId: movie.id },
-    },
-    trigger: {
-      type: SchedulableTriggerInputTypes.DATE,
-      date,
-      channelId: 'estrenos',
-    },
-  });
+  queue = work;
+  return work;
 }
 export function configureNotifications() {
-  setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowBanner: true,
-      shouldShowList: true,
-      shouldPlaySound: true,
-      shouldSetBadge: false,
-    }),
-  });
-}
-
-export function cancelReminder(notificationId: string) {
-  return cancelScheduledNotificationAsync(notificationId);
+  if (Platform.OS === 'web') return;
+  setNotificationHandler({ handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }) });
 }

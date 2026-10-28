@@ -1,3 +1,4 @@
+import "../src/config";
 import bcrypt from "bcrypt";
 import { prisma } from "../src/prisma";
 import { importMovieFromTmdb } from "../src/services/tmdb";
@@ -24,6 +25,7 @@ const TEMPLATES = [
 ];
 
 async function main() {
+  if (process.env.NODE_ENV === 'production') throw new Error('El seed demo está deshabilitado en producción');
   // 1. Vaciar (de las tablas que dependen a las principales)
   await prisma.notification.deleteMany();
   await prisma.like.deleteMany();
@@ -44,7 +46,7 @@ async function main() {
     await importMovieFromTmdb(id);
     console.log(`Película ${id} importada`);
   }
-  await prisma.movie.updateMany({ where: { id: { in: FEATURED } }, data: { featured: true } });
+  await prisma.movie.updateMany({ where: { tmdbId: { in: FEATURED } }, data: { featured: true } });
 
   // 4. Reseñas: la misma lógica que el bucle de mockData.ts
   let t = 0;
@@ -59,7 +61,7 @@ async function main() {
           rating: Math.round((2 + ((t * 37) % 4)) * 2) / 2,
           createdAt: new Date(Date.now() - t * 6 * 3600 * 1000),    // repartidas en los últimos días
           authorId: author.id,
-          movieId,
+          movieId: (await prisma.movie.findUniqueOrThrow({ where: { tmdbId: movieId } })).id,
         },
       }));
       t++;

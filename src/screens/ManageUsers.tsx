@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { View, Text, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, FlatList, Alert, ActivityIndicator, StyleSheet } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useAuth } from '../context/AuthContext';
-import { mockGetAllUsers, mockUpdateUserRole } from '../mockData';
+import { getAllUsers, updateUserRole } from '../services/api';
 import { colors, fonts } from '../theme';
 
 const ROLE_OPTIONS = [
@@ -15,20 +15,23 @@ function ManageUsersScreen() {
   const { user } = useAuth();
   // La lista de usuarios solo la usa esta pantalla: estado local
   const [users, setUsers] = useState([]);
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    mockGetAllUsers()
+    getAllUsers()
       .then(setUsers)
+      .catch(e => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
 
-  async function updateUserRole(userId, role) {
+  async function handleRoleChange(userId, role) {
     try {
-      const updated = await mockUpdateUserRole(userId, role);
+      const updated = await updateUserRole(userId, role);
       setUsers((current) => current.map((u) => (u.id === updated.id ? updated : u)));
       return { success: true };
     } catch (error) {
+      Alert.alert('No se pudo cambiar el rol', error.message);
       return { success: false, error: error.message };
     }
   }
@@ -37,6 +40,7 @@ function ManageUsersScreen() {
     <View style={styles.container}>
       <Text style={styles.headerTitle}>Administrar usuarios</Text>
 
+      {error ? <Text style={{ color: colors.danger }}>{error}</Text> : null}
       {loading ? (
         <View style={styles.centered}>
           <ActivityIndicator color={colors.accentPrimary} />
@@ -66,7 +70,7 @@ function ManageUsersScreen() {
                     selectedValue={item.role}
                     style={styles.picker}
                     dropdownIconColor={colors.text}
-                    onValueChange={(value) => updateUserRole(item.id, value)}
+                    onValueChange={(value) => handleRoleChange(item.id, value)}
                   >
                     {ROLE_OPTIONS.map((option) => (
                       <Picker.Item key={option.value} label={option.label} value={option.value} />

@@ -248,7 +248,7 @@ function AddMovieScreen({ navigation, route }) {
 
       <Text style={styles.sectionTitle}>Metadatos</Text>
       <Text style={styles.sectionHint}>
-        Estos datos se guardan en el catálogo mock de WhatNext. TMDB solo fue la fuente inicial.
+        Los cambios se guardan en el catálogo de WhatNext.
       </Text>
 
       <View style={styles.inputRow}>

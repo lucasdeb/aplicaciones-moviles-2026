@@ -10,18 +10,13 @@ import {
   Alert,
   Platform,
   StyleSheet,
-  Linking,
 } from 'react-native';
 import AppIcon from '../components/AppIcon';
 import { useAuth } from '../context/AuthContext';
 import { colors, fonts } from '../theme';
-import { getNowPlaying, getUpcoming, type TmdbMovie } from '../services/tmdb';
-import {
-  ensureNotificationPermission,
-  getScheduledReminders,
-  scheduleReleaseReminder,
-  cancelReminder,
-} from '../utils/reminders';
+import { getNowPlaying, getUpcoming, type ReleaseMovie } from '../services/releases';
+import { useReminders } from '../context/RemindersContext';
+import { useOnFocus } from '../hooks/useOnFocus';
 import BrandLogo from '../components/BrandLogo';
 import SettingsButton from '../components/SettingsButton';
 import { formatRating } from '../utils/movieMetadata';
@@ -38,11 +33,12 @@ function formatDate(iso: string) {
 function ReleasesScreen({ navigation }) {
   const { user } = useAuth();
   const [tab, setTab] = useState<Tab>('upcoming');
-  const [movies, setMovies] = useState<{ upcoming: TmdbMovie[]; now: TmdbMovie[] }>({ upcoming: [], now: [] });
+  const [movies, setMovies] = useState<{ upcoming: ReleaseMovie[]; now: ReleaseMovie[] }>({ upcoming: [], now: [] });
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [errorMsg, setErrorMsg] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-  const [reminders, setReminders] = useState<Record<number, string>>({}); // movieId -> id de notificación
+  const { reminders, busy, error: reminderError, deviceError, refresh: refreshReminders, toggle } = useReminders();
+  useOnFocus(() => { void refreshReminders(); }, [user.user?.id]);
 
   async function load() {
     try {
@@ -57,58 +53,28 @@ function ReleasesScreen({ navigation }) {
 
   useEffect(() => {
     load();
-    if (Platform.OS !== 'web') {
-      getScheduledReminders()
-        .then(setReminders)
-        .catch((error) => console.warn('No se pudieron leer los avisos programados', error));
-    }
   }, []);
 
   async function handleRefresh() {
     setRefreshing(true);
-    await load();
+    await Promise.all([load(), refreshReminders()]);
     setRefreshing(false);
   }
 
-    async function toggleReminder(movie: TmdbMovie) {
-    if (!user.isLoggedIn) {
-      navigation.navigate('Login');
-      return;
-    }
-    if (Platform.OS === 'web') {
-      Alert.alert('No disponible', 'Los avisos funcionan solo en el celular.');
-      return;
-    }
-
+  async function toggleReminder(movie: ReleaseMovie) {
+    if (!user.isLoggedIn) { navigation.navigate('Login'); return; }
     try {
-      const existing = reminders[movie.id];
-      if (existing) {
-        await cancelReminder(existing);
-        setReminders(({ [movie.id]: _removed, ...rest }) => rest);
+      const result = await toggle(movie.id);
+      if (!result.subscribed) {
+        if (result.deviceError) Alert.alert('Aviso eliminado', result.deviceError);
         return;
       }
-
-      const { granted, canAskAgain } = await ensureNotificationPermission();
-      if (!granted) {
-        Alert.alert(
-          'Notificaciones desactivadas',
-          'Activalas en los ajustes del teléfono para recibir avisos.',
-          canAskAgain
-            ? [{ text: 'OK' }]
-            : [
-                { text: 'Cancelar', style: 'cancel' },
-                { text: 'Abrir ajustes', onPress: () => Linking.openSettings() },
-              ]
-        );
-        return;
-      }
-
-      const id = await scheduleReleaseReminder(movie);
-      setReminders((current) => ({ ...current, [movie.id]: id }));
-      Alert.alert('¡Listo!', `Te avisamos el ${formatDate(movie.releaseDate)} cuando se estrene.`);
-    } catch (error) {
-      Alert.alert('Error', 'No se pudo programar el aviso: ' + error.message);
-    }
+      const message = result.deviceError || (Platform.OS === 'web'
+        ? 'Aviso guardado en tu cuenta. Abrí la app en tu celular para activar la notificación.'
+        : result.deviceEnabled ? `Te avisamos el ${formatDate(movie.releaseDate)} a las 10:00 de Argentina.`
+        : 'Aviso guardado en tu cuenta. Activá las notificaciones en los ajustes del teléfono para recibirlo.');
+      Alert.alert('Aviso guardado', message);
+    } catch (e) { Alert.alert('No se pudo guardar el aviso', e.message); }
   }
 
 
@@ -123,6 +89,7 @@ function ReleasesScreen({ navigation }) {
         <SettingsButton />
       </View>
 
+      {reminderError || deviceError ? <Text style={{ color: colors.danger, paddingHorizontal: 16 }}>{reminderError || deviceError}</Text> : null}
       <View style={styles.segment}>
         {(['upcoming', 'now'] as Tab[]).map((key) => (
           <TouchableOpacity
@@ -167,7 +134,7 @@ function ReleasesScreen({ navigation }) {
           }
           ListEmptyComponent={<Text style={styles.mutedText}>No hay películas para mostrar.</Text>}
           renderItem={({ item }) => {
-            const reminded = !!reminders[item.id];
+            const reminded = reminders.some(reminder => reminder.movieId === item.id);
             return (
               <View style={styles.card}>
                 {item.posterUrl ? (
@@ -194,6 +161,7 @@ function ReleasesScreen({ navigation }) {
                     <TouchableOpacity
                       style={[styles.remindButton, reminded && styles.remindButtonActive]}
                       onPress={() => toggleReminder(item)}
+                      disabled={busy.includes(item.id)}
                       activeOpacity={0.8}
                     >
                       <AppIcon
@@ -201,7 +169,7 @@ function ReleasesScreen({ navigation }) {
                         size={14}
                       />
                       <Text style={[styles.remindText, reminded && styles.remindTextActive]}>
-                        {reminded ? 'Te vamos a avisar' : 'Avisame'}
+                        {busy.includes(item.id) ? 'Guardando…' : reminded ? 'Aviso guardado' : 'Avisame'}
                       </Text>
                     </TouchableOpacity>
                   )}

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import {
 import AppIcon from '../components/AppIcon';
 import { useAuth } from '../context/AuthContext';
 import { useMovies } from '../context/MovieContext';
-import { mockGetFriendReviews, mockGetPopularReviews } from '../mockData';
+import { getFriendReviews, getPopularReviews, searchMovies } from '../services/api';
 import MovieCard from '../components/MovieCard';
 import ReviewCard from '../components/ReviewCard';
 import PopularCarousel from '../components/PopularCarousel';
@@ -42,10 +42,23 @@ function HomeScreen({ navigation }) {
   const [showSearch, setShowSearch] = useState(false);
   const [search, setSearch] = useState('');
 
-  // Búsqueda: deja solo las películas cuyo título contiene lo escrito
-  const results = movies.list.filter((movie) =>
-    movie.title.toLowerCase().includes(search.toLowerCase())
-  );
+  const [results, setResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState('');
+  useEffect(() => {
+    let active = true;
+    const query = search.trim();
+    setResults([]);
+    setSearchError('');
+    if (!query) { setSearching(false); return; }
+    setSearching(true);
+    const timer = setTimeout(async () => {
+      try { const data = await searchMovies(query); if (active) setResults(data); }
+      catch (e) { if (active) setSearchError(e.message); }
+      finally { if (active) setSearching(false); }
+    }, 250);
+    return () => { active = false; clearTimeout(timer); };
+  }, [search, currentUser?.id]);
 
   function toggleSearch() {
     setShowSearch(!showSearch);
@@ -56,8 +69,8 @@ function HomeScreen({ navigation }) {
     fetchMovies();
     try {
       const [popular, friends] = await Promise.all([
-        mockGetPopularReviews(),
-        currentUser ? mockGetFriendReviews(currentUser.id) : Promise.resolve([]),
+        getPopularReviews(),
+        currentUser ? getFriendReviews(currentUser.id) : Promise.resolve([]),
       ]);
       setPopularReviews(popular);
       setFriendReviews(friends);
@@ -80,19 +93,8 @@ function HomeScreen({ navigation }) {
   );
 
   const isInitialLoading = movies.isFetching && movies.list.length === 0;
-  const moviesByRating = movies.list
-    .filter((movie) => Number.isFinite(movie.communityRating))
-    .sort((a, b) => b.communityRating - a.communityRating);
-  const heroMovies = movies.featured.length > 0
-    ? movies.featured
-    : moviesByRating.slice(0, 4);
-  const trendingMovies = [...movies.list]
-    .filter((movie) => movie.reviewsLast30Days > 0)
-    .sort(
-      (a, b) =>
-        b.reviewsLast30Days - a.reviewsLast30Days ||
-        (b.communityRating ?? 0) - (a.communityRating ?? 0)
-    );
+  const heroMovies = movies.hero;
+  const trendingMovies = movies.trending;
 
   return (
     <View style={styles.container}>
@@ -114,11 +116,11 @@ function HomeScreen({ navigation }) {
 
       {currentUser?.name ? (
         <View style={styles.greetingPillWrap}>
-          <view style={styles.greetingPill}>
+          <View style={styles.greetingPill}>
             <Text style={styles.greetingText} numberOfLines={1}>
               Hola, {currentUser.name.split(' ')[0]}
             </Text>
-          </view>
+          </View>
         </View>
       ) : null}
 
@@ -133,10 +135,12 @@ function HomeScreen({ navigation }) {
         />
       )}
 
-      {search !== '' ? (
+      {search.trim() !== '' ? (
         <View>
+          {searching ? <ActivityIndicator color={colors.accentPrimary} /> : null}
+          {searchError ? <Text style={styles.error}>{searchError}</Text> : null}
           <PopularCarousel movies={results} onPressMovie={goToMovie} />
-          {results.length === 0 && <Text style={styles.noResults}>No hay películas con ese título.</Text>}
+          {!searching && !searchError && results.length === 0 && <Text style={styles.noResults}>No hay películas con ese título.</Text>}
         </View>
       ) : isInitialLoading ? (
         <ActivityIndicator color={colors.accentPrimary} style={styles.loader} />

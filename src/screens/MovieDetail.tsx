@@ -14,20 +14,21 @@ import {
   StyleSheet,
   Platform,
 } from 'react-native';
+import type { ScrollViewInstance } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import AppIcon from '../components/AppIcon';
 import { useAuth } from '../context/AuthContext';
 import { useOnFocus } from '../hooks/useOnFocus';
 import {
-  mockGetMovie,
-  mockGetRecommendations,
-  mockGetComments,
-  mockPostComment,
-  mockUpdateComment,
-  mockLikeComment,
-  mockRepostComment,
-  mockDeleteComment,
-} from '../mockData';
+  getMovie,
+  getRecommendations,
+  getComments,
+  postComment,
+  updateComment,
+  likeComment as apiLikeComment,
+  repostComment as apiRepostComment,
+  deleteComment as apiDeleteComment,
+} from '../services/api';
 import CommentCard from '../components/CommentCard';
 import { colors, fonts } from '../theme';
 import { pickPhoto } from '../utils/pickPhoto';
@@ -118,7 +119,7 @@ function ProviderGroup({ icon, label, providers }) {
 function MovieDetailScreen({ navigation, route }) {
   const { user } = useAuth();
   const { movieId } = route.params;
-  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef<ScrollViewInstance>(null);
   const reviewsSectionY = useRef(0);
   // Solo los usa esta pantalla: estado local. Al salir se descartan solos,
   // por eso ya no hacen falta clearMovieDetail ni clearComments.
@@ -143,9 +144,9 @@ function MovieDetailScreen({ navigation, route }) {
     setLoadingComments(true);
     try {
       const [detail, recs, list] = await Promise.all([
-        mockGetMovie(movieId),
-        mockGetRecommendations(movieId),
-        mockGetComments(movieId),
+        getMovie(movieId),
+        getRecommendations(movieId),
+        getComments(movieId),
       ]);
       setMovie(detail);
       setRecommendations(recs);
@@ -158,19 +159,19 @@ function MovieDetailScreen({ navigation, route }) {
     }
   }
 
-  // Reemplaza en la lista el comentario que devolvió el mock (like / repost)
+  // Reemplaza en la lista el comentario que devolvió el servidor (like / repost)
   function replaceComment(updated) {
     setComments((current) => current.map((c) => (c.id === updated.id ? updated : c)));
   }
 
   async function likeComment(commentId) {
-    const result = await mockLikeComment(commentId, me.id);
+    const result = await apiLikeComment(commentId, me.id);
     replaceComment(result.comment);
-    return result.liked; 
+    return result.liked;
   }
 
   async function repostComment(commentId, userId) {
-    const result = await mockRepostComment(
+    const result = await apiRepostComment(
       commentId,
       userId
     );
@@ -182,7 +183,7 @@ function MovieDetailScreen({ navigation, route }) {
 
   async function deleteComment(commentId) {
     try {
-      await mockDeleteComment(commentId, me.id);
+      await apiDeleteComment(commentId, me.id);
       if (editingReviewId === commentId) resetComposer();
       await loadMovie();
       return { success: true };
@@ -255,13 +256,13 @@ function MovieDetailScreen({ navigation, route }) {
     setComposerError('');
     try {
       if (isEditingMyReview) {
-        await mockUpdateComment(editingReviewId, me.id, {
+        await updateComment(editingReviewId, me.id, {
           text: commentText.trim(),
           rating,
           photo,
         });
       } else {
-        await mockPostComment(movieId, me.id, commentText.trim(), rating, photo);
+        await postComment(movieId, me.id, commentText.trim(), rating, photo);
       }
       resetComposer();
       await loadMovie();
@@ -272,10 +273,7 @@ function MovieDetailScreen({ navigation, route }) {
       setSavingReview(false);
     }
   }
-  const rated = comments.filter((c) => c.rating !== null && c.rating !== undefined);
-  const communityAvg = rated.length
-    ? (rated.reduce((sum, c) => sum + c.rating, 0) / rated.length).toFixed(1)
-    : '–';
+  const communityAvg = movie?.communityRating === null || movie?.communityRating === undefined ? '–' : movie.communityRating.toFixed(1);
   const argentinaProviders = movie?.watchProviders?.AR;
   const firstTrailer = movie?.trailers?.[0];
 
@@ -469,7 +467,7 @@ function MovieDetailScreen({ navigation, route }) {
           <View style={styles.ratingSummary}>
             <AppIcon name="star" size={14} tone="movieRating" />
             <Text style={styles.ratingSummaryText}>{communityAvg}</Text>
-            <Text style={styles.ratingSummaryCount}>({rated.length})</Text>
+            <Text style={styles.ratingSummaryCount}>({movie.ratingsCount})</Text>
           </View>
         </View>
 
@@ -587,11 +585,11 @@ function MovieDetailScreen({ navigation, route }) {
               comment={comment}
               onPressAuthor={() => openAuthor(comment.author?.id)}
               onLike={requireLogin(() => likeComment(comment.id))}
-              initialLiked={me?.likes?.includes(comment.id) ?? false} 
+              initialLiked={comment.liked ?? false}
               onRepost={requireLogin(() => repostComment(comment.id, me?.id))}
               canDelete={canModerate || comment.author.id === me?.id}
               onDelete={() => deleteComment(comment.id)}
-              initialReposted={me?.reposts?.includes(comment.id) ?? false}
+              initialReposted={comment.reposted ?? false}
             />
           ))
         )}

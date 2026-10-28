@@ -1,3 +1,4 @@
+import { request } from '../services/http';
 import { Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -27,5 +28,6 @@ export async function pickPhoto(
       : await ImagePicker.launchImageLibraryAsync(options);
 
   if (result.canceled) return null;
-  return `data:image/jpeg;base64,${result.assets[0].base64}`;
+  const uploaded = await request('/uploads', 'POST', { image: `data:image/jpeg;base64,${result.assets[0].base64}` });
+  return uploaded.url;
 }

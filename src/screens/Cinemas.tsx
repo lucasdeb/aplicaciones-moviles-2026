@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import {
 import * as Location from 'expo-location';
 import AppIcon from '../components/AppIcon';
 import { colors, fonts } from '../theme';
-import { fetchNearbyCinemas, type Cinema } from '../utils/geo';
+import { fetchNearbyCinemas, type Cinema } from '../services/cinemas';
 import BrandLogo from '../components/BrandLogo';
 import SettingsButton from '../components/SettingsButton';
 
@@ -27,6 +27,9 @@ function CinemasScreen() {
   const [pos, setPos] = useState<Location.LocationObject | null>(null);
   const [place, setPlace] = useState<string | null>(null);
   const [cinemas, setCinemas] = useState<Cinema[]>([]);
+  const [stale, setStale] = useState(false);
+  const [lookupError, setLookupError] = useState('');
+  const requestVersion = useRef(0);
   const [status, setStatus] = useState<Status>('loading');
   const [refreshing, setRefreshing] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -71,12 +74,17 @@ function CinemasScreen() {
   const c = pos?.coords;
 
   async function loadCinemas(latitude: number, longitude: number) {
+    const version = ++requestVersion.current;
     try {
-      const list = await fetchNearbyCinemas(latitude, longitude);
-      setCinemas(list);
+      const result = await fetchNearbyCinemas(latitude, longitude);
+      if (version !== requestVersion.current) return;
+      setCinemas(result.cinemas);
+      setStale(result.source === 'stale');
+      setLookupError('');
       setStatus('ready');
     } catch (e) {
-      setStatus('error');
+      if (version !== requestVersion.current) return;
+      setLookupError(e.message); setStatus('error');
     }
 
     if (Platform.OS === 'web') return;
@@ -126,7 +134,7 @@ function CinemasScreen() {
         <Text style={styles.mutedText}>
           {denied
             ? 'Necesitamos tu ubicación para mostrarte los cines cercanos.'
-            : 'No pudimos cargar los cines. Revisá tu conexión y que el GPS esté prendido.'}
+            : lookupError || 'No pudimos cargar los cines. Revisá tu conexión y que el GPS esté prendido.'}
         </Text>
         <TouchableOpacity
           style={styles.primaryButton}
@@ -150,6 +158,8 @@ function CinemasScreen() {
         {place ? `Cerca de ${place} · ordenados por distancia` : 'Ordenados por distancia'}
       </Text>
 
+      {stale ? <Text style={styles.subtitle}>Mostramos la última búsqueda guardada porque el proveedor no está disponible.</Text> : null}
+      <Text style={styles.subtitle}>Datos de OpenStreetMap · Ubicación consultada a través de WhatNext</Text>
       <FlatList
         data={cinemas}
         keyExtractor={(item) => item.id}

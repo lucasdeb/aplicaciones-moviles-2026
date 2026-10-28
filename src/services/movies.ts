@@ -1,0 +1,21 @@
+import { request } from './http';
+export type Movie = {
+  id: number; tmdbId: number | null; title: string; overview: string;
+  releaseDate: string | null; runtime: number | null; genres: string[];
+  posterUrl: string | null; backdropUrl: string | null; featured: boolean; hidden: boolean;
+  actors: Array<{ name: string; character: string }>;
+  directors: string[]; crew: Array<{ name: string; job: string }>;
+  trailers: Array<{ name: string; key: string; site: string }>;
+  watchProviders: { AR: { stream: string[]; rent: string[]; buy: string[] } };
+  communityRating: number | null; commentsCount: number; ratingsCount: number; reviewsLast30Days: number;
+  friendsRating: { rating: number; count: number } | null;
+};
+export type MovieHome = { list: Movie[]; featured: Movie[]; hero: Movie[]; trending: Movie[] };
+export const getMovies = (): Promise<Movie[]> => request('/movies');
+export const getMovieHome = (): Promise<MovieHome> => request('/movies/home');
+export const searchMovies = (query: string): Promise<Movie[]> => request(`/movies/search?q=${encodeURIComponent(query.trim())}`);
+export const getMovie = (id: number): Promise<Movie & { friendsWhoReviewed: Array<{ id: number; name: string; role: string; rating: number | null }> }> => request(`/movies/${id}`);
+export const getRecommendations = (id: number): Promise<Movie[]> => request(`/movies/${id}/recommendations`);
+export const createMovie = (data: unknown): Promise<Movie> => request('/movies', 'POST', data);
+export const updateMovie = (id: number, data: unknown): Promise<Movie> => request(`/movies/${id}`, 'PATCH', data);
+export const deleteMovie = (id: number): Promise<void> => request(`/movies/${id}`, 'DELETE');

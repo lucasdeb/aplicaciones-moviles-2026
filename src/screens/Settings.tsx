@@ -15,7 +15,7 @@ import { isValidEmail } from '../utils/validators';
 import { colors, fonts } from '../theme';
 import ConfirmModal from '../components/ConfirmModal';
 
-function SettingsScreen() {
+function SettingsScreen({ navigation }) {
   const { user, updateUser, logOut } = useAuth();
   const [name, setName] = useState(user.user?.name ?? '');
   const [email, setEmail] = useState(user.user?.email ?? '');
@@ -40,9 +40,10 @@ function SettingsScreen() {
     setLogoutVisible(true);
   }
 
-  function confirmLogOut(){
+  async function confirmLogOut(){
     setLogoutVisible(false);
-    logOut();
+    try { await logOut(); }
+    catch (e) { Alert.alert('No se pudo cerrar la sesión', e.message); }
   }
   return (
     <>
@@ -84,6 +85,7 @@ function SettingsScreen() {
             )}
           </TouchableOpacity>
         </View>
+        {['moderator', 'superadmin'].includes(user.user?.role ?? '') ? <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('ManageRedemptions')}><Text style={styles.buttonText}>Validar canjes</Text></TouchableOpacity> : null}
         <TouchableOpacity style={styles.logout} onPress={onLogOut}>
           <AppIcon name="log-out-outline" size={20} />
           <Text style={styles.logoutText}>Cerrar sesión</Text>

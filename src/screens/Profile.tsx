@@ -4,6 +4,7 @@ import {
   ActivityIndicator, Alert,                                   
   StyleSheet,
 } from 'react-native';
+import type { ScrollViewInstance } from 'react-native';
 import { colors, fonts } from '../theme';
 import AppIcon from '../components/AppIcon';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,20 +17,20 @@ import GuestPrompt from '../components/GuestPrompt';
 import SettingsButton from '../components/SettingsButton';
 import ReviewCard from '../components/ReviewCard';            
 import NotificationList, { type AppNotification } from '../components/NotificationList';
-import { RANKS, calculateRank } from '../utils/ranks';
+import { RANKS } from '../utils/ranks';
 import {
-  mockGetPublicProfile,
-  mockRepostComment,
-  mockGetFriendshipStatus,
-  mockSendFriendRequest,
-  mockRespondFriendRequest,
-  mockRemoveFriendship,
-  mockGetPendingRequests,
-  mockGetFriends,
-  mockGetNotifications,
-  mockMarkNotificationRead,
-  mockMarkAllNotificationsRead,
-} from '../mockData';
+  getPublicProfile,
+  repostComment,
+  getFriendshipStatus,
+  sendFriendRequest,
+  respondFriendRequest,
+  removeFriendship,
+  getPendingRequests,
+  getFriends,
+  getNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+} from '../services/api';
 
 const TABS = [
   { key: 'comments', label: 'Reseñas' },
@@ -170,7 +171,7 @@ function ProfileScreen({ navigation, route }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);                      // evita doble toque en el botón de amistad
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const [reviewsSectionY, setReviewsSectionY] = useState(0);
 
   // ---------- Carga: todo en paralelo ----------
@@ -182,11 +183,11 @@ function ProfileScreen({ navigation, route }) {
     setError('');
     try {
       const [data, relation, pending, friendList, notificationList] = await Promise.all([
-        mockGetPublicProfile(targetId),
-        me && !isOwn ? mockGetFriendshipStatus(me.id, targetId) : Promise.resolve({ status: 'none' as FriendStatus }),
-        isOwn ? mockGetPendingRequests(me.id) : Promise.resolve([]),
-        isOwn ? mockGetFriends(me.id) : Promise.resolve([]),
-        isOwn ? mockGetNotifications(me.id) : Promise.resolve([]),
+        getPublicProfile(targetId),
+        me && !isOwn ? getFriendshipStatus(me.id, targetId) : Promise.resolve({ status: 'none' as FriendStatus }),
+        isOwn ? getPendingRequests(me.id) : Promise.resolve([]),
+        isOwn ? getFriends(me.id) : Promise.resolve([]),
+        isOwn ? getNotifications(me.id) : Promise.resolve([]),
       ]);
       setProfile(data);
       setFriendship(relation as { status: FriendStatus; requestId?: number });
@@ -239,13 +240,13 @@ function ProfileScreen({ navigation, route }) {
 
     if (friendship.status === 'none') {
       return run(async () => {
-        const request = await mockSendFriendRequest(me.id, targetId);
+        const request = await sendFriendRequest(me.id, targetId);
         setFriendship({ status: 'sent', requestId: request.id });
       });
     }
     if (friendship.status === 'received') {
       return run(async () => {
-        await mockRespondFriendRequest(friendship.requestId, true);
+        await respondFriendRequest(friendship.requestId, true);
         setFriendship({ status: 'friends', requestId: friendship.requestId });
         changeFriendsCount(+1);
       });
@@ -261,7 +262,7 @@ function ProfileScreen({ navigation, route }) {
           text: isFriend ? 'Eliminar' : 'Cancelar solicitud',
           style: 'destructive',
           onPress: () => run(async () => {
-            await mockRemoveFriendship(friendship.requestId);
+            await removeFriendship(friendship.requestId);
             setFriendship({ status: 'none' });
             if (isFriend) changeFriendsCount(-1);
           }),
@@ -272,7 +273,7 @@ function ProfileScreen({ navigation, route }) {
 
   function handleReject() {
     run(async () => {
-      await mockRespondFriendRequest(friendship.requestId, false);
+      await respondFriendRequest(friendship.requestId, false);
       setFriendship({ status: 'none' });
     });
   }
@@ -280,7 +281,7 @@ function ProfileScreen({ navigation, route }) {
   // ---------- Acciones de mi perfil ----------
   async function respondRequest(requestId: number, accept: boolean) {
     try {
-      await mockRespondFriendRequest(requestId, accept);
+      await respondFriendRequest(requestId, accept);
       await load();                         // recarga solicitudes, amigos y la cantidad de amigos
     } catch (e) {
       Alert.alert('Error', e.message);
@@ -290,7 +291,7 @@ function ProfileScreen({ navigation, route }) {
   async function openNotification(notification: AppNotification) {
     try {
       if (!notification.read) {
-        await mockMarkNotificationRead(notification.id, me.id);
+        await markNotificationRead(notification.id, me.id);
         setNotifications((current) =>
           current.map((item) =>
             item.id === notification.id ? { ...item, read: true } : item
@@ -310,9 +311,9 @@ function ProfileScreen({ navigation, route }) {
     }
   }
 
-  async function markAllNotificationsRead() {
+  async function handleMarkAllNotificationsRead() {
     try {
-      await mockMarkAllNotificationsRead(me.id);
+      await markAllNotificationsRead(me.id);
       setNotifications((current) =>
         current.map((notification) => ({ ...notification, read: true }))
       );
@@ -323,7 +324,7 @@ function ProfileScreen({ navigation, route }) {
 
   async function removeRepost(commentId: number) {
     try {
-      const result = await mockRepostComment(commentId, me.id);   // es un interruptor: lo saca
+      const result = await repostComment(commentId, me.id);   // es un interruptor: lo saca
       if (!result.reposted) {
         setProfile((p) => ({
           ...p,
@@ -372,8 +373,7 @@ function ProfileScreen({ navigation, route }) {
   const earnedPoints = profile.stats.points;                                  // ganados con logros
   const shownPoints = isOwn ? earnedPoints - rewards.spentPoints : earnedPoints; // los canjes solo se restan en el mio
   const reviewCount = profile.stats.comments;
-  // Api va a agarrar el rank pero por ahora esta como mock
-  const rank = profile.rank ?? calculateRank(reviewCount);
+  const rank = profile.rank;
   const unlockedCount = achievements.list.filter((a) => a.unlocked).length;
   const list = tab === 'reposts'
     ? profile.reposts
@@ -659,7 +659,7 @@ function ProfileScreen({ navigation, route }) {
               <NotificationList
                 notifications={notifications}
                 onPress={openNotification}
-                onMarkAllRead={markAllNotificationsRead}
+                onMarkAllRead={handleMarkAllNotificationsRead}
                 onClose={() => setNotificationsVisible(false)}
               />
             </ScrollView>

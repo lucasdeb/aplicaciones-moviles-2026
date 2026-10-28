@@ -6,13 +6,14 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
   StyleSheet,
 } from 'react-native';
 import AppIcon from '../components/AppIcon';
 import { useAuth } from '../context/AuthContext';
 import { useGamification } from '../context/GamificationContext';
 import { useOnFocus } from '../hooks/useOnFocus';
-import { REWARDS } from '../mockData';
+
 import { colors, fonts } from '../theme';
 import BrandLogo from '../components/BrandLogo';
 import SettingsButton from '../components/SettingsButton';
@@ -30,7 +31,7 @@ type Achievement = {
   unlocked: boolean;
 };
 
-type Reward = (typeof REWARDS)[number];
+type Reward = { id: string; title: string; description: string; icon: any; cost: number };
 
 type BadgeProps = {
   achievement: Achievement;
@@ -63,6 +64,7 @@ function Badge({ achievement }: BadgeProps) {
 function AchievementsScreen({ navigation }) {
   const { user } = useAuth();
   const { achievements, rewards, fetchAchievements, redeemReward } = useGamification();
+  const [redeeming, setRedeeming] = useState(false);
   const [rewardToRedeem, setRewardToRedeem] = useState<Reward | null>(null);
 
   // Se recalcula al entrar a la solapa, así refleja las reseñas nuevas
@@ -90,12 +92,15 @@ function AchievementsScreen({ navigation }) {
     setRewardToRedeem(reward);
   }
 
-  function confirmRedeem() {
-    if (!rewardToRedeem) return;
+  async function confirmRedeem() {
+    if (!rewardToRedeem || redeeming) return;
+    setRedeeming(true);
 
-    const result = redeemReward(rewardToRedeem);
+    const result = await redeemReward(rewardToRedeem);
+    setRedeeming(false);
 
     if (!result.success) {
+      Alert.alert('No se pudo canjear', result.error);
       return;
     }
 
@@ -105,6 +110,7 @@ function AchievementsScreen({ navigation }) {
   return (
     <>
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        {achievements.error ? <Text style={{ color: colors.danger }} accessibilityRole="alert">{achievements.error}</Text> : null}
         <View style={styles.header}>
           <View style={styles.titleRow}>
             <BrandLogo size={36} />
@@ -161,7 +167,7 @@ function AchievementsScreen({ navigation }) {
             </View>
             <FlatList
               horizontal
-              data={REWARDS}
+              data={rewards.catalog}
               keyExtractor={(item) => item.id}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.rewardList}
@@ -195,7 +201,7 @@ function AchievementsScreen({ navigation }) {
                 <Text style={styles.sectionTitle}>Mis canjes</Text>
                 {rewards.redeemed.map((r) => (
                   <Text key={r.code} style={styles.redeemedItem}>
-                    {r.title} · código {r.code}
+                    {r.title} · código {r.code} · {({ active: 'Disponible', used: 'Usado', expired: 'Vencido', refunded: 'Reintegrado' })[r.status] ?? r.status}
                   </Text>
                 ))}
               </View>
@@ -208,8 +214,9 @@ function AchievementsScreen({ navigation }) {
         title="Canjear premio"
         message={`¿Canjear "${rewardToRedeem?.title}" por ${rewardToRedeem?.cost} puntos?`}
         confirmLabel="Canjear"
+        loading={redeeming}
         onConfirm={confirmRedeem}
-        onCancel={() => setRewardToRedeem(null)}
+        onCancel={() => { if (!redeeming) setRewardToRedeem(null); }}
       />
     </>
   );

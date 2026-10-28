@@ -1,0 +1,106 @@
+import { createHash, timingSafeEqual } from 'node:crypto';
+import { z } from 'zod';
+import { prisma } from '../prisma';
+import { fail } from '../utils/http';
+import { withJobLease } from './job';
+const registration = z.object({
+  id: z.uuid(), secret: z.string().regex(/^[a-f0-9]{64}$/),
+  token: z.string().max(255).regex(/^(Expo|Exponent)PushToken\[[A-Za-z0-9_-]+\]$/), platform: z.enum(['ios', 'android']),
+}).strict();
+const digest = (value: string) => createHash('sha256').update(value).digest('hex');
+export async function registerPushDevice(userId: number, sessionId: string, body: unknown) {
+  const parsed = registration.safeParse(body);
+  if (!parsed.success) fail(400, 'Registro de dispositivo inválido');
+  const { id, secret, token, platform } = parsed.data;
+  const secretHash = digest(secret);
+  await prisma.$transaction(async tx => {
+    const previous = await tx.pushDevice.findUnique({ where: { id } });
+    if (previous && !timingSafeEqual(Buffer.from(previous.secretHash), Buffer.from(secretHash))) fail(403, 'El dispositivo no pertenece a esta instalación');
+    await tx.pushDevice.upsert({ where: { id }, create: { id, secretHash, token, platform, userId, sessionId },
+      update: { token, platform, userId, sessionId, enabled: true } });
+    if (previous && (!previous.enabled || previous.token !== token)) await tx.pushDelivery.updateMany({ where: { deviceId: id, userId, status: 'failed', error: 'DeviceNotRegistered' }, data: { status: 'pending', attempts: 0, nextAttemptAt: new Date() } });
+  });
+  return { id, enabled: true };
+}
+export async function unregisterPushDevice(userId: number, id: string, secret: unknown) {
+  if (typeof secret !== 'string' || !/^[a-f0-9]{64}$/.test(secret)) fail(400, 'Dispositivo inválido');
+  await prisma.pushDevice.deleteMany({ where: { id, userId, secretHash: digest(secret) } });
+}
+async function expo(path: string, body: unknown): Promise<any> {
+  const response = await fetch(`${process.env.EXPO_PUSH_BASE_URL ?? 'https://exp.host/--/api/v2/push'}/${path}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json',
+      ...(process.env.EXPO_ACCESS_TOKEN ? { Authorization: `Bearer ${process.env.EXPO_ACCESS_TOKEN}` } : {}) },
+    body: JSON.stringify(body), signal: AbortSignal.timeout(15000),
+  });
+  if (!response.ok) throw new Error(`Expo HTTP ${response.status}`);
+  const result = await response.json() as any;
+  if (result.errors?.length) throw new Error('Expo rechazó la solicitud');
+  return result.data;
+}
+function localDate(now: Date) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Argentina/Buenos_Aires', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+}
+export async function runPushDelivery(now = new Date()) {
+  return withJobLease('release-push', async () => {
+    const today = localDate(now), due = new Date(`${today}T10:00:00-03:00`);
+    if (now >= due) {
+      const reminders = await prisma.releaseReminder.findMany({
+        where: { movie: { releaseDate: today, hidden: false }, createdAt: { lte: due } },
+        include: { user: { include: { pushDevices: { where: { enabled: true, session: { expiresAt: { gt: now } } } } } } },
+      });
+      for (const reminder of reminders) for (const device of reminder.user.pushDevices) {
+        const id = digest(`${reminder.userId}:${device.id}:${reminder.movieId}:${today}`);
+        await prisma.pushDelivery.upsert({ where: { id }, create: { id, userId: reminder.userId, movieId: reminder.movieId, deviceId: device.id, releaseDate: today, nextAttemptAt: now }, update: {} });
+      }
+    }
+    const deliveries = await prisma.pushDelivery.findMany({ where: {
+      OR: [{ status: 'pending', nextAttemptAt: { lte: now } }, { status: 'sending', updatedAt: { lt: new Date(now.getTime() - 120000) } }],
+    }, orderBy: { createdAt: 'asc' }, take: 100 });
+    let sent = 0;
+    for (const delivery of deliveries) {
+      const claim = await prisma.pushDelivery.updateMany({ where: { id: delivery.id, status: delivery.status, updatedAt: delivery.updatedAt }, data: { status: 'sending', attempts: { increment: 1 } } });
+      if (!claim.count) continue;
+      const device = delivery.deviceId ? await prisma.pushDevice.findUnique({ where: { id: delivery.deviceId }, include: { session: true } }) : null;
+      const movie = await prisma.movie.findUnique({ where: { id: delivery.movieId } });
+      const subscription = await prisma.releaseReminder.findUnique({ where: { userId_movieId: { userId: delivery.userId, movieId: delivery.movieId } } });
+      if (!device?.enabled || device.userId !== delivery.userId || device.session.expiresAt <= now || !subscription || !movie || movie.hidden || movie.releaseDate !== today || delivery.releaseDate !== today) {
+        await prisma.pushDelivery.update({ where: { id: delivery.id }, data: { status: 'canceled' } }); continue;
+      }
+      try {
+        const tickets = await expo('send', [{ to: device.token, sound: 'default', channelId: 'estrenos', title: '🎬 ¡Hoy se estrena!',
+          body: `${movie.title} ya está en cines. ¿Vas a verla?`, ttl: Math.max(60, Math.floor((new Date(`${today}T23:59:59-03:00`).getTime() - now.getTime()) / 1000)),
+          data: { kind: 'release-reminder', movieId: movie.id, deliveryId: delivery.id } }]);
+        const ticket = tickets?.[0];
+        if (ticket?.status === 'ok' && typeof ticket.id === 'string') {
+          await prisma.pushDelivery.update({ where: { id: delivery.id }, data: { status: 'ticketed', ticketId: ticket.id, nextAttemptAt: new Date(now.getTime() + 15 * 60000), error: null } }); sent++;
+        } else await pushFailure(delivery.id, device.id, ticket?.details?.error ?? 'InvalidTicket', delivery.attempts + 1, now);
+      } catch { await pushFailure(delivery.id, device.id, 'TransportError', delivery.attempts + 1, now); }
+    }
+    await checkReceipts(now);
+    return { sent };
+  });
+}
+async function pushFailure(id: string, deviceId: string, error: string, attempts: number, now: Date) {
+  if (error === 'DeviceNotRegistered') await prisma.pushDevice.updateMany({ where: { id: deviceId }, data: { enabled: false } });
+  const retry = ['TransportError', 'MessageRateExceeded', 'ExpoServerError'].includes(error) && attempts < 6;
+  await prisma.pushDelivery.update({ where: { id }, data: { status: retry ? 'pending' : 'failed', error: error.slice(0, 100), nextAttemptAt: new Date(now.getTime() + Math.min(3600, 60 * 2 ** attempts) * 1000) } });
+}
+async function checkReceipts(now: Date) {
+  const rows = await prisma.pushDelivery.findMany({ where: { status: 'ticketed', nextAttemptAt: { lte: now } }, take: 100 });
+  if (!rows.length) return;
+  let receipts: any;
+  try { receipts = await expo('getReceipts', { ids: rows.map(row => row.ticketId) }); }
+  catch { return; }
+  for (const row of rows) {
+    const receipt = receipts?.[row.ticketId!];
+    if (!receipt) {
+      const expired = now.getTime() - row.createdAt.getTime() > 24 * 3600000;
+      await prisma.pushDelivery.update({ where: { id: row.id }, data: { status: expired ? 'failed' : 'ticketed', error: expired ? 'ReceiptMissing' : null, nextAttemptAt: new Date(now.getTime() + 15 * 60000) } });
+    } else if (receipt.status === 'ok') {
+      await prisma.pushDelivery.update({ where: { id: row.id }, data: { status: 'delivered', receiptCheckedAt: now } });
+    } else {
+      if (row.deviceId) await pushFailure(row.id, row.deviceId, receipt.details?.error ?? 'ReceiptError', row.attempts, now);
+      else await prisma.pushDelivery.update({ where: { id: row.id }, data: { status: 'canceled' } });
+    }
+  }
+}

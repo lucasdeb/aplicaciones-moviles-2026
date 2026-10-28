@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/context/AuthContext';
 import { MoviesProvider } from './src/context/MovieContext';
+import { RemindersProvider } from './src/context/RemindersContext';
 import { GamificationProvider } from './src/context/GamificationContext';
 import RootNavigator from './src/Navigator';
 import IntroVideo from './src/components/IntroVideo';
@@ -28,12 +29,14 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
+        <RemindersProvider>
         <GamificationProvider>
           <MoviesProvider>
             <StatusBar style="light" />
               {showIntro || !fontsReady ? <IntroVideo onFinish={() => setShowIntro(false)} /> : <RootNavigator />}
           </MoviesProvider>
         </GamificationProvider>
+        </RemindersProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );
