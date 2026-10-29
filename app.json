@@ -14,7 +14,9 @@
         "backgroundColor": "#131313",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "package": "com.lucasdeb.whatnext",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -47,6 +49,12 @@
         }
       ],
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "2f3fd43e-f7b9-4480-a761-4d6b54324700"
+      }
+    },
+    "owner": "lucasdeb"
   }
 }

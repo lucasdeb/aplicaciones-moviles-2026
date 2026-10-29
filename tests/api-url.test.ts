@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { resolveApiUrl } from '../../src/services/apiUrl';
+import { resolveApiUrl } from '../src/services/apiUrl';
 
 test('Local API follows the current Expo network and keeps explicit production URLs', () => {
   assert.equal(resolveApiUrl({ development: true, expoHost: '192.168.0.10:8081' }), 'http://192.168.0.10:3000/api');

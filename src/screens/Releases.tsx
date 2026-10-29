@@ -1,3 +1,5 @@
+import { pushUnavailableReason } from '../services/push';
+import { notificationPermissionHint } from '../utils/notificationFeedback';
 import { useEffect, useState } from 'react';
 import {
   View,
@@ -8,7 +10,6 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
-  Platform,
   StyleSheet,
 } from 'react-native';
 import AppIcon from '../components/AppIcon';
@@ -37,7 +38,7 @@ function ReleasesScreen({ navigation }) {
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [errorMsg, setErrorMsg] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-  const { reminders, busy, error: reminderError, deviceError, refresh: refreshReminders, toggle } = useReminders();
+  const { reminders, busy, error: reminderError, refresh: refreshReminders, toggle } = useReminders();
   useOnFocus(() => { void refreshReminders(); }, [user.user?.id]);
 
   async function load() {
@@ -69,10 +70,10 @@ function ReleasesScreen({ navigation }) {
         if (result.deviceError) Alert.alert('Aviso eliminado', result.deviceError);
         return;
       }
-      const message = result.deviceError || (Platform.OS === 'web'
-        ? 'Aviso guardado en tu cuenta. Abrí la app en tu celular para activar la notificación.'
+      const message = result.deviceError || (pushUnavailableReason()
+        ? 'El aviso quedó guardado en tu cuenta.'
         : result.deviceEnabled ? `Te avisamos el ${formatDate(movie.releaseDate)} a las 10:00 de Argentina.`
-        : 'Aviso guardado en tu cuenta. Activá las notificaciones en los ajustes del teléfono para recibirlo.');
+        : notificationPermissionHint);
       Alert.alert('Aviso guardado', message);
     } catch (e) { Alert.alert('No se pudo guardar el aviso', e.message); }
   }
@@ -89,7 +90,7 @@ function ReleasesScreen({ navigation }) {
         <SettingsButton />
       </View>
 
-      {reminderError || deviceError ? <Text style={{ color: colors.danger, paddingHorizontal: 16 }}>{reminderError || deviceError}</Text> : null}
+      {reminderError ? <Text style={{ color: colors.danger, paddingHorizontal: 16 }}>{reminderError}</Text> : null}
       <View style={styles.segment}>
         {(['upcoming', 'now'] as Tab[]).map((key) => (
           <TouchableOpacity

@@ -9,7 +9,10 @@ import { setNotificationHandler } from 'expo-notifications/build/NotificationsHa
 import { foreignReleaseReminders } from './releaseReminderPlan';
 
 export async function configureChannel() {
-  if (Platform.OS === 'android') await setNotificationChannelAsync('estrenos', { name: 'Estrenos', importance: AndroidImportance.HIGH });
+  if (Platform.OS === 'android') {
+    await setNotificationChannelAsync('estrenos', { name: 'Estrenos', importance: AndroidImportance.HIGH });
+    await setNotificationChannelAsync('actividad', { name: 'Amistades y reseñas', importance: AndroidImportance.HIGH });
+  }
 }
 export async function ensureNotificationPermission() {
   if (Platform.OS === 'web') return { granted: false, canAskAgain: false };

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "622143143610",
+    "project_id": "whatnext-b8824",
+    "storage_bucket": "whatnext-b8824.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:622143143610:android:2eb10925d2c9f783eb8c83",
+        "android_client_info": {
+          "package_name": "com.lucasdeb.whatnext"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCMLUO-fvAnJvrWpfKlUIoLq2d1flUZeCc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

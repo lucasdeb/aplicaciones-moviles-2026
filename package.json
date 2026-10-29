@@ -41,14 +41,18 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "dev": "expo start",
-    "backend": "npm --prefix ../aplicaciones-moviles-2026-back run dev"
+    "dev": "npm exec --yes --package=node@22 -- node scripts/dev.mjs",
+    "backend": "npm exec --yes --package=node@22 -- node scripts/dev.mjs --backend-only",
+    "test": "npm exec --yes --package=node@22 -- node node_modules/tsx/dist/cli.mjs --test tests/*.test.ts",
+    "dev:client": "npm exec --yes --package=node@22 -- node scripts/dev.mjs --dev-client"
   },
   "private": true,
   "devDependencies": {
     "@expo/ngrok": "^4.1.3",
     "@types/react": "~19.3.0",
     "concurrently": "^10.0.6",
+    "prisma": "^8.0.0-rc.28",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.3"
   },
   "description": "",

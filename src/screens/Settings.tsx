@@ -1,3 +1,4 @@
+import { notificationPermissionHint, notificationTestError } from '../utils/notificationFeedback';
 import { useState } from 'react';
 import {
   View,
@@ -97,9 +98,9 @@ function SettingsScreen({ navigation }) {
             try {
               const reason = pushUnavailableReason();
               if (reason) { setPushMessage(reason); return; }
-              if (!await registerDevicePush(true)) { setPushMessage('Activá las notificaciones en los ajustes del teléfono.'); return; }
-              const result = await request('/push/test', 'POST'); setPushMessage(result.message);
-            } catch (e) { setPushMessage(e.message); } finally { setPushBusy(false); }
+              if (!await registerDevicePush(true)) { setPushMessage(notificationPermissionHint); return; }
+              await request('/push/test', 'POST'); setPushMessage('Prueba enviada. Revisá las notificaciones de tu teléfono.');
+            } catch (e) { setPushMessage(notificationTestError(e)); } finally { setPushBusy(false); }
           }}><Text style={styles.buttonText}>{pushBusy ? 'Enviando prueba…' : 'Probar notificaciones'}</Text></TouchableOpacity>
           {pushMessage ? <Text style={[styles.label, { marginTop: 12 }]}>{pushMessage}</Text> : null}
         </View>

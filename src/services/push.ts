@@ -1,3 +1,5 @@
+import { notificationsUnavailable } from '../utils/notificationFeedback';
+import { pushDestination, type PushDestination } from '../utils/pushDestination';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
@@ -9,12 +11,9 @@ import { clearForeignReleaseReminders, configureChannel, ensureNotificationPermi
 import { getPermissionsAsync } from 'expo-notifications/build/NotificationPermissions';
 let registration: Promise<boolean> | null = null;
 export function pushUnavailableReason() {
-  if (Platform.OS === 'web') return 'Las notificaciones push se activan desde la app instalada en tu teléfono.';
-  if (Constants.appOwnership === 'expo') return 'Expo Go permite guardar avisos, pero no recibir notificaciones push. Para recibirlas, instalá la versión de desarrollo de WhatNext.';
-  if (!Device.isDevice) return 'Probá las notificaciones en un teléfono físico con la versión de desarrollo de WhatNext.';
   const projectId = process.env.EXPO_PUBLIC_EAS_PROJECT_ID || Constants.expoConfig?.extra?.eas?.projectId || Constants.easConfig?.projectId;
-  if (!projectId) return 'Las notificaciones todavía no están habilitadas para esta versión de WhatNext.';
-  return '';
+  return Platform.OS === 'web' || Constants.appOwnership === 'expo' || !Device.isDevice || !projectId
+    ? notificationsUnavailable : '';
 }
 export async function registerDevicePush(askPermission = false): Promise<boolean> {
   if (Platform.OS === 'web') return false;
@@ -42,12 +41,12 @@ export async function registerDevicePush(askPermission = false): Promise<boolean
   })();
   try { return await registration; } finally { registration = null; }
 }
-export async function listenToPushTaps(onMovie: (id: number) => void) {
+export async function listenToPushTaps(onDestination: (destination: PushDestination) => void) {
   if (Platform.OS === 'web' || Constants.appOwnership === 'expo') return () => {};
   const { addNotificationResponseReceivedListener, getLastNotificationResponseAsync, clearLastNotificationResponseAsync } = await import('expo-notifications');
   const consume = (response: any) => {
-    const id = response?.notification?.request?.content?.data?.movieId;
-    if (Number.isInteger(id) && id > 0) { onMovie(id); void clearLastNotificationResponseAsync(); }
+    const destination = pushDestination(response?.notification?.request?.content?.data);
+    if (destination) { onDestination(destination); void clearLastNotificationResponseAsync(); }
   };
   const listener = addNotificationResponseReceivedListener(consume);
   consume(await getLastNotificationResponseAsync());

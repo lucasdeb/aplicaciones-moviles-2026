@@ -1,3 +1,4 @@
+import type { PushDestination } from './utils/pushDestination';
 import { useEffect, useRef } from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
@@ -58,19 +59,19 @@ const headerOptions = {
 
 function RootNavigator() {
   const navigationRef = useNavigationContainerRef<any>();
-  const pendingMovie = useRef<number | null>(null);
-  const openMovie = (id: number) => {
-    if (navigationRef.isReady()) navigationRef.navigate('MovieDetail', { movieId: id });
-    else pendingMovie.current = id;
+  const pendingPush = useRef<PushDestination | null>(null);
+  const openPush = (destination: PushDestination) => {
+    if (navigationRef.isReady()) navigationRef.navigate(destination.screen, destination.params);
+    else pendingPush.current = destination;
   };
   useEffect(() => {
     let stopped = false, unsubscribe: (() => void) | undefined;
-    void listenToPushTaps(openMovie).then(cleanup => { if (stopped) cleanup(); else unsubscribe = cleanup; }).catch(() => {});
+    void listenToPushTaps(openPush).then(cleanup => { if (stopped) cleanup(); else unsubscribe = cleanup; }).catch(() => {});
     return () => { stopped = true; unsubscribe?.(); };
   }, []);
   const { user } = useAuth();
   return (
-    <NavigationContainer ref={navigationRef} onReady={() => { if (pendingMovie.current) { openMovie(pendingMovie.current); pendingMovie.current = null; } }}>
+    <NavigationContainer ref={navigationRef} onReady={() => { if (pendingPush.current) { openPush(pendingPush.current); pendingPush.current = null; } }}>
       <Stack.Navigator id="root-stack" screenOptions={{ headerShown: false }}>
       {/* Visibles para todos */}
       <Stack.Screen name="Main" component={MainTabs} />

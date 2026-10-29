@@ -1,5 +1,6 @@
+import { notificationPermissionHint, notificationRegistrationFailed } from '../utils/notificationFeedback';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { AppState, Platform } from 'react-native';
+import { AppState } from 'react-native';
 import { useAuth } from './AuthContext';
 import { getToken } from '../services/session';
 import * as api from '../services/reminders';
@@ -27,8 +28,13 @@ export function RemindersProvider({ children }: { children: ReactNode }) {
       const rows = await api.getReleaseReminders();
       if (viewer.current !== userId || current !== version.current) return false;
       setReminders(rows); setError('');
-      try { const enabled = await registerDevicePush(false); if (viewer.current === userId) setDeviceError(!enabled && rows.length && Platform.OS !== 'web' ? pushUnavailableReason() || 'Tus avisos están guardados. Activá las notificaciones en los ajustes del teléfono.' : ''); return enabled; }
-      catch { if (viewer.current === userId) setDeviceError('Tus avisos están guardados. No pudimos registrar las notificaciones push de este dispositivo.'); }
+      // Browsing releases should not display build/device setup warnings.
+      if (pushUnavailableReason()) { if (viewer.current === userId) setDeviceError(''); return false; }
+      try {
+        const enabled = await registerDevicePush(false);
+        if (viewer.current === userId) setDeviceError(!enabled && rows.length ? notificationPermissionHint : '');
+        return enabled;
+      } catch { if (viewer.current === userId) setDeviceError(notificationRegistrationFailed); }
     } catch (e) { if (viewer.current === userId && current === version.current) setError(e.message); }
     return false;
   }, [userId]);
@@ -58,16 +64,18 @@ export function RemindersProvider({ children }: { children: ReactNode }) {
       setReminders(nextRows);
       let enabled = false, localError = '';
       try {
-        if (subscribed) enabled = await registerDevicePush(true);
-        else await clearForeignReleaseReminders(undefined);
+        if (subscribed && !pushUnavailableReason()) {
+          enabled = await registerDevicePush(true);
+          if (!enabled) localError = notificationPermissionHint;
+        } else if (!subscribed) await clearForeignReleaseReminders(undefined);
       }
-      catch (e) { localError = subscribed
-        ? e.message || 'El aviso está guardado, pero no pudimos activar la notificación en este dispositivo.'
+      catch { localError = subscribed
+        ? notificationRegistrationFailed
         : 'La suscripción se eliminó, pero no pudimos quitar la notificación de este dispositivo. Volvé a abrir la app para reintentar.'; }
       const synced = await refresh();
       if (synced) localError = '';
       if (localError && viewer.current === userId) setDeviceError(localError);
-      if (enabled && !synced) localError ||= 'El aviso está guardado. No pudimos sincronizar la notificación de este dispositivo.';
+      if (enabled && !synced) localError ||= notificationRegistrationFailed;
       return { subscribed, deviceEnabled: enabled && synced, deviceError: localError || undefined };
     } finally {
       if (viewer.current === userId) { pending.current.delete(movieId); setBusy([...pending.current]); }

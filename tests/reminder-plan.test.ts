@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { foreignReleaseReminders } from '../../src/utils/releaseReminderPlan';
+import { foreignReleaseReminders } from '../src/utils/releaseReminderPlan';
 test('Push migration removes legacy and account-specific local release alerts without touching unrelated notifications', () => {
   const current = { id: 'current', data: { kind: 'release-reminder', userId: 7, movieId: 1 } };
   const legacy = { id: 'legacy', data: { movieId: 2 } };

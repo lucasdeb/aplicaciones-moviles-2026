@@ -44,3 +44,6 @@ yarn-error.*
 
 .env
 .env.local
+
+# Private service-account credentials; upload to EAS, never bundle.
+.credentials/
