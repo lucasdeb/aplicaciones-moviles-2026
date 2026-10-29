@@ -90,6 +90,12 @@ function SettingsScreen({ navigation }) {
             )}
           </TouchableOpacity>
         </View>
+        <Text style={styles.sectionTitle}>Seguridad</Text>
+        <View style={styles.card}>
+          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('ChangePassword')}>
+            <Text style={styles.buttonText}>Cambiar contraseña</Text>
+          </TouchableOpacity>
+        </View>
         <Text style={styles.sectionTitle}>Notificaciones</Text>
         <View style={styles.card}>
           <Text style={styles.label}>{pushUnavailableReason() || 'Activá y probá las notificaciones de este teléfono.'}</Text>

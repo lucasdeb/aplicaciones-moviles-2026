@@ -10,6 +10,7 @@ import { listenToPushTaps } from './services/push';
 import ManageRedemptionsScreen from './screens/ManageRedemptions';
 import LoginScreen from './screens/Login';
 import RegisterScreen from './screens/Register';
+import ChangePasswordScreen from './screens/ChangePassword';
 import HomeScreen from './screens/Home';
 import MovieDetailScreen from './screens/MovieDetail';
 import ProfileScreen from './screens/Profile';
@@ -92,6 +93,7 @@ function RootNavigator() {
             </>
           )}
           {['moderator', 'superadmin'].includes(user.user?.role ?? '') && <Stack.Screen name="ManageRedemptions" component={ManageRedemptionsScreen} options={headerOptions} />}
+          <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ ...headerOptions, headerTitle: 'Contraseña' }} />
           <Stack.Screen name="Settings" component={SettingsScreen} options={{ ...headerOptions, headerTitle: 'Configuración' }} />
         </>
       ) : (

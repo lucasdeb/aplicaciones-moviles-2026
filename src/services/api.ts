@@ -37,3 +37,4 @@ export const getNotifications = (_id?: number) => request('/notifications');
 export const markNotificationRead = (id: number, _me?: number) => request(`/notifications/${id}/read`, 'PATCH');
 export const markAllNotificationsRead = (_id?: number) => request('/notifications/read-all', 'PATCH');
 
+export const changePassword = (body: { currentPassword: string; newPassword: string }): Promise<{ message: string }> => request('/auth/change-password', 'POST', body);

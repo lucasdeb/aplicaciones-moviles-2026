@@ -133,6 +133,16 @@ function AddMovieScreen({ navigation, route }) {
   const [backdropUrl, setBackdropUrl] = useState(editingMovie?.backdropUrl || null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [featuredFeedback, setFeaturedFeedback] = useState('');
+
+  async function saveFeatured() {
+    if (!editingMovie || saving) return;
+    setSaving(true); setError(''); setFeaturedFeedback('');
+    const result = await updateMovie(movieId, { featured });
+    setSaving(false);
+    if (result.success) setFeaturedFeedback(featured ? 'Película agregada a destacadas.' : 'Película quitada de destacadas.');
+    else setError(result.error);
+  }
 
   async function handleSave() {
     const parsedGenres = commaSeparated(genres);
@@ -211,6 +221,20 @@ function AddMovieScreen({ navigation, route }) {
       <Text style={styles.headerTitle}>
         {editingMovie ? 'Editar película' : 'Nueva película'}
       </Text>
+
+      {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
+      <Text style={styles.sectionTitle}>Destacada en Inicio</Text>
+      <Text style={styles.sectionHint}>Elegí si esta película aparece entre las destacadas y en el carrusel de Inicio.</Text>
+      <View style={styles.switchRow}>
+        <Text style={styles.switchLabel}>Mostrar como destacada</Text>
+        <Switch accessibilityLabel="Mostrar como destacada en Inicio" value={featured} disabled={saving}
+          onValueChange={value => { setFeatured(value); setFeaturedFeedback(''); }} trackColor={{ true: colors.accentPrimary }} />
+      </View>
+      {editingMovie && <TouchableOpacity style={[styles.saveButton, (saving || featured === editingMovie.featured) && { opacity: 0.5 }]}
+        disabled={saving || featured === editingMovie.featured} onPress={saveFeatured}>
+        <Text style={styles.saveButtonText}>{saving ? 'Guardando...' : 'Guardar selección de destacada'}</Text>
+      </TouchableOpacity>}
+      {!!featuredFeedback && <Text accessibilityLiveRegion="polite" style={styles.sectionHint}>{featuredFeedback}</Text>}
 
       <ImageSlot
         label="Póster"
@@ -372,16 +396,7 @@ function AddMovieScreen({ navigation, route }) {
         onChangeText={setBuyProviders}
       />
 
-      <View style={styles.switchRow}>
-        <Text style={styles.switchLabel}>Elegida por el equipo (crew pick)</Text>
-        <Switch
-          value={featured}
-          onValueChange={setFeatured}
-          trackColor={{ true: colors.accentPrimary }}
-        />
-      </View>
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
 
       <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={saving}>
         {saving ? (
