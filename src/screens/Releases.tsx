@@ -1,6 +1,6 @@
 import { pushUnavailableReason } from '../services/push';
 import { notificationPermissionHint } from '../utils/notificationFeedback';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -41,20 +41,24 @@ function ReleasesScreen({ navigation }) {
   const { reminders, busy, error: reminderError, refresh: refreshReminders, toggle } = useReminders();
   useOnFocus(() => { void refreshReminders(); }, [user.user?.id]);
 
+  const loadVersion = useRef(0);
+  useEffect(() => () => { ++loadVersion.current; }, []);
+
   async function load() {
+    const version = ++loadVersion.current;
     try {
       const [upcoming, now] = await Promise.all([getUpcoming(), getNowPlaying()]);
+      if (version !== loadVersion.current) return;
       setMovies({ upcoming, now });
       setStatus('ready');
     } catch (e: any) {
+      if (version !== loadVersion.current) return;
       setErrorMsg(e.message);
       setStatus('error');
     }
   }
 
-  useEffect(() => {
-    load();
-  }, []);
+  useOnFocus(() => { void load(); }, [user.user?.id]);
 
   async function handleRefresh() {
     setRefreshing(true);

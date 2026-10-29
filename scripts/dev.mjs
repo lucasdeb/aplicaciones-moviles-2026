@@ -5,7 +5,9 @@ import { fileURLToPath } from 'node:url';
 import net from 'node:net';
 
 const frontend = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const backend = path.resolve(process.env.WHATNEXT_BACKEND_DIR || path.join(frontend, '../appsmovilesBACK'));
+const localBackend = path.join(frontend, '../aplicaciones-moviles-2026-back');
+const backend = path.resolve(process.env.WHATNEXT_BACKEND_DIR ||
+  (existsSync(path.join(localBackend, 'package.json')) ? localBackend : path.join(frontend, '../appsmovilesBACK')));
 const backendOnly = process.argv.includes('--backend-only');
 for (const file of ['package.json', '.env', 'node_modules/tsx/dist/cli.mjs', 'node_modules/.prisma/client/index.js', 'src/index.ts', 'src/worker.ts']) {
   if (!existsSync(path.join(backend, file))) {

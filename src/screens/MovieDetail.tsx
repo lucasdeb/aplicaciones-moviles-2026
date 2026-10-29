@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -150,10 +150,25 @@ function MovieDetailScreen({ navigation, route }) {
   const [savingReview, setSavingReview] = useState(false);
   const [composerError, setComposerError] = useState('');
 
+  const loadVersion = useRef(0);
+  const identity = String(movieId) + ':' + (user.user?.id ?? 'guest');
+  const currentIdentity = useRef(identity);
+  if (currentIdentity.current !== identity) {
+    currentIdentity.current = identity;
+    ++loadVersion.current;
+    setMovie(null); setRecommendations([]); setComments([]);
+    setLoading(true); setLoadingComments(true); setError('');
+    resetComposer(); setSavingReview(false);
+  }
+  useEffect(() => () => { ++loadVersion.current; }, []);
+
   // Se recarga cada vez que la pantalla queda visible (por ejemplo, al volver de una recomendada)
-  useOnFocus(loadMovie, [movieId]);
+  useOnFocus(loadMovie, [movieId, user.user?.id]);
 
   async function loadMovie() {
+    if (identity !== currentIdentity.current) return;
+    const version = ++loadVersion.current, viewer = identity;
+    const isCurrent = () => version === loadVersion.current && viewer === currentIdentity.current;
     setError('');
     setLoadingComments(true);
     try {
@@ -162,19 +177,23 @@ function MovieDetailScreen({ navigation, route }) {
         getRecommendations(movieId),
         getComments(movieId),
       ]);
+      if (!isCurrent()) return;
       setMovie(detail);
       setRecommendations(recs);
       setComments(list);
     } catch (e) {
-      setError(e.message);
+      if (isCurrent()) setError(e.message);
     } finally {
-      setLoading(false);
-      setLoadingComments(false);
+      if (isCurrent()) {
+        setLoading(false);
+        setLoadingComments(false);
+      }
     }
   }
 
   // Reemplaza en la lista el comentario que devolvió el servidor (like / repost)
   function replaceComment(updated) {
+    if (identity !== currentIdentity.current) return;
     setComments((current) => current.map((c) => (c.id === updated.id ? updated : c)));
   }
 
@@ -218,7 +237,7 @@ function MovieDetailScreen({ navigation, route }) {
 }
   async function attach(source: 'camera' | 'gallery') {
     const uri = await pickPhoto(source);
-    if (uri) setPhoto(uri);
+    if (uri && identity === currentIdentity.current) setPhoto(uri);
   }
 
   function handleAddPhoto() {
@@ -278,13 +297,15 @@ function MovieDetailScreen({ navigation, route }) {
       } else {
         await postComment(movieId, me.id, commentText.trim(), rating, photo);
       }
+      if (identity !== currentIdentity.current) return;
       resetComposer();
       await loadMovie();
     } catch (e) {
+      if (identity !== currentIdentity.current) return;
       setComposerError(e.message || 'No se pudo guardar la reseña.');
       if (e.code === 'REVIEW_ALREADY_EXISTS') await loadMovie();
     } finally {
-      setSavingReview(false);
+      if (identity === currentIdentity.current) setSavingReview(false);
     }
   }
   const communityAvg = movie?.communityRating === null || movie?.communityRating === undefined ? '–' : movie.communityRating.toFixed(1);

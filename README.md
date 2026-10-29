@@ -1,6 +1,3 @@
-> Desarrollo mobile con repos separados: ejecutar `npm run dev` en esta carpeta para Expo. Ejecutar `npm run dev` y `npm run worker` en `../aplicaciones-moviles-2026-back` en terminales separadas. `npm run backend` es un acceso al servidor externo.
->
-> `EXPO_PUBLIC_API_URL` vacío usa el host de Expo y el puerto 3000; teléfono y servidor deben estar en la misma red. Para otro servidor, configurar su URL accesible desde el teléfono. La copia `backend/` se conserva temporalmente como referencia y ya no se inicia con estos scripts. Las instrucciones históricas de arranque combinado que siguen están reemplazadas por estas.
 # WhatNext
 
 Expo frontend for WhatNext. The complete API, Prisma database, movies, points, auth, scheduled jobs, push and Wallet live in the separate [appsmovilesBACK repository](https://github.com/Zand3r5/appsmovilesBACK).
@@ -10,9 +7,9 @@ Expo frontend for WhatNext. The complete API, Prisma database, movies, points, a
 Keep both checkouts beside each other:
 
 ```text
-Documents/
+apps/
   aplicaciones-moviles-2026/   frontend
-  appsmovilesBACK/             API, worker, SQLite, uploads, private .env
+  aplicaciones-moviles-2026-back/ API, worker, SQLite, uploads, private .env
 ```
 
 On the configured development computer, run from this frontend:
@@ -25,11 +22,11 @@ This launches the standalone API on port 3000, its worker, and Expo with its int
 
 For two terminals, use `npm run backend` here for the API/worker, then `npx expo start --go` for Expo (use Node 22 when launching Expo directly). `npm start` starts only Expo. Scan the QR code with the iPhone Camera or Expo Go on Android; real remote push requires a development/production build and platform credentials.
 
-For a fresh machine, install frontend dependencies with `npm ci`, clone the backend beside it, and follow that repository’s setup guide to install dependencies and configure its private `.env`. For a different checkout location, set `WHATNEXT_BACKEND_DIR` to the backend directory before starting development. Secrets and real database contents are not distributed through Git.
+For a fresh machine, install frontend dependencies with `npm ci`, clone the backend beside it as `aplicaciones-moviles-2026-back`, and follow that repository’s setup guide to install dependencies and configure its private `.env`. The launcher also accepts the repository's upstream name `appsmovilesBACK` when the local folder is absent. For a different checkout location, set `WHATNEXT_BACKEND_DIR` to the backend directory before starting development. Secrets and real database contents are not distributed through Git.
 
 Leave frontend `EXPO_PUBLIC_API_URL` empty for local development. The app follows Expo’s network hostname on API port 3000; keep the phone and computer on the same Wi-Fi. Set a public HTTPS API URL for production. The Expo tunnel does not expose the API.
 
-Backend configuration and data are now in `../appsmovilesBACK/.env`, `../appsmovilesBACK/prisma/local.db` and `../appsmovilesBACK/uploads`. Existing accounts were preserved; log in again after transfer because the old sessions were retired. Backend deployment and Prisma Studio commands run in that separate repository.
+Backend configuration and uploaded files are in `../aplicaciones-moviles-2026-back/.env` and `../aplicaciones-moviles-2026-back/uploads`. `DATABASE_URL` in that private `.env` selects the SQLite file. Backend deployment and Prisma Studio commands run in that separate repository.
 
 ## Daily catalog sync
 
@@ -62,7 +59,7 @@ Existing users can log in with their saved credentials. The standalone backend�
 
 | Feature | Routes |
 | --- | --- |
-| Auth | `POST /api/auth/register`, `/login`, `/logout`; `GET /api/auth/me` |
+| Auth | `POST /api/auth/register`, `/login`, `/logout`, `/change-password`; `GET /api/auth/me` |
 | Catalog | `GET /api/movies`, `/movies/home`, `/movies/search?q=...`, `/movies/:id`, `/movies/:id/recommendations` |
 | Saved release lists | `GET /api/releases/upcoming`, `/api/releases/now-playing` |
 | Reviews | `GET/POST /api/movies/:id/reviews`; `PATCH/DELETE /api/reviews/:id` |

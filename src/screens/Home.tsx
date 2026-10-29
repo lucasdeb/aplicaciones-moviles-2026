@@ -47,6 +47,15 @@ function HomeScreen({ navigation }) {
   // El feed solo lo usa Home: estado local, no global
   const [popularReviews, setPopularReviews] = useState([]);
   const [friendReviews, setFriendReviews] = useState([]);
+  const feedVersion = useRef(0);
+  const feedViewer = useRef(currentUser?.id);
+  if (feedViewer.current !== currentUser?.id) {
+    feedViewer.current = currentUser?.id;
+    ++feedVersion.current;
+    setPopularReviews([]);
+    setFriendReviews([]);
+  }
+  useEffect(() => () => { ++feedVersion.current; }, []);
   const [showSearch, setShowSearch] = useState(false);
   const [search, setSearch] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -94,15 +103,18 @@ function HomeScreen({ navigation }) {
   }
 
   async function refreshAll() {
+    const version = ++feedVersion.current, viewer = currentUser?.id;
     fetchMovies();
     try {
       const [popular, friends] = await Promise.all([
         getPopularReviews(),
         currentUser ? getFriendReviews(currentUser.id) : Promise.resolve([]),
       ]);
+      if (version !== feedVersion.current || viewer !== feedViewer.current) return;
       setPopularReviews(popular);
       setFriendReviews(friends);
     } catch (error) {
+      if (version !== feedVersion.current || viewer !== feedViewer.current) return;
       console.warn('No se pudo cargar el feed', error);
     }
   }

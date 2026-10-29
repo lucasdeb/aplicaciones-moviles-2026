@@ -9,6 +9,7 @@ import {
   RefreshControl,
   StyleSheet,
   Platform,
+  AppState,
 } from 'react-native';
 import * as Location from 'expo-location';
 import AppIcon from '../components/AppIcon';
@@ -37,6 +38,7 @@ function CinemasScreen() {
   const [stale, setStale] = useState(false);
   const [lookupError, setLookupError] = useState('');
   const requestVersion = useRef(0);
+  const permissionDenied = useRef(false);
   const lastArea = useRef('');
   const [status, setStatus] = useState<Status>('loading');
   const [refreshing, setRefreshing] = useState(false);
@@ -56,6 +58,8 @@ function CinemasScreen() {
     (async () => {
       try {
         const { status: permission } = await Location.requestForegroundPermissionsAsync();
+        if (cancelled) return;
+        permissionDenied.current = permission !== 'granted';
         if (permission !== 'granted') {
           setStatus('denied');
           return;
@@ -87,9 +91,20 @@ function CinemasScreen() {
 
     return () => {
       cancelled = true;
+      ++requestVersion.current;
       sub?.remove();
     };
   }, [attempt]);
+
+  useEffect(() => {
+    const listener = AppState.addEventListener('change', state => {
+      if (state === 'active' && permissionDenied.current) {
+        setStatus('loading');
+        setAttempt(value => value + 1);
+      }
+    });
+    return () => listener.remove();
+  }, []);
 
  
   const c = pos?.coords;
@@ -105,15 +120,17 @@ function CinemasScreen() {
       setStatus('ready');
     } catch (e) {
       if (version !== requestVersion.current) return;
-      setLookupError(e.message);
+      setLookupError(`No pudimos actualizar los cines. ${e.message}`);
       setStatus((current) => (current === 'ready' ? 'ready' : 'error'));
     }
 
     if (Platform.OS === 'web') return;
     try {
       const [addr] = await Location.reverseGeocodeAsync({ latitude, longitude });
+      if (version !== requestVersion.current) return;
       setPlace(addr ? [addr.district ?? addr.subregion, addr.city].filter(Boolean).join(', ') : null);
     } catch (e) {
+      if (version !== requestVersion.current) return;
       setPlace(null);
     }
   }
@@ -124,6 +141,7 @@ function CinemasScreen() {
     const area = `${c.latitude.toFixed(2)}:${c.longitude.toFixed(2)}`;
     if (area === lastArea.current) return;
     lastArea.current = area;
+    setPlace(null);
     loadCinemas(c.latitude, c.longitude);
   }, [c?.latitude, c?.longitude]);
 
@@ -165,10 +183,13 @@ function CinemasScreen() {
         </Text>
         <TouchableOpacity
           style={styles.primaryButton}
-          onPress={denied ? () => Linking.openSettings() : handleRetry}
+          onPress={denied ? () => {
+            if (Platform.OS === 'web') { setStatus('loading'); setAttempt(value => value + 1); }
+            else void Linking.openSettings();
+          } : handleRetry}
           activeOpacity={0.8}
         >
-          <Text style={styles.primaryButtonText}>{denied ? 'Abrir ajustes' : 'Reintentar'}</Text>
+          <Text style={styles.primaryButtonText}>{denied && Platform.OS !== 'web' ? 'Abrir ajustes' : 'Reintentar'}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -185,6 +206,7 @@ function CinemasScreen() {
         {place ? `Cerca de ${place} · ordenados por distancia` : 'Ordenados por distancia'}
       </Text>
 
+      {lookupError ? <Text style={styles.subtitle} accessibilityRole="alert">{lookupError} Mostramos los resultados de la última búsqueda correcta.</Text> : null}
       {stale ? <Text style={styles.subtitle}>Mostramos la última búsqueda guardada porque el proveedor no está disponible.</Text> : null}
       <Text style={styles.subtitle}>Datos de OpenStreetMap · Ubicación consultada a través de WhatNext</Text>
       <FlatList

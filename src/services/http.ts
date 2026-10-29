@@ -22,7 +22,7 @@ export async function request(path: string, method = 'GET', body?: unknown): Pro
   } catch { throw new ApiError('No se pudo conectar con el servidor. Revisá tu conexión e intentá de nuevo.', 0); }
   if (response.status === 204) return;
   const result = await response.json().catch(() => null);
-  if (response.status === 401 && token && !['/auth/login', '/auth/register'].includes(path)) await expireSession();
+  if (response.status === 401 && token && !['/auth/login', '/auth/register'].includes(path)) await expireSession(token);
   if (!response.ok) throw new ApiError(result?.error ?? 'No se pudo completar la operación', response.status, result?.code);
   const origin = new URL(BASE).origin;
   const resolveMedia = (value: any): any => {
