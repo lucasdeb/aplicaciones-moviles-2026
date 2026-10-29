@@ -26,7 +26,7 @@ apiAxios.interceptors.response.use(response => response, async error => {
     ? 'No se pudo conectar con el servidor. Revisá tu conexión e intentá de nuevo.'
     : 'No se pudo completar la operación'), status, error.response?.data?.code);
 });
-export async function requestAxios(path: string, method = 'GET', body?: unknown): Promise<any> {
-  const response = await apiAxios.request({ url: path, method, data: body });
+export async function requestAxios(path: string, method = 'GET', body?: unknown, timeout?: number): Promise<any> {
+  const response = await apiAxios.request({ url: path, method, data: body, ...(timeout ? { timeout } : {}) });
   return response.data;
 }

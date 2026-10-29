@@ -21,6 +21,7 @@ import { colors, fonts } from './theme';
 import CinemasScreen from './screens/Cinemas';
 import BrandLogo from './components/BrandLogo';
 import SettingsScreen from './screens/Settings';
+import FriendsFeedScreen from './screens/FriendsFeed';
 
 
 
@@ -92,6 +93,7 @@ function RootNavigator() {
           )}
           {['moderator', 'superadmin'].includes(user.user?.role ?? '') && <Stack.Screen name="ManageRedemptions" component={ManageRedemptionsScreen} options={headerOptions} />}
           <Stack.Screen name="Settings" component={SettingsScreen} options={{ ...headerOptions, headerTitle: 'Configuración' }} />
+          <Stack.Screen name="FriendsFeed" component={FriendsFeedScreen} options={{ ...headerOptions, headerTitle: 'Reseñas de amigos' }} />
         </>
       ) : (
         <Stack.Group

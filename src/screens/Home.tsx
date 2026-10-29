@@ -26,11 +26,16 @@ import { useOnFocus } from '../hooks/useOnFocus';
 import { getJSON, setJSON } from '../services/localStorage';
 import { addRecentSearch } from '../services/jsonStorage';
 
-function SectionHeader({ title }) {
+function SectionHeader({ title, onSeeAll }: { title: string; onSeeAll?: () => void }) {
   return (
     <View style={styles.sectionHeader}>
       <View style={styles.sectionBar} />
       <Text style={styles.sectionTitle}>{title}</Text>
+      {onSeeAll && (
+        <TouchableOpacity style={styles.seeAll} onPress={onSeeAll} hitSlop={8}>
+          <Text style={styles.seeAllText}>Ver todo</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -221,7 +226,7 @@ function HomeScreen({ navigation }) {
 
           {currentUser && (
             <RevealOnScroll scrollY={scrollY}>
-              <SectionHeader title="Reseñas de amigos" />
+              <SectionHeader title="Reseñas de amigos" onSeeAll={() => navigation.navigate('FriendsFeed')} />
               {friendReviews.length > 0 ? (
                 <View style={styles.reviewsList}>
                   {friendReviews.slice(0, 5).map((review) => (
@@ -357,6 +362,14 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 16,
     fontFamily: fonts.bodyBold,
+  },
+  seeAll: {
+    marginLeft: 'auto',
+  },
+  seeAllText: {
+    color: colors.accentSecondaryText,
+    fontSize: 13,
+    fontFamily: fonts.label,
   },
   reviewsList: {
     paddingHorizontal: 16,

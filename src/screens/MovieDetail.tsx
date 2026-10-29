@@ -82,37 +82,40 @@ function DetailSectionTitle({ children }) {
   );
 }
 
-function ProviderGroup({ icon, label, providers }) {
-  if (!providers?.length) return null;
+const PROVIDER_TYPES = [
+  { key: 'stream', tag: null },
+  { key: 'rent', tag: 'Alquiler' },
+  { key: 'buy', tag: 'Compra' },
+] as const;
+
+function ProviderStrip({ providers }) {
+  // Una sola fila sin plataformas repetidas; la suscripción tiene prioridad
+  const seen = new Set<string>();
+  const items = PROVIDER_TYPES.flatMap(({ key, tag }) =>
+    ((providers?.[key] ?? []) as string[])
+      .filter((name) => !seen.has(name) && seen.add(name))
+      .map((name) => ({ name, tag }))
+  );
+
+  if (!items.length) {
+    return <Text style={styles.noProviders}>No hay opciones informadas para Argentina.</Text>;
+  }
+
   return (
-    <View style={styles.providerGroup}>
-      <View style={styles.providerGroupTitle}>
-        <AppIcon name={icon} size={16} />
-        <Text style={styles.providerGroupLabel}>{label}</Text>
-      </View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.providerList}
-      >
-        {providers.map((provider) => (
-          <View key={provider} style={styles.providerChip}>
-            {PROVIDER_LOGOS[provider] ? (
-              <Image
-                source={{ uri: PROVIDER_LOGOS[provider] }}
-                style={styles.providerLogo}
-                resizeMode="contain"
-              />
-            ) : (
-              <View style={styles.providerLogoFallback}>
-                <AppIcon name="tv-outline" size={22} />
-              </View>
-            )}
-            <Text style={styles.providerChipText}>{provider}</Text>
-          </View>
-        ))}
-      </ScrollView>
-    </View>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.providerStrip}>
+      {items.map(({ name, tag }) => (
+        <View key={name} style={styles.providerItem} accessibilityLabel={tag ? `${name}, ${tag}` : name}>
+          {PROVIDER_LOGOS[name] ? (
+            <Image source={{ uri: PROVIDER_LOGOS[name] }} style={styles.providerLogo} resizeMode="contain" />
+          ) : (
+            <View style={styles.providerLogoFallback}>
+              <Text style={styles.providerFallbackText} numberOfLines={2}>{name}</Text>
+            </View>
+          )}
+          {tag && <Text style={styles.providerTag}>{tag}</Text>}
+        </View>
+      ))}
+    </ScrollView>
   );
 }
 
@@ -406,24 +409,8 @@ function MovieDetailScreen({ navigation, route }) {
         </View>
 
         <DetailSectionTitle>Dónde ver</DetailSectionTitle>
-        <View style={styles.providersCard}>
-          <View style={styles.providersHeader}>
-            <View>
-              <Text style={styles.providersTitle}>Disponibilidad en Argentina</Text>
-              <Text style={styles.providersUpdated}>La disponibilidad puede cambiar</Text>
-            </View>
-            <AppIcon name="location-outline" size={20} />
-          </View>
-          {argentinaProviders ? (
-            <>
-              <ProviderGroup icon="play-circle-outline" label="Con suscripción" providers={argentinaProviders.stream} />
-              <ProviderGroup icon="card-outline" label="Alquiler" providers={argentinaProviders.rent} />
-              <ProviderGroup icon="bag-check-outline" label="Compra" providers={argentinaProviders.buy} />
-            </>
-          ) : (
-            <Text style={styles.noProviders}>No hay opciones informadas para este país.</Text>
-          )}
-        </View>
+        <ProviderStrip providers={argentinaProviders} />
+        <Text style={styles.providersUpdated}>En Argentina · la disponibilidad puede cambiar</Text>
 
         {recommendations.length > 0 && (
           <>
@@ -856,81 +843,48 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: fonts.title,
   },
-  providersCard: {
-    padding: 16,
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  providersHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 18,
-  },
-  providersTitle: {
-    color: colors.text,
-    fontSize: 15,
-    fontFamily: fonts.bodyBold,
-  },
   providersUpdated: {
     color: colors.textMuted,
     fontSize: 12,
     fontFamily: fonts.body,
-    marginTop: 2,
+    marginTop: 6,
   },
-  providerGroup: {
-    marginBottom: 16,
+  providerStrip: {
+    gap: 10,
+    paddingVertical: 4,
   },
-  providerGroupTitle: {
-    flexDirection: 'row',
+  providerItem: {
+    width: 52,
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 10,
-  },
-  providerGroupLabel: {
-    color: colors.text,
-    fontSize: 14,
-    fontFamily: fonts.label,
-  },
-  providerList: {
-    flexDirection: 'row',
-    gap: 9,
-    paddingRight: 4,
-  },
-  providerChip: {
-    width: 94,
-    minHeight: 98,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 9,
-    backgroundColor: colors.surfaceHigh,
-    borderRadius: 12,
   },
   providerLogo: {
-    width: 42,
-    height: 42,
-    borderRadius: 9,
-    marginBottom: 7,
+    width: 44,
+    height: 44,
+    borderRadius: 10,
     backgroundColor: colors.text,
   },
   providerLogoFallback: {
-    width: 42,
-    height: 42,
-    borderRadius: 9,
+    width: 44,
+    height: 44,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 7,
-    backgroundColor: colors.surfaceAlt,
+    padding: 2,
+    backgroundColor: colors.surfaceHigh,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  providerChipText: {
+  providerFallbackText: {
     color: colors.text,
-    fontSize: 11,
-    lineHeight: 15,
-    fontFamily: fonts.body,
+    fontSize: 8,
+    fontFamily: fonts.label,
     textAlign: 'center',
+  },
+  providerTag: {
+    color: colors.textMuted,
+    fontSize: 9,
+    fontFamily: fonts.label,
+    marginTop: 3,
   },
   noProviders: {
     color: colors.textMuted,

@@ -23,6 +23,14 @@ function formatDistance(km: number) {
   return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
 }
 
+// Rechaza si la promesa no termina a tiempo (el GPS puede no responder nunca)
+function withTimeout<T>(promise: Promise<T>, ms: number) {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
+  ]);
+}
+
 function CinemasScreen() {
   const [pos, setPos] = useState<Location.LocationObject | null>(null);
   const [place, setPlace] = useState<string | null>(null);
@@ -39,6 +47,12 @@ function CinemasScreen() {
   useEffect(() => {
     let sub: Location.LocationSubscription | undefined;
     let cancelled = false;
+    let gotPosition = false;
+    const usePosition = (p: Location.LocationObject) => {
+      if (cancelled) return;
+      gotPosition = true;
+      setPos(p);
+    };
 
     (async () => {
       try {
@@ -49,26 +63,28 @@ function CinemasScreen() {
         }
 
         try {
-          const last = await Location.getLastKnownPositionAsync({ maxAge: 10 * 60 * 1000, requiredAccuracy: 2000 });
-          if (last && !cancelled) setPos(last);
+          const last = await Location.getLastKnownPositionAsync({ maxAge: 30 * 60 * 1000, requiredAccuracy: 3000 });
+          if (last) usePosition(last);
         } catch {
           // not available on some devices or on web
         }
 
-        const p = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
-        });
+        // Si la precisión normal no llega a tiempo y no hay ninguna ubicación, se prueba con baja
+        try {
+          usePosition(await withTimeout(Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }), 8000));
+        } catch {
+          if (!gotPosition) usePosition(await withTimeout(Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low }), 8000));
+        }
         if (cancelled) return;
-        setPos(p);
 
-        
         sub = await Location.watchPositionAsync(
           { accuracy: Location.Accuracy.Balanced, distanceInterval: 500 },
-          (next) => setPos(next)
+          usePosition
         );
         if (cancelled) sub.remove();
-      } catch (e) {
-        setStatus('error'); 
+      } catch {
+        // Solo es un error si no se consiguió ninguna ubicación
+        if (!cancelled && !gotPosition) setStatus('error');
       }
     })();
 
@@ -92,7 +108,9 @@ function CinemasScreen() {
       setStatus('ready');
     } catch (e) {
       if (version !== requestVersion.current) return;
-      setLookupError(e.message); setStatus('error');
+      setLookupError(e.message);
+      // Si ya hay una lista visible, se mantiene
+      setStatus((current) => (current === 'ready' ? 'ready' : 'error'));
     }
 
     if (Platform.OS === 'web') return;
@@ -134,7 +152,7 @@ function CinemasScreen() {
     return (
       <View style={styles.centered}>
         <ActivityIndicator color={colors.accentPrimary} />
-        <Text style={styles.mutedText}>{c ? 'Buscando cines cerca tuyo...' : 'Obteniendo tu ubicación...'}</Text>
+        <Text style={styles.mutedText}>{c ? 'Buscando cines cerca tuyo...\nLa primera búsqueda en una zona puede tardar hasta un minuto.' : 'Obteniendo tu ubicación...'}</Text>
       </View>
     );
   }

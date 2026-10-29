@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -17,6 +18,9 @@ type ConfirmModalProps = {
   cancelLabel?: string;
   destructive?: boolean;
   loading?: boolean;
+  hideCancel?: boolean;
+  // Contenido extra debajo del mensaje
+  children?: ReactNode;
   onConfirm: () => void | Promise<void>;
   onCancel: () => void;
 };
@@ -29,6 +33,8 @@ export default function ConfirmModal({
   cancelLabel = 'Cancelar',
   destructive = false,
   loading = false,
+  hideCancel = false,
+  children,
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
@@ -48,16 +54,19 @@ export default function ConfirmModal({
         >
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
+          {children}
 
           <View style={styles.actions}>
-            <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
-              onPress={onCancel}
-              disabled={loading}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.cancelText}>{cancelLabel}</Text>
-            </TouchableOpacity>
+            {!hideCancel && (
+              <TouchableOpacity
+                style={[styles.button, styles.cancelButton]}
+                onPress={onCancel}
+                disabled={loading}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.cancelText}>{cancelLabel}</Text>
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity
               style={[

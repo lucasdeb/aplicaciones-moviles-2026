@@ -136,7 +136,12 @@ function ReleasesScreen({ navigation }) {
           renderItem={({ item }) => {
             const reminded = reminders.some(reminder => reminder.movieId === item.id);
             return (
-              <View style={styles.card}>
+              <TouchableOpacity
+                style={styles.card}
+                activeOpacity={0.8}
+                disabled={tab === 'upcoming'}
+                onPress={() => navigation.navigate('MovieDetail', { movieId: item.id })}
+              >
                 {item.posterUrl ? (
                   <Image source={{ uri: item.posterUrl }} style={styles.poster} />
                 ) : (
@@ -173,8 +178,14 @@ function ReleasesScreen({ navigation }) {
                       </Text>
                     </TouchableOpacity>
                   )}
+                  {tab === 'now' && (
+                    <View style={styles.reviewHint}>
+                      <AppIcon name="create-outline" size={12} />
+                      <Text style={styles.metaText}>Tocá para ver y reseñar</Text>
+                    </View>
+                  )}
                 </View>
-              </View>
+              </TouchableOpacity>
             );
           }}
         />
@@ -225,6 +236,7 @@ const styles = StyleSheet.create({
   cardBody: { flex: 1, marginLeft: 12 },
   cardTitle: { color: colors.text, fontFamily: fonts.bodyBold, fontSize: 15 },
   metaRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
+  reviewHint: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
   metaText: { color: colors.textMuted, fontSize: 12, fontFamily: fonts.body, marginLeft: 4 },
   movieRatingText: { color: colors.movieRating, fontSize: 12, fontFamily: fonts.bodySemiBold, marginLeft: 4 },
   overview: { color: colors.textMuted, fontSize: 12, fontFamily: fonts.body, marginTop: 6, lineHeight: 17 },

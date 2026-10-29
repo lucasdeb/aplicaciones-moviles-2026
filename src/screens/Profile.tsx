@@ -17,7 +17,7 @@ import GuestPrompt from '../components/GuestPrompt';
 import SettingsButton from '../components/SettingsButton';
 import ReviewCard from '../components/ReviewCard';            
 import NotificationList, { type AppNotification } from '../components/NotificationList';
-import { RANKS } from '../utils/ranks';
+import { RANKS, getRankDecor } from '../utils/ranks';
 import {
   getPublicProfile,
   repostComment,
@@ -374,6 +374,8 @@ function ProfileScreen({ navigation, route }) {
   const shownPoints = isOwn ? earnedPoints - rewards.spentPoints : earnedPoints; // los canjes solo se restan en el mio
   const reviewCount = profile.stats.comments;
   const rank = profile.rank;
+  const decor = getRankDecor(rank.index ?? -1);
+  const ringSize = 94 + decor.thickness * 2;
   const unlockedCount = achievements.list.filter((a) => a.unlocked).length;
   const list = tab === 'reposts'
     ? profile.reposts
@@ -416,17 +418,24 @@ function ProfileScreen({ navigation, route }) {
       )}
 
       {/* ---------- Tarjeta principal (igual para todos) ---------- */}
-      <View style={styles.card}>
-        <LinearGradient
-          colors={[colors.accentPrimary, colors.rating]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.avatarRing}
-        >
-          <View style={styles.avatar}>
-            <Text style={styles.avatarInitial}>{(shownUser.name || '?').charAt(0).toUpperCase()}</Text>
-          </View>
-        </LinearGradient>
+      <View style={[styles.card, { borderColor: decor.ring[0] }]}>
+        <View>
+          <LinearGradient
+            colors={decor.ring}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[styles.avatarRing, { width: ringSize, height: ringSize, borderRadius: ringSize / 2 }]}
+          >
+            <View style={styles.avatar}>
+              <Text style={styles.avatarInitial}>{(shownUser.name || '?').charAt(0).toUpperCase()}</Text>
+            </View>
+          </LinearGradient>
+          {rank.current && (
+            <View style={[styles.avatarRankIcon, { borderColor: decor.ring[0] }]}>
+              <AppIcon name={rank.current.icon} size={14} />
+            </View>
+          )}
+        </View>
 
         <View style={styles.nameRow}>
           <Text style={styles.name}>{shownUser.name}</Text>
@@ -740,11 +749,20 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   avatarRing: {
-    width: 104,
-    height: 104,
-    borderRadius: 52,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  avatarRankIcon: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceHigh,
+    borderWidth: 2,
   },
   avatar: {
     width: 94,
@@ -760,16 +778,14 @@ const styles = StyleSheet.create({
     fontFamily: fonts.title,
   },
   nameRow: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
     marginTop: 14,
   },
   name: {
     color: colors.text,
     fontSize: 22,
     fontFamily: fonts.title,
+    textAlign: 'center',
   },
   rankBadge: {
     flexDirection: 'row',
@@ -780,7 +796,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 9,
     paddingVertical: 4,
-    marginLeft: 8,
+    marginTop: 8,
   },
   rankBadgeText: {
     color: colors.rating,
