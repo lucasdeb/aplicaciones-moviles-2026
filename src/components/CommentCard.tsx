@@ -7,6 +7,7 @@ import { timeAgo } from '../utils/timeAgo';
 import { Image } from 'react-native';
 import StarRating from './StarRating';
 import ConfirmModal from './ConfirmModal';
+import { getAuthorRing } from '../utils/ranks';
 
 const SWIPE_THRESHOLD = -80;
 const MAX_SWIPE = -110;
@@ -18,6 +19,7 @@ export default function CommentCard({ comment, onLike, onRepost, canDelete,onPre
   const [reacting, setReacting] = useState(false);
   const translateX = useRef(new Animated.Value(0)).current;
   const authorName = comment.author?.name ?? 'Usuario';
+  const ring = getAuthorRing(comment.author?.reviewCount);
   const [deleteVisible, setDeleteVisible] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
@@ -111,7 +113,7 @@ export default function CommentCard({ comment, onLike, onRepost, canDelete,onPre
             colors={[colors.accentPrimary, colors.accentSecondary]}
              start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-             style={styles.avatar}
+             style={[styles.avatar, ring && { borderWidth: 2, borderColor: ring }]}
                 >
             <Text style={styles.avatarInitial}>{authorName.charAt(0).toUpperCase()}</Text>
           </LinearGradient>

@@ -82,37 +82,51 @@ function DetailSectionTitle({ children }) {
   );
 }
 
-function ProviderGroup({ icon, label, providers }) {
-  if (!providers?.length) return null;
+const PROVIDER_TYPES = [
+  { key: 'stream', label: 'Suscripción' },
+  { key: 'rent', label: 'Alquiler' },
+  { key: 'buy', label: 'Compra' },
+] as const;
+
+function ProviderStrip({ providers }) {
+  const [type, setType] = useState<(typeof PROVIDER_TYPES)[number]['key']>(
+    () => PROVIDER_TYPES.find(({ key }) => providers?.[key]?.length)?.key ?? 'stream'
+  );
+  const items: string[] = providers?.[type] ?? [];
+  const label = PROVIDER_TYPES.find(({ key }) => key === type)!.label;
+
   return (
-    <View style={styles.providerGroup}>
-      <View style={styles.providerGroupTitle}>
-        <AppIcon name={icon} size={16} />
-        <Text style={styles.providerGroupLabel}>{label}</Text>
-      </View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.providerList}
-      >
-        {providers.map((provider) => (
-          <View key={provider} style={styles.providerChip}>
-            {PROVIDER_LOGOS[provider] ? (
-              <Image
-                source={{ uri: PROVIDER_LOGOS[provider] }}
-                style={styles.providerLogo}
-                resizeMode="contain"
-              />
-            ) : (
-              <View style={styles.providerLogoFallback}>
-                <AppIcon name="tv-outline" size={22} />
-              </View>
-            )}
-            <Text style={styles.providerChipText}>{provider}</Text>
-          </View>
+    <>
+      <View style={styles.providerMenu}>
+        {PROVIDER_TYPES.map(({ key, label }) => (
+          <TouchableOpacity
+            key={key}
+            style={[styles.providerMenuItem, type === key && styles.providerMenuItemActive]}
+            onPress={() => setType(key)}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.providerMenuText, type === key && styles.providerMenuTextActive]}>{label}</Text>
+          </TouchableOpacity>
         ))}
-      </ScrollView>
-    </View>
+      </View>
+      {items.length ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.providerStrip}>
+          {items.map((name) => (
+            <View key={name} style={styles.providerItem} accessibilityLabel={name}>
+              {PROVIDER_LOGOS[name] ? (
+                <Image source={{ uri: PROVIDER_LOGOS[name] }} style={styles.providerLogo} resizeMode="contain" />
+              ) : (
+                <View style={styles.providerLogoFallback}>
+                  <Text style={styles.providerFallbackText} numberOfLines={2}>{name}</Text>
+                </View>
+              )}
+            </View>
+          ))}
+        </ScrollView>
+      ) : (
+        <Text style={styles.noProviders}>No hay opciones de {label.toLowerCase()} informadas para Argentina.</Text>
+      )}
+    </>
   );
 }
 
@@ -406,24 +420,8 @@ function MovieDetailScreen({ navigation, route }) {
         </View>
 
         <DetailSectionTitle>Dónde ver</DetailSectionTitle>
-        <View style={styles.providersCard}>
-          <View style={styles.providersHeader}>
-            <View>
-              <Text style={styles.providersTitle}>Disponibilidad en Argentina</Text>
-              <Text style={styles.providersUpdated}>La disponibilidad puede cambiar</Text>
-            </View>
-            <AppIcon name="location-outline" size={20} />
-          </View>
-          {argentinaProviders ? (
-            <>
-              <ProviderGroup icon="play-circle-outline" label="Con suscripción" providers={argentinaProviders.stream} />
-              <ProviderGroup icon="card-outline" label="Alquiler" providers={argentinaProviders.rent} />
-              <ProviderGroup icon="bag-check-outline" label="Compra" providers={argentinaProviders.buy} />
-            </>
-          ) : (
-            <Text style={styles.noProviders}>No hay opciones informadas para este país.</Text>
-          )}
-        </View>
+        <ProviderStrip providers={argentinaProviders} />
+        <Text style={styles.providersUpdated}>En Argentina · la disponibilidad puede cambiar</Text>
 
         {recommendations.length > 0 && (
           <>
@@ -856,82 +854,33 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: fonts.title,
   },
-  providersCard: {
-    padding: 16,
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  providersHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 18,
-  },
-  providersTitle: {
-    color: colors.text,
-    fontSize: 15,
-    fontFamily: fonts.bodyBold,
-  },
   providersUpdated: {
     color: colors.textMuted,
     fontSize: 12,
     fontFamily: fonts.body,
-    marginTop: 2,
+    marginTop: 4,
   },
-  providerGroup: {
-    marginBottom: 16,
-  },
-  providerGroupTitle: {
+  providerMenu: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 10,
+    backgroundColor: colors.surface,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 4,
+    marginBottom: 12,
   },
-  providerGroupLabel: {
-    color: colors.text,
-    fontSize: 14,
-    fontFamily: fonts.label,
-  },
-  providerList: {
-    flexDirection: 'row',
-    gap: 9,
-    paddingRight: 4,
-  },
-  providerChip: {
-    width: 94,
-    minHeight: 98,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 9,
-    backgroundColor: colors.surfaceHigh,
-    borderRadius: 12,
-  },
-  providerLogo: {
-    width: 42,
-    height: 42,
-    borderRadius: 9,
-    marginBottom: 7,
-    backgroundColor: colors.text,
-  },
+  providerMenuItem: { flex: 1, paddingVertical: 8, borderRadius: 18, alignItems: 'center' },
+  providerMenuItemActive: { backgroundColor: colors.accentPrimary },
+  providerMenuText: { color: colors.textMuted, fontFamily: fonts.label, fontSize: 13 },
+  providerMenuTextActive: { color: colors.onAccentPrimary },
+  providerStrip: { gap: 10, paddingVertical: 4 },
+  providerItem: { alignItems: 'center', width: 52 },
+  providerLogo: { width: 44, height: 44, borderRadius: 10 },
   providerLogoFallback: {
-    width: 42,
-    height: 42,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 7,
-    backgroundColor: colors.surfaceAlt,
+    width: 44, height: 44, borderRadius: 10, backgroundColor: colors.surfaceHigh,
+    alignItems: 'center', justifyContent: 'center', padding: 2,
   },
-  providerChipText: {
-    color: colors.text,
-    fontSize: 11,
-    lineHeight: 15,
-    fontFamily: fonts.body,
-    textAlign: 'center',
-  },
+  providerFallbackText: { color: colors.text, fontSize: 8, fontFamily: fonts.label, textAlign: 'center' },
   noProviders: {
     color: colors.textMuted,
     fontSize: 13,

@@ -136,8 +136,12 @@ function ReleasesScreen({ navigation }) {
           ListEmptyComponent={<Text style={styles.mutedText}>No hay películas para mostrar.</Text>}
           renderItem={({ item }) => {
             const reminded = reminders.some(reminder => reminder.movieId === item.id);
+            const Card = tab === 'now' ? TouchableOpacity : View;
             return (
-              <View style={styles.card}>
+              <Card
+                style={styles.card}
+                {...(tab === 'now' ? { onPress: () => navigation.navigate('MovieDetail', { movieId: item.id }), activeOpacity: 0.8 } : {})}
+              >
                 {item.posterUrl ? (
                   <Image source={{ uri: item.posterUrl }} style={styles.poster} />
                 ) : (
@@ -152,7 +156,13 @@ function ReleasesScreen({ navigation }) {
                     <AppIcon name="calendar-outline" size={12} />
                     <Text style={styles.metaText}>{formatDate(item.releaseDate)}</Text>
                     <AppIcon name="star" size={12} tone="movieRating" style={{ marginLeft: 10 }} />
-                    <Text style={styles.movieRatingText}>{formatRating(item.rating)}</Text>
+                    <Text style={styles.movieRatingText}>{formatRating(tab === 'now' ? item.communityRating : item.rating)}</Text>
+                    {tab === 'now' && (
+                      <>
+                        <AppIcon name="chatbubble-outline" size={12} style={{ marginLeft: 10 }} />
+                        <Text style={styles.metaText}>{item.commentsCount ?? 0}</Text>
+                      </>
+                    )}
                   </View>
                   <Text style={styles.overview} numberOfLines={3}>
                     {item.overview || 'Sin sinopsis disponible.'}
@@ -175,7 +185,7 @@ function ReleasesScreen({ navigation }) {
                     </TouchableOpacity>
                   )}
                 </View>
-              </View>
+              </Card>
             );
           }}
         />

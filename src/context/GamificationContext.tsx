@@ -9,7 +9,7 @@ type GamificationContextValue = {
   points: { entries: any[]; nextCursor: number | null };
   fetchMorePoints: () => Promise<void>;
   cancelRedemption: (id: number) => Promise<{ success: boolean; error?: string }>;
-  redeemReward: (reward: { id: string; cost: number }) => Promise<{ success: boolean; code?: string; error?: string }>;
+  redeemReward: (reward: { id: string; cost: number }) => Promise<{ success: boolean; code?: string; redemptionId?: number; error?: string }>;
 };
 const GamificationContext = createContext<GamificationContextValue | undefined>(undefined);
 const emptyAchievements: AchievementsState = { list: [], totalPoints: 0, availablePoints: 0, profile: null, isFetching: false };
@@ -57,7 +57,7 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
           // A history refresh failure must not turn a completed purchase into an apparent failure.
           try { const history = await api.request('/points'); if (viewer.current === userId) setPoints(history); } catch {}
         }
-        return { success: true, code: result.code };
+        return { success: true, code: result.code, redemptionId: result.redemptionId };
       } catch (e) { return { success: false, error: e.message }; }
     },
   }), [achievements, rewards, points, userId]);

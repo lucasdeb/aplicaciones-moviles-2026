@@ -6,7 +6,6 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   StyleSheet,
 } from 'react-native';
 import AppIcon from '../components/AppIcon';
@@ -72,6 +71,8 @@ function AchievementsScreen({ navigation }) {
   const [historyBusy, setHistoryBusy] = useState(false);
   const [redeeming, setRedeeming] = useState(false);
   const [rewardToRedeem, setRewardToRedeem] = useState<Reward | null>(null);
+  const [redeemError, setRedeemError] = useState('');
+  const [redeemed, setRedeemed] = useState<{ title: string; code: string; redemptionId?: number } | null>(null);
 
   // Se recalcula al entrar a la solapa, así refleja las reseñas nuevas
   useOnFocus(fetchAchievements, [user.user?.id]);
@@ -101,15 +102,17 @@ function AchievementsScreen({ navigation }) {
   async function confirmRedeem() {
     if (!rewardToRedeem || redeeming) return;
     setRedeeming(true);
+    setRedeemError('');
 
     const result = await redeemReward(rewardToRedeem);
     setRedeeming(false);
 
     if (!result.success) {
-      Alert.alert('No se pudo canjear', result.error);
+      setRedeemError(result.error || 'No se pudo canjear');
       return;
     }
 
+    setRedeemed({ title: rewardToRedeem.title, code: result.code ?? '', redemptionId: result.redemptionId });
     setRewardToRedeem(null);
   }
 
@@ -251,12 +254,24 @@ function AchievementsScreen({ navigation }) {
       <ConfirmModal
         visible={rewardToRedeem !== null}
         title="Canjear premio"
-        message={`¿Canjear "${rewardToRedeem?.title}" por ${rewardToRedeem?.cost} puntos?`}
+        message={redeemError || `¿Canjear "${rewardToRedeem?.title}" por ${rewardToRedeem?.cost} puntos?`}
         confirmLabel="Canjear"
         loading={redeeming}
         onConfirm={confirmRedeem}
-        onCancel={() => { if (!redeeming) setRewardToRedeem(null); }}
+        onCancel={() => { if (!redeeming) { setRewardToRedeem(null); setRedeemError(''); } }}
       />
+      <ConfirmModal
+        visible={redeemed !== null}
+        title="¡Canje listo!"
+        message={`Presentá este código en el cine para usar "${redeemed?.title}". También lo encontrás en "Mis canjes".`}
+        confirmLabel="Listo"
+        hideCancel
+        onConfirm={() => setRedeemed(null)}
+        onCancel={() => setRedeemed(null)}
+      >
+        <Text selectable style={styles.redeemCode}>{redeemed?.code}</Text>
+        {redeemed?.redemptionId ? <VoucherWalletActions redemptionId={redeemed.redemptionId} /> : null}
+      </ConfirmModal>
     </>
   );
 }
@@ -264,6 +279,10 @@ function AchievementsScreen({ navigation }) {
 const styles = StyleSheet.create({
   cancelVoucher: { marginTop: 10, paddingVertical: 12, paddingHorizontal: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.border },
   cancelVoucherText: { color: colors.text, fontFamily: fonts.label, textAlign: 'center' },
+  redeemCode: {
+    color: colors.rating, fontFamily: fonts.title, fontSize: 24, letterSpacing: 2,
+    textAlign: 'center', marginVertical: 12,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,

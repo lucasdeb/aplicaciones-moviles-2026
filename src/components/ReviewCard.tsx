@@ -5,8 +5,10 @@ import { timeAgo } from '../utils/timeAgo';
 import { formatNumber } from '../utils/formatNumber';
 import StarRating from './StarRating';
 import { getMovieYear } from '../utils/movieMetadata';
+import { getAuthorRing } from '../utils/ranks';
 
 export default function ReviewCard({ review, onPress }) {
+  const ring = getAuthorRing(review.author.reviewCount);
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.8}>
       <Image source={{ uri: review.movie?.posterUrl }} style={styles.poster} />
@@ -20,7 +22,7 @@ export default function ReviewCard({ review, onPress }) {
         </Text>
 
         <View style={styles.authorRow}>
-          <View style={styles.avatar}>
+          <View style={[styles.avatar, ring && { borderWidth: 1.5, borderColor: ring }]}>
             <Text style={styles.avatarInitial}>
               {review.author.name.charAt(0).toUpperCase()}
             </Text>
