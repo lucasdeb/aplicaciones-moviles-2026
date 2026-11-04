@@ -4,11 +4,15 @@ import ConfirmModal from '../components/ConfirmModal';
 import { request } from '../services/http';
 import { useAuth } from '../context/AuthContext';
 import { colors, fonts } from '../theme';
+import { isValidRedemptionCode } from '../utils/validators';
+
+
 export default function ManageRedemptionsScreen() {
   const { user } = useAuth();
   const [action, setAction] = useState<'use' | 'refund' | null>(null);
   const [code, setCode] = useState(''), [result, setResult] = useState<any>(null), [error, setError] = useState(''), [busy, setBusy] = useState(false);
   async function run(action: 'validate' | 'use' | 'refund') {
+    if (!isValidRedemptionCode(code)) { setError('Ingresá un código de 16 caracteres (0-9 y A-F)'); return; }
     setBusy(true); setError('');
     try {
       if (action === 'refund') {

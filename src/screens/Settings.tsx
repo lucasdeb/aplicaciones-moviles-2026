@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import AppIcon from '../components/AppIcon';
 import { useAuth } from '../context/AuthContext';
-import { isValidEmail } from '../utils/validators';
+import { isValidEmail, isValidName } from '../utils/validators';
 import { colors, fonts } from '../theme';
 import { registerDevicePush, pushUnavailableReason } from '../services/push';
 import { request } from '../services/http';
@@ -31,7 +31,7 @@ function SettingsScreen({ navigation }) {
   const hasChanges = name.trim() !== user.user?.name || email.trim() !== user.user?.email;
 
   async function onSave() {
-    if (!name.trim()) return setFormError('El nombre no puede estar vacío');
+   if (!isValidName(name)) return setFormError('Ingresá un nombre de hasta 60 caracteres');
     if (!isValidEmail(email)) return setFormError('Ingresá un email válido');
     setFormError('');
     setSaving(true);

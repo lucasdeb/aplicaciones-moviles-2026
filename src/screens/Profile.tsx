@@ -20,6 +20,7 @@ import NotificationList, { type AppNotification } from '../components/Notificati
 import { RANKS, getRankDecor } from '../utils/ranks';
 import {
   getPublicProfile,
+  getMyProfile,
   repostComment,
   getFriendshipStatus,
   sendFriendRequest,
@@ -183,11 +184,11 @@ function ProfileScreen({ navigation, route }) {
     setError('');
     try {
       const [data, relation, pending, friendList, notificationList] = await Promise.all([
-        getPublicProfile(targetId),
-        me && !isOwn ? getFriendshipStatus(me.id, targetId) : Promise.resolve({ status: 'none' as FriendStatus }),
-        isOwn ? getPendingRequests(me.id) : Promise.resolve([]),
-        isOwn ? getFriends(me.id) : Promise.resolve([]),
-        isOwn ? getNotifications(me.id) : Promise.resolve([]),
+        isOwn ? getMyProfile() : getPublicProfile(targetId),
+        me && !isOwn ? getFriendshipStatus( targetId) : Promise.resolve({ status: 'none' as FriendStatus }),
+        isOwn ? getPendingRequests() : Promise.resolve([]),
+        isOwn ? getFriends() : Promise.resolve([]),
+        isOwn ? getNotifications() : Promise.resolve([]),
       ]);
       setProfile(data);
       setFriendship(relation as { status: FriendStatus; requestId?: number });
@@ -240,7 +241,7 @@ function ProfileScreen({ navigation, route }) {
 
     if (friendship.status === 'none') {
       return run(async () => {
-        const request = await sendFriendRequest(me.id, targetId);
+        const request = await sendFriendRequest( targetId);
         setFriendship({ status: 'sent', requestId: request.id });
       });
     }
@@ -291,7 +292,7 @@ function ProfileScreen({ navigation, route }) {
   async function openNotification(notification: AppNotification) {
     try {
       if (!notification.read) {
-        await markNotificationRead(notification.id, me.id);
+        await markNotificationRead(notification.id);
         setNotifications((current) =>
           current.map((item) =>
             item.id === notification.id ? { ...item, read: true } : item
@@ -313,7 +314,7 @@ function ProfileScreen({ navigation, route }) {
 
   async function handleMarkAllNotificationsRead() {
     try {
-      await markAllNotificationsRead(me.id);
+      await markAllNotificationsRead();
       setNotifications((current) =>
         current.map((notification) => ({ ...notification, read: true }))
       );
@@ -324,7 +325,7 @@ function ProfileScreen({ navigation, route }) {
 
   async function removeRepost(commentId: number) {
     try {
-      const result = await repostComment(commentId, me.id);   // es un interruptor: lo saca
+      const result = await repostComment(commentId);   // es un interruptor: lo saca
       if (!result.reposted) {
         setProfile((p) => ({
           ...p,

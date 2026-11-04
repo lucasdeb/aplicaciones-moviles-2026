@@ -15,6 +15,7 @@ import AppIcon from '../components/AppIcon';
 import { useMovies } from '../context/MovieContext';
 import { pickPhoto } from '../utils/pickPhoto';
 import { colors, fonts } from '../theme';
+import { isValidIsoDate, movieFormError } from '../utils/validators';
 
 function commaSeparated(value: string) {
   return value
@@ -58,8 +59,13 @@ function ImageSlot({ label, aspect, value, onChange, required = false }) {
   }
 
   function handleUseLink() {
-    if (!linkInput.trim()) return;
-    onChange(linkInput.trim());
+    const link = linkInput.trim();
+    if (!link) return;
+    if (!/^https?:\/\//.test(link)) {
+      Alert.alert('Link inválido', 'El link debe empezar con http:// o https://');
+      return;
+     }
+    onChange(link);
     setLinkInput('');
   }
 
@@ -150,13 +156,13 @@ function AddMovieScreen({ navigation, route }) {
       setError('Completá título, sinopsis y al menos un género');
       return;
     }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(releaseDate)) {
-      setError('La fecha de estreno debe usar el formato AAAA-MM-DD');
+    if (!isValidIsoDate(releaseDate)) {
+      setError('Ingresá una fecha de estreno real, con el formato AAAA-MM-DD');
       return;
     }
     const runtimeNumber = Number(runtime);
-    if (!Number.isInteger(runtimeNumber) || runtimeNumber <= 0) {
-      setError('La duración debe ser una cantidad válida de minutos');
+    if (!Number.isInteger(runtimeNumber) || runtimeNumber <= 0 || runtimeNumber > 2000) {
+      setError('La duración debe ser de 1 a 2000 minutos');
       return;
     }
     if (!editingMovie && !posterUrl) {
@@ -178,8 +184,8 @@ function AddMovieScreen({ navigation, route }) {
       return;
     }
 
-    setSaving(true);
-    setError('');
+    
+    
 
     const payload = {
       tmdbId: parsedTmdbId,
@@ -203,6 +209,11 @@ function AddMovieScreen({ navigation, route }) {
       ...(posterUrl && { posterUrl }),
       ...(backdropUrl && { backdropUrl }),
     };
+
+    const formError = movieFormError(payload);
+    if (formError) { setError(formError); return; }
+      setSaving(true);
+      setError('');
 
     const result = editingMovie
         ? await updateMovie(movieId, payload)      

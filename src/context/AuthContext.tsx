@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     updateUser: async data => {
       try {
-        const updated = await api.updateUser(user.user!.id, data);
+        const updated = await api.updateUser( data);
         setUser(current => ({ ...current, user: updated }));
         return { success: true };
       } catch (e) { return { success: false, error: e.message }; }

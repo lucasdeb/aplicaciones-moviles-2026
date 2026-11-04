@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity } from 'react-native';
 import { changePassword } from '../services/api';
-import { isValidPassword, PASSWORD_HINT } from '../utils/validators';
+import { isValidLoginPassword, isValidPassword, PASSWORD_HINT } from '../utils/validators';
 import { colors, fonts } from '../theme';
 
 export default function ChangePasswordScreen() {
@@ -15,8 +15,8 @@ export default function ChangePasswordScreen() {
   async function save() {
     if (busy) return;
     setError(''); setMessage('');
-    if (!currentPassword) { setError('Ingresá tu contraseña actual'); return; }
-    if (!isValidPassword(newPassword) || newPassword.length > 72) { setError(`${PASSWORD_HINT}. Máximo 72 caracteres.`); return; }
+    if (!isValidLoginPassword(currentPassword)) { setError('Ingresá tu contraseña actual'); return; }
+    if (!isValidPassword(newPassword)) { setError(PASSWORD_HINT); return; }
     if (newPassword === currentPassword) { setError('La nueva contraseña debe ser diferente de la actual'); return; }
     if (newPassword !== confirmation) { setError('Las contraseñas no coinciden'); return; }
     setBusy(true);
@@ -33,12 +33,12 @@ export default function ChangePasswordScreen() {
         <Text style={styles.title}>Cambiar contraseña</Text>
         <Text style={styles.hint}>Ingresá tu contraseña actual y elegí una nueva. Se cerrarán las sesiones en los demás dispositivos; esta sesión seguirá activa.</Text>
         <Text style={styles.label}>Contraseña actual</Text>
-        <TextInput style={styles.input} accessibilityLabel="Contraseña actual" secureTextEntry autoCapitalize="none" autoCorrect={false} autoComplete="current-password" value={currentPassword} onChangeText={setCurrentPassword} editable={!busy} maxLength={72} />
+        <TextInput style={styles.input} accessibilityLabel="Contraseña actual" secureTextEntry autoCapitalize="none" autoCorrect={false} autoComplete="current-password" value={currentPassword} onChangeText={setCurrentPassword} editable={!busy} />
         <Text style={styles.label}>Nueva contraseña</Text>
-        <TextInput style={styles.input} accessibilityLabel="Nueva contraseña" secureTextEntry autoCapitalize="none" autoCorrect={false} autoComplete="new-password" value={newPassword} onChangeText={setNewPassword} editable={!busy} maxLength={72} />
-        <Text style={styles.hint}>{PASSWORD_HINT}. Máximo 72 caracteres.</Text>
+        <TextInput style={styles.input} accessibilityLabel="Nueva contraseña" secureTextEntry autoCapitalize="none" autoCorrect={false} autoComplete="new-password" value={newPassword} onChangeText={setNewPassword} editable={!busy} />
+        <Text style={styles.hint}>{PASSWORD_HINT}.</Text>
         <Text style={styles.label}>Repetir nueva contraseña</Text>
-        <TextInput style={styles.input} accessibilityLabel="Repetir nueva contraseña" secureTextEntry autoCapitalize="none" autoCorrect={false} value={confirmation} onChangeText={setConfirmation} editable={!busy} maxLength={72} />
+        <TextInput style={styles.input} accessibilityLabel="Repetir nueva contraseña" secureTextEntry autoCapitalize="none" autoCorrect={false} value={confirmation} onChangeText={setConfirmation} editable={!busy}/>
         {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
         {!!message && <Text accessibilityLiveRegion="polite" style={styles.hint}>{message}</Text>}
         <TouchableOpacity style={[styles.button, busy && styles.disabled]} disabled={busy} onPress={save}>

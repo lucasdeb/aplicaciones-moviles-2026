@@ -34,6 +34,7 @@ import { colors, fonts } from '../theme';
 import { pickPhoto } from '../utils/pickPhoto';
 import StarRatingInput from '../components/StarRatingImput';
 import { formatRating, getMovieYear, getPrimaryGenre } from '../utils/movieMetadata';
+import { isValidRating, isValidReviewText } from '../utils/validators';
 
 const HERO_HEIGHT = 300;
 
@@ -198,15 +199,14 @@ function MovieDetailScreen({ navigation, route }) {
   }
 
   async function likeComment(commentId) {
-    const result = await apiLikeComment(commentId, me.id);
+    const result = await apiLikeComment(commentId);
     replaceComment(result.comment);
     return result.liked;
   }
 
-  async function repostComment(commentId, userId) {
+  async function repostComment(commentId) {
     const result = await apiRepostComment(
-      commentId,
-      userId
+      commentId
     );
 
     replaceComment(result.comment);
@@ -216,7 +216,7 @@ function MovieDetailScreen({ navigation, route }) {
 
   async function deleteComment(commentId) {
     try {
-      await apiDeleteComment(commentId, me.id);
+      await apiDeleteComment(commentId);
       if (editingReviewId === commentId) resetComposer();
       await loadMovie();
       return { success: true };
@@ -236,9 +236,14 @@ function MovieDetailScreen({ navigation, route }) {
   else navigation.push('UserProfile', { userId: authorId });
 }
   async function attach(source: 'camera' | 'gallery') {
+  try {
     const uri = await pickPhoto(source);
     if (uri && identity === currentIdentity.current) setPhoto(uri);
+  } catch (e) {
+    Alert.alert('No se pudo subir la foto', e.message);
   }
+}
+
 
   function handleAddPhoto() {
   if (Platform.OS === 'web') {
@@ -253,10 +258,10 @@ function MovieDetailScreen({ navigation, route }) {
 }
 
   const missing = [
-    !rating && 'puntaje',
-    !commentText.trim() && 'texto',
-    !photo && 'foto',
-  ].filter(Boolean);
+  !isValidRating(rating) && 'puntaje',
+  !isValidReviewText(commentText) && 'texto',
+  !photo && 'foto',
+].filter(Boolean);
   const canPublish = missing.length === 0;
 
   function resetComposer() {
@@ -289,13 +294,13 @@ function MovieDetailScreen({ navigation, route }) {
     setComposerError('');
     try {
       if (isEditingMyReview) {
-        await updateComment(editingReviewId, me.id, {
+        await updateComment(editingReviewId,  {
           text: commentText.trim(),
           rating,
           photo,
         });
       } else {
-        await postComment(movieId, me.id, commentText.trim(), rating, photo);
+        await postComment(movieId, commentText.trim(), rating, photo);
       }
       if (identity !== currentIdentity.current) return;
       resetComposer();
@@ -533,6 +538,7 @@ function MovieDetailScreen({ navigation, route }) {
               style={styles.commentInput}
               placeholder="Contá qué te gustó, qué no, a quién se la recomendarías..."
               placeholderTextColor={colors.textMuted}
+              maxLength={5000}
               value={commentText}
               onChangeText={setCommentText}
               multiline
@@ -605,7 +611,7 @@ function MovieDetailScreen({ navigation, route }) {
               onPressAuthor={() => openAuthor(comment.author?.id)}
               onLike={requireLogin(() => likeComment(comment.id))}
               initialLiked={comment.liked ?? false}
-              onRepost={requireLogin(() => repostComment(comment.id, me?.id))}
+              onRepost={requireLogin(() => repostComment(comment.id))}
               canDelete={canModerate || comment.author.id === me?.id}
               reactionsDisabled={comment.author.id === me?.id}
               onDelete={() => deleteComment(comment.id)}

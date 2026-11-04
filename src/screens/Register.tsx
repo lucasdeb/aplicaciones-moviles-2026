@@ -12,7 +12,7 @@ import {
 import AppIcon from '../components/AppIcon';
 import { useAuth } from '../context/AuthContext';
 import { colors, fonts } from '../theme';
-import { isValidEmail, isValidPassword, PASSWORD_HINT } from '../utils/validators';
+import { isValidEmail, isValidName, isValidPassword, PASSWORD_HINT } from '../utils/validators';
 
 function RegisterScreen({ navigation }) {
   const { user, handleRegister } = useAuth();
@@ -23,8 +23,8 @@ function RegisterScreen({ navigation }) {
   const [formError, setFormError] = useState('');
 
   async function onSubmit() {
-    if (!name.trim()) {
-      setFormError('Ingresá tu nombre');
+    if (!isValidName(name)) {
+        setFormError('Ingresá un nombre de hasta 60 caracteres');
       return;
     }
     if (!isValidEmail(email)) {
