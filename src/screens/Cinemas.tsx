@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { withTimeout } from '../utils/withTimeout';
 import {
   View,
   Text,
@@ -24,18 +26,13 @@ function formatDistance(km: number) {
   return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
 }
 
-function withTimeout<T>(promise: Promise<T>, ms: number) {
-  return Promise.race([
-    promise,
-    new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
-  ]);
-}
-
 function CinemasScreen() {
   const [pos, setPos] = useState<Location.LocationObject | null>(null);
   const [place, setPlace] = useState<string | null>(null);
   const [cinemas, setCinemas] = useState<Cinema[]>([]);
   const [stale, setStale] = useState(false);
+  const [attribution, setAttribution] = useState('');
+  const position = useRef<Location.LocationObject | null>(null);
   const [lookupError, setLookupError] = useState('');
   const requestVersion = useRef(0);
   const permissionDenied = useRef(false);
@@ -46,6 +43,11 @@ function CinemasScreen() {
 
   
   useEffect(() => {
+    const listener = AppState.addEventListener('change', state => { if (state === 'active') setAttempt(value => value + 1); });
+    return () => { listener.remove(); requestVersion.current++; };
+  }, []);
+
+  useFocusEffect(useCallback(() => {
     let sub: Location.LocationSubscription | undefined;
     let cancelled = false;
     let gotPosition = false;
@@ -61,31 +63,47 @@ function CinemasScreen() {
         if (cancelled) return;
         permissionDenied.current = permission !== 'granted';
         if (permission !== 'granted') {
+          position.current = null; setPos(null); lastArea.current = ''; requestVersion.current++;
           setStatus('denied');
           return;
         }
 
         try {
-          const last = await Location.getLastKnownPositionAsync({ maxAge: 30 * 60 * 1000, requiredAccuracy: 3000 });
-          if (last) applyPosition(last);
+          const last = await withTimeout(
+            Location.getLastKnownPositionAsync({ maxAge: 10 * 60 * 1000, requiredAccuracy: 2000 }),
+            2000,
+            'Ubicación guardada no disponible'
+          );
+          if (last) {
+            position.current = last;
+            applyPosition(last);
+          }
         } catch {
           // not available on some devices or on web
         }
 
         try {
-          applyPosition(await withTimeout(Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }), 8000));
-        } catch {
-          if (!gotPosition) applyPosition(await withTimeout(Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low }), 8000));
+          const p = await withTimeout(Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }), 15000,
+            'No pudimos obtener tu ubicación. Activá la ubicación del teléfono e intentá de nuevo.');
+          if (cancelled) return;
+          position.current = p;
+          applyPosition(p);
+        } catch (error) {
+          if (!gotPosition && !position.current) throw error;
+          // A failed fresh GPS fix must not discard an available recent position/list.
         }
         if (cancelled) return;
-
-        sub = await Location.watchPositionAsync(
-          { accuracy: Location.Accuracy.Balanced, distanceInterval: 500 },
-          applyPosition
-        );
-        if (cancelled) sub.remove();
-      } catch {
-        if (!cancelled && !gotPosition) setStatus('error');
+        try {
+          sub = await Location.watchPositionAsync(
+            { accuracy: Location.Accuracy.Balanced, distanceInterval: 500 },
+            next => { if (!cancelled) { position.current = next; setPos(next); } }
+          );
+          if (cancelled) sub.remove();
+        } catch { /* A watcher is optional once we have a usable position. */ }
+      } catch (e) {
+        if (cancelled) return;
+        setLookupError(e instanceof Error ? e.message : 'No pudimos obtener tu ubicación. Intentá de nuevo.');
+        if (!gotPosition) setStatus('error');
       }
     })();
 
@@ -94,7 +112,7 @@ function CinemasScreen() {
       ++requestVersion.current;
       sub?.remove();
     };
-  }, [attempt]);
+  }, [attempt]));
 
   useEffect(() => {
     const listener = AppState.addEventListener('change', state => {
@@ -116,23 +134,22 @@ function CinemasScreen() {
       if (version !== requestVersion.current) return;
       setCinemas(result.cinemas);
       setStale(result.source === 'stale');
+      setAttribution(result.attribution || '© OpenStreetMap contributors');
       setLookupError('');
       setStatus('ready');
     } catch (e) {
       if (version !== requestVersion.current) return;
-      setLookupError(`No pudimos actualizar los cines. ${e.message}`);
+      lastArea.current = '';
+      const message = e instanceof Error ? e.message : 'Error desconocido';
+      setLookupError(`No pudimos actualizar los cines. ${message}`);
       setStatus((current) => (current === 'ready' ? 'ready' : 'error'));
     }
 
-    if (Platform.OS === 'web') return;
-    try {
-      const [addr] = await Location.reverseGeocodeAsync({ latitude, longitude });
-      if (version !== requestVersion.current) return;
-      setPlace(addr ? [addr.district ?? addr.subregion, addr.city].filter(Boolean).join(', ') : null);
-    } catch (e) {
-      if (version !== requestVersion.current) return;
-      setPlace(null);
-    }
+    if (Platform.OS === 'web' || version !== requestVersion.current) return;
+    // Address labels are optional and must not keep pull-to-refresh waiting.
+    void withTimeout(Location.reverseGeocodeAsync({ latitude, longitude }), 5000, 'Ubicación no disponible')
+      .then(([addr]) => { if (version === requestVersion.current) setPlace(addr ? [addr.district ?? addr.subregion, addr.city].filter(Boolean).join(', ') : null); })
+      .catch(() => { if (version === requestVersion.current) setPlace(null); });
   }
 
   useEffect(() => {
@@ -142,7 +159,7 @@ function CinemasScreen() {
     if (area === lastArea.current) return;
     lastArea.current = area;
     setPlace(null);
-    loadCinemas(c.latitude, c.longitude);
+    void loadCinemas(c.latitude, c.longitude);
   }, [c?.latitude, c?.longitude]);
 
   async function handleRefresh() {
@@ -207,8 +224,8 @@ function CinemasScreen() {
       </Text>
 
       {lookupError ? <Text style={styles.subtitle} accessibilityRole="alert">{lookupError} Mostramos los resultados de la última búsqueda correcta.</Text> : null}
-      {stale ? <Text style={styles.subtitle}>Mostramos la última búsqueda guardada porque el proveedor no está disponible.</Text> : null}
-      <Text style={styles.subtitle}>Datos de OpenStreetMap · Ubicación consultada a través de WhatNext</Text>
+      {stale ? <Text style={styles.subtitle}>Mostramos la última búsqueda guardada.</Text> : null}
+      <Text style={styles.subtitle}>{attribution || 'Datos de OpenStreetMap · Ubicación consultada a través de WhatNext'}</Text>
       <FlatList
         data={cinemas}
         keyExtractor={(item) => item.id}
@@ -216,7 +233,7 @@ function CinemasScreen() {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.accentPrimary} />
         }
-        ListEmptyComponent={<Text style={styles.mutedText}>No encontramos cines en 15 km a la redonda.</Text>}
+        ListEmptyComponent={<Text style={styles.mutedText}>No encontramos cines en los datos disponibles a menos de 15 km.</Text>}
         renderItem={({ item }) => (
           <View style={styles.card}>
             <View style={styles.iconCircle}>

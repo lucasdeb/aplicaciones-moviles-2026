@@ -13,7 +13,7 @@ import {
 import AppIcon from '../components/AppIcon';
 import { useAuth } from '../context/AuthContext';
 import { colors, fonts } from '../theme';
-import { isValidEmail } from '../utils/validators';
+import { isValidEmail, isValidPassword } from '../utils/validators';
 
 function LoginScreen({ navigation }) {
   const { user, handleLogin } = useAuth();
@@ -27,12 +27,12 @@ function LoginScreen({ navigation }) {
       setFormError('Ingresá un email válido');
       return;
     }
-    if (!password) {
+    if (!isValidPassword(password)) {
       setFormError('Ingresá tu contraseña');
       return;
     }
     setFormError('');
-    const result = await handleLogin({ email: email.trim(), password });
+    const result = await handleLogin({ email: email.trim().toLowerCase(), password });
     if (!result.success) {
       setFormError(result.error);
       setPassword('');
@@ -55,6 +55,7 @@ function LoginScreen({ navigation }) {
         keyboardType="email-address"
         value={email}
         onChangeText={setEmail}
+        maxLength={120}
       />
 
       <View style={styles.passwordWrapper}>
@@ -65,6 +66,7 @@ function LoginScreen({ navigation }) {
           secureTextEntry={!showPassword}
           value={password}
           onChangeText={setPassword}
+          maxLength={72}
         />
         <TouchableOpacity
           style={styles.eyeButton}
