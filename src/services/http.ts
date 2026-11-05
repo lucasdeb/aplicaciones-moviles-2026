@@ -11,14 +11,14 @@ const BASE = resolveApiUrl({
 export class ApiError extends Error {
   constructor(message: string, public status: number, public code?: string) { super(message); }
 }
-export async function request(path: string, method = 'GET', body?: unknown): Promise<any> {
+export async function request(path: string, method = 'GET', body?: unknown, timeout = 20000): Promise<any> {
   const token = getToken();
   let response: Response;
   try {
     response = await fetch(`${BASE}${path}`, { method, headers: {
       Accept: 'application/json', ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    }, body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(20000) });
+    }, body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(timeout) });
   } catch { throw new ApiError('No se pudo conectar con el servidor. Revisá tu conexión e intentá de nuevo.', 0); }
   if (response.status === 204) return;
   const result = await response.json().catch(() => null);

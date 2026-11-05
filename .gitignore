@@ -3,6 +3,9 @@
 # configuración local de herramientas de desarrollo, no es parte de la app
 .claude/
 
+.env
+.env.example
+
 # dependencies
 node_modules/
 
