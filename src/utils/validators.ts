@@ -37,4 +37,4 @@ export function movieFormError(m) {
   return null;
 }
 
-export const PASSWORD_HINT = 'Mínimo 8 caracteres, con al menos una letra y un número. Máximo 72 bytes (las tildes y los emojis ocupan más).';
+export const PASSWORD_HINT = 'Mínimo 8 caracteres, con al menos una letra y un número.';

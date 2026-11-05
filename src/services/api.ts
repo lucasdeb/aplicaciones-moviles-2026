@@ -1,6 +1,6 @@
 import { request, ApiError } from './http';
 export { request, ApiError } from './http';
-export { getMovies, getMovieHome, searchMovies, getMovie, getRecommendations, createMovie, updateMovie, deleteMovie } from './movies';
+export { getMovieHome, searchMovies, getMovie, getRecommendations, createMovie, updateMovie, deleteMovie } from './movies';
 export const login = (body: { email: string; password: string }) => request('/auth/login', 'POST', body);
 export const register = (body: { name: string; email: string; password: string }) => request('/auth/register', 'POST', body);
 export async function logout() {
@@ -10,7 +10,6 @@ export async function logout() {
 export const getSession = () => request('/auth/me');
 export const updateUser = (data: unknown) => request('/users/me', 'PATCH', data);
 export const getComments = (id: number) => request(`/movies/${id}/reviews`);
-export const getUserComments = (id: number) => request(`/users/${id}/reviews`);
 export const postComment = (id: number, text: string, rating?: number, photo?: string) => request(`/movies/${id}/reviews`, 'POST', { text, rating, photo });
 export const updateComment = (id: number,  data: unknown) => request(`/reviews/${id}`, 'PATCH', data);
 export const deleteComment = (id: number) => request(`/reviews/${id}`, 'DELETE');
@@ -20,8 +19,6 @@ export const getPopularReviews = () => request('/feed/popular');
 export const getFriendReviews = () => request('/feed/friends');
 export const getAllUsers = () => request('/users');
 export const updateUserRole = (id: number, role: string) => request(`/users/${id}/role`, 'PATCH', { role });
-export const getUser = (id: number) => request(`/users/${id}`);
-export const getUserReposts = (id: number) => request(`/users/${id}/reposts`);
 export const getPublicProfile = (id: number) => request(`/users/${id}`);
 export const getMyProfile = () => request('/users/me');
 export const getAchievements = () => request('/achievements');

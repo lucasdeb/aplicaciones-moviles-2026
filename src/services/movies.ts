@@ -11,7 +11,6 @@ export type Movie = {
   friendsRating: { rating: number; count: number } | null;
 };
 export type MovieHome = { list: Movie[]; featured: Movie[]; hero: Movie[]; trending: Movie[] };
-export const getMovies = (): Promise<Movie[]> => request('/movies');
 export const getMovieHome = (): Promise<MovieHome> => request('/movies/home');
 export const searchMovies = (query: string): Promise<Movie[]> => request(`/movies/search?q=${encodeURIComponent(query.trim())}`);
 export const getMovie = (id: number): Promise<Movie & { friendsWhoReviewed: Array<{ id: number; name: string; role: string; rating: number | null }> }> => request(`/movies/${id}`);

@@ -176,6 +176,7 @@ function ProfileScreen({ navigation, route }) {
   const [reviewsSectionY, setReviewsSectionY] = useState(0);
 
   // ---------- Carga: todo en paralelo ----------
+  
   async function load() {
     if (targetId === undefined) {        // pestaña Perfil sin sesión: no hay nada que cargar
       setLoading(false);

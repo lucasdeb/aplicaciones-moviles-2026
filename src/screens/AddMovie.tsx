@@ -24,15 +24,13 @@ function commaSeparated(value: string) {
     .filter(Boolean);
 }
 
-function pairLines(value: string): [string, string][] | null {
-  const lines = value
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean);
-
-  const pairs = lines.map((line) => line.split('|').map((part) => part.trim()));
-  if (!pairs.every(([first, second]) => first && second)) return null;
-  return pairs.map(([first, second]) => [first, second]);
+function pairLines(value: string, secondRequired = false): [string, string][] | null {
+  const pairs = value.split('\n').map((line) => line.trim()).filter(Boolean).map((line) => {
+    const i = line.lastIndexOf('|');
+    return i < 0 ? ['', ''] : [line.slice(0, i).trim(), line.slice(i + 1).trim()];
+  });
+  if (!pairs.every(([first, second]) => first && (second || !secondRequired))) return null;
+  return pairs as [string, string][];
 }
 
 function pairsToText(items: Array<{ name: string; [field: string]: string }> | undefined, secondField: string) {
