@@ -108,7 +108,7 @@ function HomeScreen({ navigation }) {
     try {
       const [popular, friends] = await Promise.all([
         getPopularReviews(),
-        currentUser ? getFriendReviews(currentUser.id) : Promise.resolve([]),
+        currentUser ? getFriendReviews() : Promise.resolve([]),
       ]);
       if (version !== feedVersion.current || viewer !== feedViewer.current) return;
       setPopularReviews(popular);
@@ -170,6 +170,7 @@ function HomeScreen({ navigation }) {
           placeholder="Buscar película por título"
           placeholderTextColor={colors.textMuted}
           value={search}
+          maxLength={80}
           onChangeText={setSearch}
           autoFocus
         />

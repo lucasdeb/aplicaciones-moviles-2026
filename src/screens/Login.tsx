@@ -13,7 +13,7 @@ import {
 import AppIcon from '../components/AppIcon';
 import { useAuth } from '../context/AuthContext';
 import { colors, fonts } from '../theme';
-import { isValidEmail, isValidPassword } from '../utils/validators';
+import { isValidEmail, isValidLoginPassword } from '../utils/validators';
 
 function LoginScreen({ navigation }) {
   const { user, handleLogin } = useAuth();
@@ -27,8 +27,8 @@ function LoginScreen({ navigation }) {
       setFormError('Ingresá un email válido');
       return;
     }
-    if (!isValidPassword(password)) {
-      setFormError('Ingresá tu contraseña');
+    if (!isValidLoginPassword(password)) {
+      setFormError('Ingresá una contraseña válida');
       return;
     }
     setFormError('');

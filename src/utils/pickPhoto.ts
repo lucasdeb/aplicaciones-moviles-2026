@@ -1,6 +1,7 @@
 import { request } from '../services/http';
 import { Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { isValidImageUpload } from './validators';
 
 export async function pickPhoto(
   source: 'camera' | 'gallery',
@@ -28,6 +29,12 @@ export async function pickPhoto(
       : await ImagePicker.launchImageLibraryAsync(options);
 
   if (result.canceled) return null;
-  const uploaded = await request('/uploads', 'POST', { image: `data:image/jpeg;base64,${result.assets[0].base64}` });
+  const image = `data:image/jpeg;base64,${result.assets[0].base64}`;
+  if (!isValidImageUpload(image)) {
+    Alert.alert('Foto demasiado grande', 'Probá con otra foto o recortala un poco más.');
+    return null;
+  }
+  const uploaded = await request('/uploads', 'POST', { image });
   return uploaded.url;
+
 }
