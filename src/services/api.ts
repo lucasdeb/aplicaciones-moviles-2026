@@ -1,6 +1,6 @@
 import { request, ApiError } from './http';
 export { request, ApiError } from './http';
-export { getMovieHome, searchMovies, getMovie, getRecommendations, createMovie, updateMovie, deleteMovie } from './movies';
+export { searchMovies, getMovie, getRecommendations } from './movies';
 export const login = (body: { email: string; password: string }) => request('/auth/login', 'POST', body);
 export const register = (body: { name: string; email: string; password: string }) => request('/auth/register', 'POST', body);
 export async function logout() {

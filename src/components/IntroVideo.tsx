@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { fonts } from '../theme';
+import { colors, fonts } from '../theme';
 
 const MAX_DURATION_MS = 12000;
 
@@ -42,7 +42,7 @@ export default function IntroVideo({ onFinish }: IntroVideoProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: colors.black,
   },
   skip: {
     position: 'absolute',

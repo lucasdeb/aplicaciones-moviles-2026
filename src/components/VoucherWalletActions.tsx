@@ -32,4 +32,4 @@ export default function VoucherWalletActions({ redemptionId }: { redemptionId: n
     {error ? <Text style={styles.error} accessibilityRole="alert">{error}</Text> : null}
   </View>;
 }
-const styles = StyleSheet.create({ container: { marginTop: 8 }, button: { backgroundColor: '#000', borderColor: colors.border, borderWidth: 1, borderRadius: 8, padding: 12, marginVertical: 4 }, disabled: { opacity: 0.5 }, label: { color: '#fff', fontFamily: fonts.label, textAlign: 'center' }, note: { color: colors.textMuted, fontSize: 12, marginTop: 4 }, error: { color: colors.danger, marginTop: 8 } });
+const styles = StyleSheet.create({ container: { marginTop: 8 }, button: { backgroundColor: colors.black, borderColor: colors.border, borderWidth: 1, borderRadius: 8, padding: 12, marginVertical: 4 }, disabled: { opacity: 0.5 }, label: { color: colors.white, fontFamily: fonts.label, textAlign: 'center' }, note: { color: colors.textMuted, fontSize: 12, marginTop: 4 }, error: { color: colors.danger, marginTop: 8 } });

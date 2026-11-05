@@ -32,7 +32,7 @@ import {
 import CommentCard from '../components/CommentCard';
 import { colors, fonts } from '../theme';
 import { pickPhoto } from '../utils/pickPhoto';
-import StarRatingInput from '../components/StarRatingImput';
+import StarRatingInput from '../components/StarRatingInput';
 import { formatRating, getMovieYear, getPrimaryGenre } from '../utils/movieMetadata';
 import { isValidRating, isValidReviewText } from '../utils/validators';
 
@@ -602,7 +602,7 @@ function MovieDetailScreen({ navigation, route }) {
         )}
 
         {loadingComments ? (
-          <ActivityIndicator color={colors.accentPrimary} style={{ marginTop: 16 }} />
+          <ActivityIndicator color={colors.accentPrimary} style={styles.commentsLoader} />
         ) : (
           comments.map((comment) => (
             <CommentCard
@@ -625,6 +625,7 @@ function MovieDetailScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
+  commentsLoader: { marginTop: 16 },
   container: {
     flex: 1,
     backgroundColor: colors.background,

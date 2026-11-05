@@ -1,5 +1,5 @@
 import { notificationPermissionHint, notificationRegistrationFailed } from '../utils/notificationFeedback';
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AppState } from 'react-native';
 import { useAuth } from './AuthContext';
 import { getToken } from '../services/session';
@@ -49,7 +49,7 @@ export function RemindersProvider({ children }: { children: ReactNode }) {
     const listener = AppState.addEventListener('change', state => { if (state === 'active') void refresh(); });
     return () => listener.remove();
   }, [refresh, user.isFetching]);
-  async function toggle(movieId: number) {
+  const toggle = useCallback(async (movieId: number) => {
     if (!userId) throw new Error('Iniciá sesión para guardar un aviso');
     if (pending.current.has(movieId)) throw new Error('El aviso se está guardando');
     ++version.current;
@@ -80,8 +80,12 @@ export function RemindersProvider({ children }: { children: ReactNode }) {
     } finally {
       if (viewer.current === userId) { pending.current.delete(movieId); setBusy([...pending.current]); }
     }
-  }
-  return <RemindersContext.Provider value={{ reminders, busy, error, deviceError, refresh, toggle }}>{children}</RemindersContext.Provider>;
+  }, [userId, reminders, refresh]);
+  const value = useMemo(
+    () => ({ reminders, busy, error, deviceError, refresh, toggle }),
+    [reminders, busy, error, deviceError, refresh, toggle]
+  );
+  return <RemindersContext.Provider value={value}>{children}</RemindersContext.Provider>;
 }
 export function useReminders() {
   const context = useContext(RemindersContext);

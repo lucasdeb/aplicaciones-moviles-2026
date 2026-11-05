@@ -34,7 +34,7 @@ export function getRankDecor(index: number) {
   return RANK_DECOR[Math.min(index, RANK_DECOR.length - 1)];
 }
 
-export function getRankIndex(reviewCount?: number) {
+function getRankIndex(reviewCount?: number) {
   return RANKS.filter((rank) => (reviewCount ?? 0) >= rank.min).length - 1;
 }
 

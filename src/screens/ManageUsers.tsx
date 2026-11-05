@@ -40,7 +40,7 @@ function ManageUsersScreen() {
     <View style={styles.container}>
       <Text style={styles.headerTitle}>Administrar usuarios</Text>
 
-      {error ? <Text style={{ color: colors.danger }}>{error}</Text> : null}
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
       {loading ? (
         <View style={styles.centered}>
           <ActivityIndicator color={colors.accentPrimary} />
@@ -87,6 +87,7 @@ function ManageUsersScreen() {
 }
 
 const styles = StyleSheet.create({
+  errorText: { color: colors.danger },
   container: {
     flex: 1,
     backgroundColor: colors.background,

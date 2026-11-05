@@ -480,7 +480,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   imageOverlayText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 11,
     marginLeft: 6,
     fontFamily: fonts.bodyBold,

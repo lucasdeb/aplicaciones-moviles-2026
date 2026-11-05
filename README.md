@@ -9,7 +9,7 @@ Keep both checkouts beside each other:
 ```text
 apps/
   aplicaciones-moviles-2026/   frontend
-  aplicaciones-moviles-2026-back/ API, worker, SQLite, uploads, private .env
+  appsmovilesBACK/ API, worker, SQLite, uploads, private .env
 ```
 
 On the configured development computer, run from this frontend:
@@ -22,11 +22,11 @@ This launches the standalone API on port 3000, its worker, and Expo with its int
 
 For two terminals, use `npm run backend` here for the API/worker, then `npx expo start --go` for Expo (use Node 22 when launching Expo directly). `npm start` starts only Expo. Scan the QR code with the iPhone Camera or Expo Go on Android; real remote push requires a development/production build and platform credentials.
 
-For a fresh machine, install frontend dependencies with `npm ci`, clone the backend beside it as `aplicaciones-moviles-2026-back`, and follow that repository’s setup guide to install dependencies and configure its private `.env`. The launcher also accepts the repository's upstream name `appsmovilesBACK` when the local folder is absent. For a different checkout location, set `WHATNEXT_BACKEND_DIR` to the backend directory before starting development. Secrets and real database contents are not distributed through Git.
+For a fresh machine, install frontend dependencies with `npm ci`, clone the backend beside it as `appsmovilesBACK`, and follow that repository’s setup guide to install dependencies and configure its private `.env`. For a different checkout location, set `WHATNEXT_BACKEND_DIR` to the backend directory before starting development. Secrets and real database contents are not distributed through Git.
 
 Leave frontend `EXPO_PUBLIC_API_URL` empty for local development. The app follows Expo’s network hostname on API port 3000; keep the phone and computer on the same Wi-Fi. Set a public HTTPS API URL for production. The Expo tunnel does not expose the API.
 
-Backend configuration and uploaded files are in `../aplicaciones-moviles-2026-back/.env` and `../aplicaciones-moviles-2026-back/uploads`. `DATABASE_URL` in that private `.env` selects the SQLite file. Backend deployment and Prisma Studio commands run in that separate repository.
+Backend configuration and uploaded files are in `../appsmovilesBACK/.env` and `../appsmovilesBACK/uploads`. `DATABASE_URL` in that private `.env` selects the SQLite file. Backend deployment and Prisma Studio commands run in that separate repository.
 
 ## Daily catalog sync
 
@@ -75,9 +75,9 @@ Private operations derive the actor from the session, never from a caller-provid
 
 ## Verification and backend documentation
 
-Run `npm run typecheck` and `npm test` here for frontend checks. The backend has its own type checks, build, integration tests and deployment in its repository.
+Run `npm run typecheck` here for frontend checks. The backend has its own type checks and build in its repository.
 
-See the [backend README](https://github.com/Zand3r5/appsmovilesBACK) and [architecture guide](https://github.com/Zand3r5/appsmovilesBACK/blob/main/ARCHITECTURE.md) for API contracts, calculations and the files responsible for each function.
+See the [backend README](https://github.com/Zand3r5/appsmovilesBACK) for its setup.
 
 ## Account reminders and nearby cinemas
 
@@ -101,7 +101,7 @@ Staff can validate and use reward codes from Settings → Validar canjes. Supera
 
 `POST /api/uploads` accepts authenticated JPEG/PNG images, validates decoded pixels, removes metadata and stores resized WebP files. Reviews save image URLs; uploaded review images require ownership. `/media/:filename` serves these public images. Keep the upload directory on persistent storage. `npm run media:migrate` in the backend backs up the database and converts legacy embedded images. `npm run db:backup` snapshots SQLite and copies uploads into the same backup folder.
 
-[deploy/README.md](deploy/README.md) describes the single-host Docker setup, HTTPS, initial administrator, backups and mobile push setup. Frontend CI checks frontend types and tests; backend CI checks server types, tests and build. Production rejects placeholder JWT secrets. Container startup, public hosting and physical-device notification delivery still require validation in the target environment.
+Frontend CI checks frontend types; backend CI checks server types and build. Production rejects placeholder JWT secrets. Public hosting and physical-device notification delivery still require validation in the target environment.
 
 ## Points history and Wallet vouchers
 

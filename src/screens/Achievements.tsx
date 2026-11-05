@@ -119,7 +119,7 @@ function AchievementsScreen({ navigation }) {
   return (
     <>
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        {achievements.error ? <Text style={{ color: colors.danger }} accessibilityRole="alert">{achievements.error}</Text> : null}
+        {achievements.error ? <Text style={styles.errorText} accessibilityRole="alert">{achievements.error}</Text> : null}
         <View style={styles.header}>
           <View style={styles.titleRow}>
             <BrandLogo size={36} />
@@ -209,7 +209,7 @@ function AchievementsScreen({ navigation }) {
               <View style={styles.redeemed}>
                 <Text style={styles.sectionTitle}>Mis canjes</Text>
                 {rewards.redeemed.map((r) => (
-                  <View key={r.code} style={{ marginTop: 12 }}>
+                  <View key={r.code} style={styles.listItem}>
                     <Text style={styles.redeemedItem}>
                       {r.title} · código {r.code} · {({ active: 'Disponible', used: 'Usado', expired: 'Vencido', refunded: 'Reintegrado' })[r.status] ?? r.status}
                     </Text>
@@ -224,11 +224,11 @@ function AchievementsScreen({ navigation }) {
             <View style={styles.redeemed}>
               <Text style={styles.sectionTitle}>Historial de puntos</Text>
               <Text style={styles.sectionMeta}>Los puntos de un logro se acreditan una sola vez y se conservan.</Text>
-              {points.entries.length ? points.entries.map(entry => <View key={entry.id} style={{ marginTop: 12 }}>
+              {points.entries.length ? points.entries.map(entry => <View key={entry.id} style={styles.listItem}>
                 <Text style={styles.redeemedItem}>{entry.amount > 0 ? '+' : ''}{entry.amount} pts · {entry.description}</Text>
                 <Text style={styles.sectionMeta}>{new Date(entry.createdAt).toLocaleDateString()}</Text>
               </View>) : <Text style={styles.redeemedItem}>Todavía no tenés movimientos.</Text>}
-              {historyError ? <Text style={{ color: colors.danger }}>{historyError}</Text> : null}
+              {historyError ? <Text style={styles.errorText}>{historyError}</Text> : null}
               {points.nextCursor ? <TouchableOpacity disabled={historyBusy} onPress={async () => { setHistoryBusy(true); setHistoryError(''); try { await fetchMorePoints(); } catch (e) { setHistoryError(e.message); } finally { setHistoryBusy(false); } }}><Text style={styles.redeemedItem}>{historyBusy ? 'Cargando…' : 'Ver más movimientos'}</Text></TouchableOpacity> : null}
             </View>
 
@@ -277,6 +277,8 @@ function AchievementsScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  errorText: { color: colors.danger },
+  listItem: { marginTop: 12 },
   cancelVoucher: { marginTop: 10, paddingVertical: 12, paddingHorizontal: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.border },
   cancelVoucherText: { color: colors.text, fontFamily: fonts.label, textAlign: 'center' },
   redeemCode: {

@@ -40,6 +40,14 @@ function CinemasScreen() {
   const [status, setStatus] = useState<Status>('loading');
   const [refreshing, setRefreshing] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [slow, setSlow] = useState(false);
+
+  useEffect(() => {
+    setSlow(false);
+    if (status !== 'loading') return;
+    const timer = setTimeout(() => setSlow(true), 15000);
+    return () => clearTimeout(timer);
+  }, [status, attempt]);
 
   
   useEffect(() => {
@@ -184,6 +192,7 @@ function CinemasScreen() {
       <View style={styles.centered}>
         <ActivityIndicator color={colors.accentPrimary} />
         <Text style={styles.mutedText}>{c ? 'Buscando cines cerca tuyo...' : 'Obteniendo tu ubicación...'}</Text>
+        {slow ? <Text style={styles.mutedText}>Está tardando más de lo normal. Seguimos buscando…</Text> : null}
       </View>
     );
   }

@@ -17,6 +17,8 @@ export const colors = {
   rating: '#e50914', // calificaciones y gamificación también respetan el rojo de marca
   border: 'rgba(255,255,255,0.08)', // glass border (white/5–white/10 en el export)
   danger: '#ffb4ab', // error
+  black: '#000000',
+  white: '#ffffff',
 };
 
 // Tipografía de la marca: Be Vietnam Pro en toda la app.

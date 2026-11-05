@@ -557,7 +557,7 @@ function ProfileScreen({ navigation, route }) {
               <Text style={styles.sectionTitle}>Solicitudes de amistad ({requests.length})</Text>
               {requests.map((r) => (
                 <View key={r.id} style={styles.requestRow}>
-                  <TouchableOpacity style={{ flex: 1 }} onPress={() => openUser(r.from.id)}>
+                  <TouchableOpacity style={styles.flexOne} onPress={() => openUser(r.from.id)}>
                     <Text style={styles.requestName}>{r.from.name}</Text>
                     <Text style={styles.hint}>quiere ser tu amigo</Text>
                   </TouchableOpacity>
@@ -634,7 +634,7 @@ function ProfileScreen({ navigation, route }) {
             {tab === 'reposts' && (
               <View style={styles.repostHeader}>
                 <AppIcon name="repeat" size={14} />
-                <TouchableOpacity style={{ flex: 1 }} onPress={() => openUser(comment.author?.id)}>
+                <TouchableOpacity style={styles.flexOne} onPress={() => openUser(comment.author?.id)}>
                   <Text style={styles.repostLabel}>Reseña de {comment.author?.name ?? 'Usuario'}</Text>
                 </TouchableOpacity>
                 {isOwn && (
@@ -681,6 +681,7 @@ function ProfileScreen({ navigation, route }) {
   );
 }
 const styles = StyleSheet.create({
+  flexOne: { flex: 1 },
   container: {
     flex: 1,
     backgroundColor: colors.background,

@@ -94,7 +94,7 @@ function ReleasesScreen({ navigation }) {
         <SettingsButton />
       </View>
 
-      {reminderError ? <Text style={{ color: colors.danger, paddingHorizontal: 16 }}>{reminderError}</Text> : null}
+      {reminderError ? <Text style={styles.reminderError}>{reminderError}</Text> : null}
       <View style={styles.segment}>
         {(['upcoming', 'now'] as Tab[]).map((key) => (
           <TouchableOpacity
@@ -159,11 +159,11 @@ function ReleasesScreen({ navigation }) {
                   <View style={styles.metaRow}>
                     <AppIcon name="calendar-outline" size={12} />
                     <Text style={styles.metaText}>{formatDate(item.releaseDate)}</Text>
-                    <AppIcon name="star" size={12} tone="movieRating" style={{ marginLeft: 10 }} />
+                    <AppIcon name="star" size={12} tone="movieRating" style={styles.statIcon} />
                     <Text style={styles.movieRatingText}>{formatRating(tab === 'now' ? item.communityRating : item.rating)}</Text>
                     {tab === 'now' && (
                       <>
-                        <AppIcon name="chatbubble-outline" size={12} style={{ marginLeft: 10 }} />
+                        <AppIcon name="chatbubble-outline" size={12} style={styles.statIcon} />
                         <Text style={styles.metaText}>{item.commentsCount ?? 0}</Text>
                       </>
                     )}
@@ -199,6 +199,8 @@ function ReleasesScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  reminderError: { color: colors.danger, paddingHorizontal: 16 },
+  statIcon: { marginLeft: 10 },
   container: { flex: 1, backgroundColor: colors.background, paddingTop: 60 },
   titleRow: { flexDirection: 'row', alignItems: 'center', paddingLeft: 16 },
   headerTitle: { color: colors.text, fontSize: 20, fontFamily: fonts.title, paddingHorizontal: 12 },

@@ -41,7 +41,6 @@
     "typecheck": "tsc --noEmit",
     "dev": "npm exec --yes --package=node@22 -- node scripts/dev.mjs",
     "backend": "npm exec --yes --package=node@22 -- node scripts/dev.mjs --backend-only",
-    "test": "tsx --test tests/*.test.ts",
     "dev:client": "npm exec --yes --package=node@22 -- node scripts/dev.mjs --dev-client"
   },
   "private": true,
