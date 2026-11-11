@@ -289,7 +289,7 @@ function MovieDetailScreen({ navigation, route }) {
   }
 
   async function handlePublish() {
-    if (!canPublish || !me || savingReview) return;
+    if (!canPublish || !me || savingReview || rating === null || photo === null) return;
     setSavingReview(true);
     setComposerError('');
     try {

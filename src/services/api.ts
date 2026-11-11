@@ -8,18 +8,19 @@ export async function logout() {
   catch (e) { if (!(e instanceof ApiError) || e.status !== 401) throw e; }
 }
 export const getSession = () => request('/auth/me');
-export const updateUser = (data: unknown) => request('/users/me', 'PATCH', data);
+export const updateUser = (data: { name: string; email: string }) => request('/users/me', 'PATCH', data);
 export const getComments = (id: number) => request(`/movies/${id}/reviews`);
 export const getUserComments = (id: number) => request(`/users/${id}/reviews`);
-export const postComment = (id: number, text: string, rating?: number, photo?: string) => request(`/movies/${id}/reviews`, 'POST', { text, rating, photo });
-export const updateComment = (id: number, data: unknown) => request(`/reviews/${id}`, 'PATCH', data);
+type ReviewPayload = { text: string; rating: number; photo: string };
+export const postComment = (id: number, text: string, rating: number, photo: string) => request(`/movies/${id}/reviews`, 'POST', { text, rating, photo });
+export const updateComment = (id: number, data: ReviewPayload) => request(`/reviews/${id}`, 'PATCH', data);
 export const deleteComment = (id: number) => request(`/reviews/${id}`, 'DELETE');
 export const likeComment = (id: number) => request(`/reviews/${id}/like`, 'POST');
 export const repostComment = (id: number) => request(`/reviews/${id}/repost`, 'POST');
 export const getPopularReviews = () => request('/feed/popular');
 export const getFriendReviews = () => request('/feed/friends');
 export const getAllUsers = () => request('/users');
-export const updateUserRole = (id: number, role: string) => request(`/users/${id}/role`, 'PATCH', { role });
+export const updateUserRole = (id: number, role: 'user' | 'moderator' | 'superadmin') => request(`/users/${id}/role`, 'PATCH', { role });
 export const getUserReposts = (id: number) => request(`/users/${id}/reposts`);
 export const getPublicProfile = (id: number) => request(`/users/${id}`);
 export const getMyProfile = () => request('/users/me');

@@ -17,7 +17,6 @@ import { colors, fonts } from '../theme';
 import BrandLogo from '../components/BrandLogo';
 import SettingsButton from '../components/SettingsButton';
 import ConfirmModal from '../components/ConfirmModal';
-import VoucherWalletActions from '../components/VoucherWalletActions';
 import GuestPrompt from '../components/GuestPrompt';
 
 type Achievement = {
@@ -72,7 +71,7 @@ function AchievementsScreen({ navigation }) {
   const [redeeming, setRedeeming] = useState(false);
   const [rewardToRedeem, setRewardToRedeem] = useState<Reward | null>(null);
   const [redeemError, setRedeemError] = useState('');
-  const [redeemed, setRedeemed] = useState<{ title: string; code: string; redemptionId?: number } | null>(null);
+  const [redeemed, setRedeemed] = useState<{ title: string; code: string } | null>(null);
 
   // Se recalcula al entrar a la solapa, así refleja las reseñas nuevas
   useOnFocus(fetchAchievements, [user.user?.id]);
@@ -112,7 +111,7 @@ function AchievementsScreen({ navigation }) {
       return;
     }
 
-    setRedeemed({ title: rewardToRedeem.title, code: result.code ?? '', redemptionId: result.redemptionId });
+    setRedeemed({ title: rewardToRedeem.title, code: result.code ?? '' });
     setRewardToRedeem(null);
   }
 
@@ -213,7 +212,6 @@ function AchievementsScreen({ navigation }) {
                     <Text style={styles.redeemedItem}>
                       {r.title} · código {r.code} · {({ active: 'Disponible', used: 'Usado', expired: 'Vencido', refunded: 'Reintegrado' })[r.status] ?? r.status}
                     </Text>
-                    {r.status === 'active' ? <VoucherWalletActions redemptionId={r.id} /> : null}
                     {['active', 'expired'].includes(r.status) ? <TouchableOpacity accessibilityRole="button" disabled={canceling} style={styles.cancelVoucher} onPress={() => { setCancelError(''); setCancelTarget({ id: r.id, title: r.title, cost: r.cost }); }}>
                       <Text style={styles.cancelVoucherText}>Anular canje y recuperar puntos</Text>
                     </TouchableOpacity> : null}
@@ -270,7 +268,6 @@ function AchievementsScreen({ navigation }) {
         onCancel={() => setRedeemed(null)}
       >
         <Text selectable style={styles.redeemCode}>{redeemed?.code}</Text>
-        {redeemed?.redemptionId ? <VoucherWalletActions redemptionId={redeemed.redemptionId} /> : null}
       </ConfirmModal>
     </>
   );

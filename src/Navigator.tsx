@@ -1,12 +1,9 @@
-import type { PushDestination } from './utils/pushDestination';
-import { useEffect, useRef } from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
-import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
+import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import AppIcon from './components/AppIcon';
 import { useAuth } from './context/AuthContext';
-import { listenToPushTaps } from './services/push';
 import ManageRedemptionsScreen from './screens/ManageRedemptions';
 import LoginScreen from './screens/Login';
 import RegisterScreen from './screens/Register';
@@ -60,20 +57,9 @@ const headerOptions = {
 };
 
 function RootNavigator() {
-  const navigationRef = useNavigationContainerRef<any>();
-  const pendingPush = useRef<PushDestination | null>(null);
-  const openPush = (destination: PushDestination) => {
-    if (navigationRef.isReady()) navigationRef.navigate(destination.screen, destination.params);
-    else pendingPush.current = destination;
-  };
-  useEffect(() => {
-    let stopped = false, unsubscribe: (() => void) | undefined;
-    void listenToPushTaps(openPush).then(cleanup => { if (stopped) cleanup(); else unsubscribe = cleanup; }).catch(() => {});
-    return () => { stopped = true; unsubscribe?.(); };
-  }, []);
   const { user } = useAuth();
   return (
-    <NavigationContainer ref={navigationRef} onReady={() => { if (pendingPush.current) { openPush(pendingPush.current); pendingPush.current = null; } }}>
+    <NavigationContainer>
       <Stack.Navigator id="root-stack" screenOptions={{ headerShown: false }}>
       {/* Visibles para todos */}
       <Stack.Screen name="Main" component={MainTabs} />

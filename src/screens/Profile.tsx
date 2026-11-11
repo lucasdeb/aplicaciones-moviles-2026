@@ -382,7 +382,7 @@ function ProfileScreen({ navigation, route }) {
   const list = tab === 'reposts'
     ? profile.reposts
     : tab === 'likes'
-      ? [...profile.comments].sort((a, b) => b.likes - a.likes)
+      ? profile.likedReviews
       : profile.comments;
   const button = FRIEND_BUTTON[friendship.status];
   const unreadNotifications = notifications.filter((notification) => !notification.read).length;
@@ -525,8 +525,8 @@ function ProfileScreen({ navigation, route }) {
         <StatCard
           icon="heart"
           color={colors.rating}
-          value={formatNumber(profile.stats.likesReceived)}
-          label="Likes recibidos"
+          value={formatNumber(profile.stats.likesGiven)}
+          label="Likes"
           onPress={() => openActivityTab('likes')}
         />
         <StatCard
@@ -625,7 +625,7 @@ function ProfileScreen({ navigation, route }) {
           {tab === 'reposts'
             ? 'Todavía no hay reposteos.'
             : tab === 'likes'
-              ? 'Todavía no hay reseñas con likes.'
+              ? 'Todavía no hay reseñas que le gusten.'
               : 'Todavía no hay reseñas.'}
         </Text>
       ) : (

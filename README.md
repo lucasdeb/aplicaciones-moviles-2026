@@ -1,6 +1,6 @@
 # WhatNext
 
-Expo frontend for WhatNext. The complete API, Prisma database, movies, points, auth, scheduled jobs, push and Wallet live in the separate [appsmovilesBACK repository](https://github.com/Zand3r5/appsmovilesBACK).
+Expo frontend for WhatNext. The complete API, Prisma database, movies, points, auth and scheduled catalog job live in the separate [appsmovilesBACK repository](https://github.com/Zand3r5/appsmovilesBACK).
 
 ## Run locally
 
@@ -20,7 +20,7 @@ npm run dev
 
 This launches the standalone API on port 3000, its worker, and Expo with its interactive terminal/QR code. Ctrl+C stops all three. The launcher uses Node 22 for SDK 58 compatibility without changing the system Node installation. It does not create a second database or start a bundled backend.
 
-For two terminals, use `npm run backend` here for the API/worker, then `npx expo start --go` for Expo (use Node 22 when launching Expo directly). `npm start` starts only Expo. Scan the QR code with the iPhone Camera or Expo Go on Android; real remote push requires a development/production build and platform credentials.
+For two terminals, use `npm run backend` here for the API/worker, then `npx expo start --go` for Expo (use Node 22 when launching Expo directly). `npm start` starts only Expo. Scan the QR code with the iPhone Camera or Expo Go on Android.
 
 For a fresh machine, install frontend dependencies with `npm ci`, clone the backend beside it as `appsmovilesBACK`, and follow that repository’s setup guide to install dependencies and configure its private `.env`. For a different checkout location, set `WHATNEXT_BACKEND_DIR` to the backend directory before starting development. Secrets and real database contents are not distributed through Git.
 
@@ -32,7 +32,9 @@ Backend configuration and uploaded files are in `../appsmovilesBACK/.env` and `.
 
 The API only reads saved movies. It never fetches TMDB during requests, including movie details, search, Próximas and Cartelera. Search covers the saved catalog.
 
-The separate worker runs the cron expression `TMDB_CRON` (default `0 4 * * *`) in `America/Argentina/Buenos_Aires`. Keep the worker running under a process supervisor. API, worker and scheduled command must use the same persistent SQLite database.
+The separate worker runs every day at 04:00 in `America/Argentina/Buenos_Aires`. Keep the worker running under a process supervisor. API, worker and scheduled command must use the same persistent SQLite database.
+
+The “Avisame” button is independent from that worker. It schedules a local notification on the phone for 10:00 Argentina time on the movie's release date. It does not register a push token, call a reminder API, or require APNs/FCM credentials. Because the reminder lives only on that device, it is not synchronized to another phone.
 
 Each job:
 
@@ -79,15 +81,7 @@ Run `npm run typecheck` here for frontend checks. The backend has its own type c
 
 See the [backend README](https://github.com/Zand3r5/appsmovilesBACK) for its setup.
 
-## Account reminders and nearby cinemas
-
-Release subscriptions are saved per user in `ReleaseReminder`. `GET /api/reminders` returns the signed-in user's subscriptions; `PUT /api/reminders/:movieId` subscribes idempotently, and `DELETE /api/reminders/:movieId` removes only that user's subscription. The backend calculates `remindAt` from the movie's current saved release date at **10:00 Buenos Aires time**. Missing, invalid, hidden or past releases cannot create a new reminder. Existing subscriptions with elapsed dates return `remindAt: null` and are not scheduled again.
-
-`RemindersProvider` restores account subscriptions on login/resume. Native development builds register an Expo push token through authenticated `PUT /api/push/devices`. An installation secret protects device ownership; registration binds the device to the current account and session. Logout removes that session's devices. The app clears old local release alerts during migration.
-
-The server worker checks due reminders every minute, starting at **10:00 Buenos Aires time on the release date**. `PushDelivery` stores attempts, Expo tickets and receipts. Temporary failures retry with backoff; invalid tokens are disabled. Subscriptions and session validity are checked before sending. Deliveries are idempotently queued per account/device/movie/date, but a crash after Expo accepts a send can still produce a duplicate. A successful receipt confirms provider handoff, not that a person saw the alert.
-
-Browser users can save subscriptions; push delivery requires the mobile app, permission, a real EAS project ID, Android/iOS credentials and a physical-device development build. Expo Go is not supported for remote push. Set `EXPO_PUBLIC_EAS_PROJECT_ID`, `EXPO_PUBLIC_ANDROID_PACKAGE` and/or `EXPO_PUBLIC_IOS_BUNDLE_ID`, then follow the [Expo push setup](https://docs.expo.dev/push-notifications/push-notifications-setup/). `eas.json` provides development, preview and production profiles. See [deploy/README.md](deploy/README.md) for deployment and device validation. Physical-device delivery has not yet been verified.
+## Nearby cinemas
 
 Nearby cinemas are requested with authenticated `POST /api/cinemas/nearby` and JSON `{ lat, lng, radiusM? }`. Coordinates must be numeric and in range; radius defaults to 15 km and is limited to 1–50 km. The backend alone queries [OpenStreetMap Overpass](https://wiki.openstreetmap.org/wiki/Overpass_API), validates/deduplicates results, computes distances, filters by the requested radius and returns the nearest 20. The phone only requests location permission, obtains its coordinates, formats distances and opens directions.
 
@@ -101,20 +95,10 @@ Staff can validate and use reward codes from Settings → Validar canjes. Supera
 
 `POST /api/uploads` accepts authenticated JPEG/PNG images, validates decoded pixels, removes metadata and stores resized WebP files. Reviews save image URLs; uploaded review images require ownership. `/media/:filename` serves these public images. Keep the upload directory on persistent storage. `npm run media:migrate` in the backend backs up the database and converts legacy embedded images. `npm run db:backup` snapshots SQLite and copies uploads into the same backup folder.
 
-Frontend CI checks frontend types; backend CI checks server types and build. Production rejects placeholder JWT secrets. Public hosting and physical-device notification delivery still require validation in the target environment.
+Frontend CI checks frontend types; backend CI checks server types and build. Production rejects placeholder JWT secrets. Public hosting still requires validation in the target environment.
 
-## Points history and Wallet vouchers
+## Points history and reward vouchers
 
 Earned achievement points are now permanent, with a saved transaction history for earning, spending and refunds. The Logros screen displays the server's available balance and paginated history. Run `npm run points:migrate` inside the backend after applying migrations to backfill existing accounts once; it is safe to repeat. Current eligible achievements can be recovered, but previously deleted activity cannot.
 
-Mis canjes offers Apple Wallet on iOS, Google Wallet on Android, and both on web. Each pass represents an existing reward voucher with its single-use code. Real issuer accounts and signing credentials must be configured first; see [Wallet setup](deploy/WALLET.md). Saving a pass does not book a cinema showing or seat. Saved passes do not yet update automatically after use/refund; staff must validate the code online.
-
-Settings includes Probar notificaciones. Expo Go displays an explanation instead of attempting remote push registration; a physical-device development build and Expo credentials are still required for push testing.
-
 Users can cancel their own unused canjes from Logros → Mis canjes → Anular canje y recuperar puntos. The backend invalidates the voucher and restores its original points atomically. Canceled vouchers leave the current list, while an inactive audit record and point history remain to prevent repeated refunds. Used vouchers cannot be canceled. Repeated requests never grant extra points.
-
-## Backend-owned push notifications
-
-Release reminders, incoming friend requests, review likes and reposts are queued and sent by the standalone backend worker. The app only requests permission, registers its push token, displays notifications and opens the relevant profile/movie when tapped. Social notifications are picked up on the next minute check; read/withdrawn/deleted events are skipped and repeated toggles are deduplicated. Android has separate Estrenos and Amistades y reseñas channels. Real push testing requires the installed development/production app, EAS/APNs/FCM credentials and a running API/worker.
-
-For an installed development build with remote push support, use `npm run dev:client` instead of the Expo Go launcher. It starts the standalone API/worker and Expo in development-client mode with Node 22.
