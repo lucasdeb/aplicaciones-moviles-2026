@@ -22,6 +22,7 @@ export const getAllUsers = () => request('/users');
 export const updateUserRole = (id: number, role: string) => request(`/users/${id}/role`, 'PATCH', { role });
 export const getUserReposts = (id: number) => request(`/users/${id}/reposts`);
 export const getPublicProfile = (id: number) => request(`/users/${id}`);
+export const getMyProfile = () => request('/users/me');
 export const getAchievements = () => request('/achievements');
 export const getRewards = () => request('/rewards');
 export const cancelRedemption = (id: number) => request(`/rewards/redemptions/${id}`, 'DELETE');
